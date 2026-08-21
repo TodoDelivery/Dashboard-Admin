@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Todo Delivery - Monitor de Envíos en Vivo</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              black: '#0A0A0C',
+              dark: '#121217',
+              card: '#18181F',
+              accent: '#E63946',
+              accentHover: '#D62839',
+              gold: '#F4A261',
+              muted: '#71717A',
+              border: '#27272A'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #0A0A0C;
+      color: #F4F4F5;
+      -webkit-tap-highlight-color: transparent;
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #121217;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #27272A;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #3F3F46;
+    }
+    .kanban-col {
+      min-height: calc(100vh - 250px);
+    }
+  </style>
+</head>
+<body class="min-h-screen font-sans flex flex-col md:flex-row overflow-x-hidden selection:bg-brand-accent selection:text-white">
+
+  <!-- ========================================== -->
+  <!-- 1. SIDEBAR DE NAVEGACIÓN                   -->
+  <!-- ========================================== -->
+  <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-64 bg-brand-dark border-r border-brand-border flex flex-col justify-between transition-transform duration-300 -translate-x-full md:translate-x-0">
+    <div>
+      <div class="h-20 flex items-center px-6 border-b border-brand-border gap-3">
+        <div class="flex items-center justify-center w-10 h-10 bg-brand-accent/10 border border-brand-accent/20 rounded-xl">
+          <i data-lucide="zap" class="w-5 h-5 text-brand-accent fill-brand-accent"></i>
+        </div>
+        <div>
+          <h1 class="text-base font-bold tracking-tight text-white flex items-center gap-1">
+            TODO <span class="text-brand-accent font-semibold tracking-wider uppercase text-xs">Delivery</span>
+          </h1>
+          <p class="text-[10px] uppercase tracking-wider text-brand-muted">Admin Console</p>
+        </div>
+      </div>
+
+      <nav class="p-4 space-y-1.5">
+        <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-400 hover:text-white hover:bg-brand-card font-medium text-sm transition-all">
+          <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+          <span>Dashboard</span>
+        </a>
+        <!-- Activo: Monitor de Envíos -->
+        <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-brand-accent text-white font-medium text-sm shadow-lg shadow-brand-accent/20 transition-all">
+          <i data-lucide="package" class="w-5 h-5"></i>
+          <span>Monitor de Envíos</span>
+          <span id="badge-total-active" class="ml-auto bg-white/20 text-white text-xs px-2 py-0.5 rounded-full font-semibold">5</span>
+        </a>
+        <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-400 hover:text-white hover:bg-brand-card font-medium text-sm transition-all">
+          <i data-lucide="users" class="w-5 h-5"></i>
+          <span>Gestión de Cadetes</span>
+        </a>
+        <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-400 hover:text-white hover:bg-brand-card font-medium text-sm transition-all">
+          <i data-lucide="map-pin" class="w-5 h-5"></i>
+          <span>Zonas y Tarifas</span>
+        </a>
+        <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-400 hover:text-white hover:bg-brand-card font-medium text-sm transition-all">
+          <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+          <span>Reportes y Caja</span>
+        </a>
+      </nav>
+    </div>
+
+    <div class="p-4 border-t border-brand-border">
+      <div class="flex items-center gap-3 p-3 rounded-xl bg-brand-card/50 border border-brand-border/60 mb-3">
+        <div class="w-10 h-10 rounded-full bg-zinc-800 border border-brand-border flex items-center justify-center font-bold text-white text-sm">
+          AD
+        </div>
+        <div class="overflow-hidden">
+          <h4 class="text-xs font-semibold text-white truncate">Ana Dueña</h4>
+          <p class="text-[11px] text-zinc-400 truncate">admin@tododelivery.com</p>
+        </div>
+      </div>
+      <button class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-brand-border hover:border-brand-accent/50 text-zinc-400 hover:text-white text-xs font-semibold transition-all">
+        <i data-lucide="log-out" class="w-4 h-4"></i>
+        <span>Cerrar Sesión</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ========================================== -->
+  <!-- 2. CONTENEDOR PRINCIPAL                   -->
+  <!-- ========================================== -->
+  <div class="flex-1 md:pl-64 flex flex-col min-h-screen">
+    
+    <!-- Top Header -->
+    <header class="h-20 bg-brand-dark/80 backdrop-blur-md border-b border-brand-border px-6 flex items-center justify-between sticky top-0 z-30">
+      <div class="flex items-center gap-4">
+        <button onclick="toggleSidebar()" class="md:hidden p-2 rounded-xl bg-brand-card border border-brand-border text-zinc-300 hover:text-white">
+          <i data-lucide="menu" class="w-5 h-5"></i>
+        </button>
+        <div>
+          <h2 class="text-lg font-bold text-white tracking-tight flex items-center gap-2">
+            Monitor de Envíos en Tiempo Real
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> Live Socket
+            </span>
+          </h2>
+          <p class="text-xs text-brand-muted hidden sm:block">Tablero dinámico de despachos, pedidos entrantes y reasignación de flota</p>
+        </div>
+      </div>
+
+      <!-- Resumen de Cadetes Disponibles -->
+      <div class="flex items-center gap-3">
+        <div class="hidden lg:flex items-center gap-2 bg-brand-card border border-brand-border px-3.5 py-1.5 rounded-xl">
+          <i data-lucide="bike" class="w-4 h-4 text-emerald-400"></i>
+          <span class="text-xs text-zinc-300 font-medium"><strong class="text-white" id="cadetes-libres-count">2</strong> Cadetes Libres</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Subheader: Búsqueda y Filtros Rápidos -->
+    <div class="px-6 py-4 border-b border-brand-border/60 bg-brand-black flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="relative w-full sm:w-80">
+        <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500">
+          <i data-lucide="search" class="w-4 h-4"></i>
+        </span>
+        <input 
+          type="text" 
+          id="order-search"
+          onkeyup="renderColumns()"
+          placeholder="Buscar por ID, cliente o comercio..." 
+          class="w-full bg-brand-card border border-brand-border text-white text-xs rounded-xl pl-10 pr-4 py-2.5 placeholder-zinc-500 focus:outline-none focus:border-brand-accent transition-all"
+        />
+      </div>
+
+      <div class="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+        <button onclick="filterPayment('all')" class="px-3 py-1.5 rounded-lg bg-zinc-800 text-xs text-zinc-200 font-medium hover:bg-zinc-700 transition-colors">Todos los pagos</button>
+        <button onclick="filterPayment('Efectivo')" class="px-3 py-1.5 rounded-lg bg-brand-card border border-brand-border text-xs text-zinc-400 font-medium hover:text-white transition-colors">Efectivo</button>
+        <button onclick="filterPayment('Online')" class="px-3 py-1.5 rounded-lg bg-brand-card border border-brand-border text-xs text-zinc-400 font-medium hover:text-white transition-colors">Online</button>
+      </div>
+    </div>
+
+    <!-- Tablero Kanban de Despacho Operativo -->
+    <main class="flex-1 p-6 overflow-x-auto">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 min-w-[850px] kanban-col">
+        
+        <!-- Columna 1: Por Asignar / Nuevos -->
+        <div class="bg-brand-dark/40 border border-brand-border/80 rounded-2xl p-4 flex flex-col">
+          <div class="flex items-center justify-between pb-3 border-b border-brand-border/60 mb-4">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+              <h3 class="text-xs font-bold uppercase tracking-wider text-white">Por Asignar</h3>
+            </div>
+            <span id="count-unassigned" class="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs px-2 py-0.5 rounded-full font-bold">0</span>
+          </div>
+
+          <div id="col-unassigned" class="flex-1 space-y-3.5 overflow-y-auto pr-1">
+            <!-- Renderizado dinámico -->
+          </div>
+        </div>
+
+        <!-- Columna 2: En Curso / Con Cadete -->
+        <div class="bg-brand-dark/40 border border-brand-border/80 rounded-2xl p-4 flex flex-col">
+          <div class="flex items-center justify-between pb-3 border-b border-brand-border/60 mb-4">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+              <h3 class="text-xs font-bold uppercase tracking-wider text-white">En Curso / En Ruta</h3>
+            </div>
+            <span id="count-in-transit" class="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs px-2 py-0.5 rounded-full font-bold">0</span>
+          </div>
+
+          <div id="col-in-transit" class="flex-1 space-y-3.5 overflow-y-auto pr-1">
+            <!-- Renderizado dinámico -->
+          </div>
+        </div>
+
+        <!-- Columna 3: Entregados Recientes -->
+        <div class="bg-brand-dark/40 border border-brand-border/80 rounded-2xl p-4 flex flex-col">
+          <div class="flex items-center justify-between pb-3 border-b border-brand-border/60 mb-4">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+              <h3 class="text-xs font-bold uppercase tracking-wider text-white">Entregados Hoy</h3>
+            </div>
+            <span id="count-delivered" class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs px-2 py-0.5 rounded-full font-bold">0</span>
+          </div>
+
+          <div id="col-delivered" class="flex-1 space-y-3.5 overflow-y-auto pr-1">
+            <!-- Renderizado dinámico -->
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+  </div>
+
+  <!-- ========================================== -->
+  <!-- 3. MODAL: ASIGNAR / CAMBIAR CADETE        -->
+  <!-- ========================================== -->
+  <div id="assign-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+    <div id="assign-container" class="w-full max-w-md bg-brand-card border border-brand-border rounded-3xl p-6 sm:p-7 shadow-2xl scale-95 transition-transform duration-300 space-y-5">
+      
+      <div class="flex items-center justify-between border-b border-brand-border pb-4">
+        <div class="flex items-center gap-3">
+          <div class="p-2.5 rounded-xl bg-brand-accent/10 text-brand-accent border border-brand-accent/20">
+            <i data-lucide="bike" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">Asignar Repartidor</h3>
+            <p id="modal-order-title" class="text-xs text-brand-muted">Pedido #TD-XXXX</p>
+          </div>
+        </div>
+        <button onclick="closeAssignModal()" class="text-zinc-500 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Lista de Selección de Cadetes -->
+      <div class="space-y-3">
+        <p class="text-xs font-semibold uppercase tracking-wider text-zinc-400">Selecciona un Cadete Habilitado:</p>
+        <div id="cadetes-select-list" class="space-y-2 max-h-60 overflow-y-auto pr-1">
+          <!-- Renderizado dinámico de cadetes -->
+        </div>
+      </div>
+
+      <div class="pt-4 border-t border-brand-border flex items-center justify-end gap-3">
+        <button onclick="closeAssignModal()" class="px-4 py-2 rounded-xl border border-brand-border text-xs text-zinc-400 hover:text-white">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- 4. LÓGICA JAVASCRIPT                       -->
+  <!-- ========================================== -->
+  <script>
+    // Cadetes habilitados del sistema
+    const availableCadetes = [
+      { id: 1, name: "Carlos Ramírez", vehicle: "Moto", status: "busy", activeOrder: "TD-4892" },
+      { id: 2, name: "Esteban Morales", vehicle: "Bicicleta", status: "free", activeOrder: null },
+      { id: 3, name: "Julián López", vehicle: "Moto", status: "free", activeOrder: null }
+    ];
+
+    // Colección de pedidos en vivo
+    let orders = [
+      {
+        id: "TD-4895",
+        time: "Hace 3 min",
+        origin: "Burger House (Sucursal Centro)",
+        destination: "Av. Libertador 1420, 4to B",
+        customer: "Lucía Fernández",
+        items: "2x Combo Doble Queso + Papas",
+        total: 5800,
+        payment: "Efectivo",
+        status: "unassigned",
+        cadete: null
+      },
+      {
+        id: "TD-4894",
+        time: "Hace 8 min",
+        origin: "Sushi Master",
+        destination: "Calle Mitre 845",
+        customer: "Mariano Costa",
+        items: "30 Piezas Clásicas",
+        total: 12400,
+        payment: "Online",
+        status: "unassigned",
+        cadete: null
+      },
+      {
+        id: "TD-4892",
+        time: "Hace 16 min",
+        origin: "Parrilla Don Pepe",
+        destination: "San Martín 2041",
+        customer: "Gonzalo Benítez",
+        items: "1x Vacío al Plato c/ Ensalada",
+        total: 8200,
+        payment: "Online",
+        status: "in_transit",
+        cadete: "Carlos Ramírez"
+      },
+      {
+        id: "TD-4890",
+        time: "Hace 35 min",
+        origin: "Café Central",
+        destination: "Alvear 510",
+        customer: "Sofía Ruiz",
+        items: "1x Latte + 2x Medialunas",
+        total: 3100,
+        payment: "Efectivo",
+        status: "delivered",
+        cadete: "Esteban Morales"
+      },
+      {
+        id: "TD-4889",
+        time: "Hace 52 min",
+        origin: "Farmacia San José",
+        destination: "Rivadavia 112",
+        customer: "Estela Méndez",
+        items: "Medicamentos varios",
+        total: 4600,
+        payment: "Online",
+        status: "delivered",
+        cadete: "Julián López"
+      }
+    ];
+
+    let currentSelectedOrderId = null;
+    let selectedPaymentFilter = 'all';
+
+    document.addEventListener("DOMContentLoaded", () => {
+      renderColumns();
+      lucide.createIcons();
+    });
+
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('-translate-x-full');
+    }
+
+    function filterPayment(type) {
+      selectedPaymentFilter = type;
+      renderColumns();
+    }
+
+    function renderColumns() {
+      const search = document.getElementById("order-search").value.toLowerCase();
+      
+      const filtered = orders.filter(o => {
+        const matchesSearch = o.id.toLowerCase().includes(search) || 
+                              o.customer.toLowerCase().includes(search) || 
+                              o.origin.toLowerCase().includes(search) ||
+                              o.destination.toLowerCase().includes(search);
+        const matchesPayment = selectedPaymentFilter === 'all' || o.payment === selectedPaymentFilter;
+        return matchesSearch && matchesPayment;
+      });
+
+      const unassigned = filtered.filter(o => o.status === 'unassigned');
+      const inTransit = filtered.filter(o => o.status === 'in_transit');
+      const delivered = filtered.filter(o => o.status === 'delivered');
+
+      document.getElementById("count-unassigned").innerText = unassigned.length;
+      document.getElementById("count-in-transit").innerText = inTransit.length;
+      document.getElementById("count-delivered").innerText = delivered.length;
+      document.getElementById("badge-total-active").innerText = unassigned.length + inTransit.length;
+
+      const libres = availableCadetes.filter(c => c.status === 'free').length;
+      document.getElementById("cadetes-libres-count").innerText = libres;
+
+      renderCardList("col-unassigned", unassigned);
+      renderCardList("col-in-transit", inTransit);
+      renderCardList("col-delivered", delivered);
+
+      lucide.createIcons();
+    }
+
+    function renderCardList(containerId, list) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = "";
+
+      if (list.length === 0) {
+        container.innerHTML = `
+          <div class="h-32 flex flex-col items-center justify-center text-zinc-600 border border-dashed border-brand-border/60 rounded-xl">
+            <i data-lucide="inbox" class="w-6 h-6 mb-1"></i>
+            <span class="text-xs">Sin pedidos en este estado</span>
+          </div>
+        `;
+        return;
+      }
+
+      list.forEach(order => {
+        const card = document.createElement("div");
+        card.className = "bg-brand-card border border-brand-border rounded-2xl p-4 space-y-3.5 hover:border-zinc-600 transition-all shadow-lg";
+
+        const isUnassigned = order.status === 'unassigned';
+        const isInTransit = order.status === 'in_transit';
+
+        card.innerHTML = `
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-white text-xs font-mono">${order.id}</span>
+              <span class="text-[10px] text-zinc-400 bg-brand-dark px-2 py-0.5 rounded border border-brand-border">${order.time}</span>
+            </div>
+            <span class="text-[11px] font-bold ${order.payment === 'Efectivo' ? 'text-brand-gold' : 'text-emerald-400'}">
+              $${order.total.toLocaleString()} • ${order.payment}
+            </span>
+          </div>
+
+          <div class="space-y-1.5 text-xs">
+            <div class="flex items-start gap-2 text-zinc-300">
+              <i data-lucide="store" class="w-3.5 h-3.5 text-zinc-500 mt-0.5 shrink-0"></i>
+              <span class="truncate font-medium">${order.origin}</span>
+            </div>
+            <div class="flex items-start gap-2 text-zinc-300">
+              <i data-lucide="map-pin" class="w-3.5 h-3.5 text-brand-accent mt-0.5 shrink-0"></i>
+              <span class="truncate font-medium">${order.destination}</span>
+            </div>
+          </div>
+
+          <div class="p-2 bg-brand-dark/70 rounded-xl border border-brand-border/60 text-[11px] text-zinc-400 flex items-center justify-between">
+            <span class="truncate">Cliente: <strong class="text-zinc-200">${order.customer}</strong></span>
+            <span class="text-zinc-500 font-mono text-[10px]">Detalles</span>
+          </div>
+
+          <div class="pt-2 border-t border-brand-border/60 flex items-center justify-between">
+            <div class="flex items-center gap-1.5">
+              ${order.cadete 
+                ? `<div class="w-6 h-6 rounded-full bg-zinc-800 text-white text-[10px] flex items-center justify-center font-bold">${order.cadete.split(' ').map(n=>n[0]).join('')}</div>
+                   <span class="text-xs text-zinc-300 font-medium">${order.cadete}</span>`
+                : `<span class="text-xs text-amber-400 font-medium flex items-center gap-1"><i data-lucide="alert-circle" class="w-3.5 h-3.5"></i> Sin asignar</span>`
+              }
+            </div>
+
+            <div class="flex items-center gap-1.5">
+              ${isUnassigned ? `
+                <button onclick="openAssignModal('${order.id}')" class="px-3 py-1.5 bg-brand-accent hover:bg-brand-accentHover text-white text-xs font-bold rounded-xl shadow-md transition-all flex items-center gap-1">
+                  <i data-lucide="user-check" class="w-3.5 h-3.5"></i> Despachar
+                </button>
+              ` : ''}
+
+              ${isInTransit ? `
+                <button onclick="markDelivered('${order.id}')" title="Marcar como entregado" class="p-1.5 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white border border-emerald-500/20 rounded-lg transition-all">
+                  <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                </button>
+                <button onclick="openAssignModal('${order.id}')" title="Reasignar cadete" class="p-1.5 bg-brand-dark text-zinc-400 hover:text-white border border-brand-border rounded-lg transition-all">
+                  <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                </button>
+              ` : ''}
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // Acciones de Asignación
+    function openAssignModal(orderId) {
+      currentSelectedOrderId = orderId;
+      document.getElementById("modal-order-title").innerText = `Pedido #${orderId}`;
+      
+      const listContainer = document.getElementById("cadetes-select-list");
+      listContainer.innerHTML = "";
+
+      availableCadetes.forEach(cadete => {
+        const item = document.createElement("button");
+        item.type = "button";
+        item.onclick = () => assignCadeteToOrder(cadete.name);
+        item.className = "w-full flex items-center justify-between p-3 rounded-xl bg-brand-dark border border-brand-border hover:border-brand-accent/50 text-left transition-all group";
+        
+        item.innerHTML = `
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center font-bold text-xs text-white">
+              ${cadete.name.split(' ').map(n=>n[0]).join('')}
+            </div>
+            <div>
+              <h5 class="text-xs font-bold text-white group-hover:text-brand-accent transition-colors">${cadete.name}</h5>
+              <p class="text-[10px] text-zinc-400">${cadete.vehicle} • ${cadete.status === 'free' ? 'Libre' : 'En ruta (' + cadete.activeOrder + ')'}</p>
+            </div>
+          </div>
+          <span class="text-xs font-bold ${cadete.status === 'free' ? 'text-emerald-400' : 'text-amber-400'}">
+            ${cadete.status === 'free' ? 'Asignar' : 'Reasignar'}
+          </span>
+        `;
+        listContainer.appendChild(item);
+      });
+
+      const m = document.getElementById('assign-modal');
+      const c = document.getElementById('assign-container');
+      m.classList.remove('hidden');
+      setTimeout(() => {
+        m.classList.add('opacity-100');
+        c.classList.remove('scale-95');
+      }, 10);
+      lucide.createIcons();
+    }
+
+    function closeAssignModal() {
+      const m = document.getElementById('assign-modal');
+      const c = document.getElementById('assign-container');
+      m.classList.remove('opacity-100');
+      c.classList.add('scale-95');
+      setTimeout(() => m.classList.add('hidden'), 300);
+    }
+
+    function assignCadeteToOrder(cadeteName) {
+      orders = orders.map(o => {
+        if (o.id === currentSelectedOrderId) {
+          return { ...o, cadete: cadeteName, status: 'in_transit' };
+        }
+        return o;
+      });
+
+      closeAssignModal();
+      renderColumns();
+    }
+
+    function markDelivered(orderId) {
+      orders = orders.map(o => {
+        if (o.id === orderId) {
+          return { ...o, status: 'delivered' };
+        }
+        return o;
+      });
+      renderColumns();
+    }
+  </script>
+</body>
+</html>

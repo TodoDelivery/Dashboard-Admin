@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Todo Delivery - Admin Console</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              black: '#0A0A0C',
+              dark: '#121217',
+              card: '#18181F',
+              accent: '#E63946',       /* Rojo vibrante estilo delivery */
+              accentHover: '#D62839',
+              gold: '#F4A261',
+              muted: '#71717A',
+              border: '#27272A'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #0A0A0C;
+      color: #F4F4F5;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Animación de pulso sobrio para el logo */
+    @keyframes subtle-pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(0.97); opacity: 0.9; }
+    }
+
+    /* Barra de carga indeterminada minimalista */
+    @keyframes loading-bar {
+      0% { transform: translateX(-100%); }
+      50% { transform: translateX(30%); }
+      100% { transform: translateX(200%); }
+    }
+
+    .animate-subtle {
+      animation: subtle-pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    .animate-progress {
+      animation: loading-bar 1.6s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+    }
+
+    /* Transiciones suaves entre estados */
+    .fade-out {
+      opacity: 0;
+      transform: scale(0.98);
+      pointer-events: none;
+      transition: all 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .fade-in {
+      opacity: 1 !important;
+      transform: translateY(0) !important;
+      pointer-events: auto !important;
+    }
+  </style>
+</head>
+<body class="min-h-screen font-sans flex items-center justify-center p-4 relative overflow-hidden selection:bg-brand-accent selection:text-white">
+
+  <!-- ========================================== -->
+  <!-- 1. SPLASH SCREEN (Pantalla de Carga)       -->
+  <!-- ========================================== -->
+  <div id="splash-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-between py-12 px-6 bg-brand-black transition-all duration-700">
+    <!-- Glow de fondo decorativo y sutil -->
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-brand-accent/10 rounded-full blur-[100px] pointer-events-none"></div>
+
+    <div class="w-full"></div>
+
+    <!-- Centro: Isotipo & Marca -->
+    <div class="flex flex-col items-center gap-6 z-10">
+      <div class="relative flex items-center justify-center w-20 h-20 bg-brand-card border border-brand-border rounded-2xl shadow-2xl animate-subtle">
+        <!-- Ícono con gradiente sutil -->
+        <i data-lucide="zap" class="w-10 h-10 text-brand-accent fill-brand-accent"></i>
+        <!-- Borde activo -->
+        <div class="absolute inset-0 rounded-2xl border border-brand-accent/30"></div>
+      </div>
+
+      <div class="text-center space-y-1">
+        <h1 class="text-2xl font-extrabold tracking-tight text-white flex items-center justify-center gap-1.5">
+          TODO <span class="text-brand-accent font-semibold tracking-wider uppercase text-lg">Delivery</span>
+        </h1>
+        <p class="text-xs uppercase tracking-[0.25em] text-brand-muted font-medium">Panel de Control</p>
+      </div>
+    </div>
+
+    <!-- Inferior: Indicador de carga ultrafino & Badge -->
+    <div class="w-full max-w-xs flex flex-col items-center gap-4 z-10">
+      <div class="w-44 h-[2px] bg-brand-border rounded-full overflow-hidden relative">
+        <div class="absolute top-0 bottom-0 left-0 w-1/2 bg-brand-accent rounded-full animate-progress"></div>
+      </div>
+      <span class="text-[11px] text-zinc-500 font-medium tracking-wide flex items-center gap-1.5">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Conexión segura
+      </span>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- 2. LOGIN TEMPLATE (Inicio de Sesión Admin)  -->
+  <!-- ========================================== -->
+  <main id="login-container" class="w-full max-w-md bg-brand-card/70 border border-brand-border backdrop-blur-xl p-8 sm:p-10 rounded-3xl shadow-2xl opacity-0 translate-y-6 transition-all duration-700 relative z-20">
+    
+    <!-- Header del Formulario -->
+    <div class="text-center space-y-2 mb-8">
+      <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-brand-accent/10 border border-brand-accent/20 mb-2">
+        <i data-lucide="shield-check" class="w-6 h-6 text-brand-accent"></i>
+      </div>
+      <h2 class="text-2xl font-bold tracking-tight text-white">Administración</h2>
+      <p class="text-sm text-brand-muted">Ingresa tus credenciales maestras de <strong class="text-zinc-300 font-medium">Todo Delivery</strong></p>
+    </div>
+
+    <!-- Formulario -->
+    <form id="admin-login-form" class="space-y-5" onsubmit="event.preventDefault();">
+      <!-- Input: Email -->
+      <div class="space-y-1.5">
+        <label for="email" class="block text-xs font-semibold uppercase tracking-wider text-zinc-400">Correo Electrónico</label>
+        <div class="relative flex items-center">
+          <span class="absolute left-4 text-zinc-500">
+            <i data-lucide="mail" class="w-5 h-5"></i>
+          </span>
+          <input 
+            type="email" 
+            id="email" 
+            placeholder="admin@tododelivery.com" 
+            required
+            class="w-full bg-brand-dark/90 border border-brand-border text-white text-sm rounded-xl pl-12 pr-4 py-3.5 placeholder-zinc-600 focus:outline-none focus:border-brand-accent focus:ring-1 focus:ring-brand-accent transition-all"
+          />
+        </div>
+      </div>
+
+      <!-- Input: Contraseña -->
+      <div class="space-y-1.5">
+        <div class="flex items-center justify-between">
+          <label for="password" class="block text-xs font-semibold uppercase tracking-wider text-zinc-400">Contraseña</label>
+          <a href="#" class="text-xs text-brand-accent hover:underline font-medium">¿Olvidaste la clave?</a>
+        </div>
+        <div class="relative flex items-center">
+          <span class="absolute left-4 text-zinc-500">
+            <i data-lucide="lock" class="w-5 h-5"></i>
+          </span>
+          <input 
+            type="password" 
+            id="password" 
+            placeholder="••••••••••••" 
+            required
+            class="w-full bg-brand-dark/90 border border-brand-border text-white text-sm rounded-xl pl-12 pr-12 py-3.5 placeholder-zinc-600 focus:outline-none focus:border-brand-accent focus:ring-1 focus:ring-brand-accent transition-all"
+          />
+          <button 
+            type="button" 
+            id="toggle-password" 
+            class="absolute right-4 text-zinc-500 hover:text-zinc-300 focus:outline-none transition-colors"
+            onclick="togglePasswordVisibility()"
+          >
+            <i data-lucide="eye" id="eye-icon" class="w-5 h-5"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Recordar sesión -->
+      <div class="flex items-center justify-between pt-1">
+        <label class="flex items-center gap-2.5 cursor-pointer select-none">
+          <input type="checkbox" class="w-4 h-4 rounded border-brand-border bg-brand-dark text-brand-accent focus:ring-0 focus:ring-offset-0 cursor-pointer accent-brand-accent">
+          <span class="text-xs text-zinc-400">Mantener sesión iniciada</span>
+        </label>
+      </div>
+
+      <!-- Botón de Envío -->
+      <button 
+        type="submit" 
+        class="w-full bg-brand-accent hover:bg-brand-accentHover text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-brand-accent/20 active:scale-[0.99] transition-all flex items-center justify-center gap-2 group"
+      >
+        <span>Ingresar al Sistema</span>
+        <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-0.5 transition-transform"></i>
+      </button>
+    </form>
+
+    <!-- Footer corporativo -->
+    <div class="mt-8 pt-6 border-t border-brand-border/60 text-center">
+      <p class="text-xs text-zinc-500">
+        Todo Delivery Management System &copy; 2026
+      </p>
+    </div>
+  </main>
+
+  <!-- ========================================== -->
+  <!-- 3. CONTROLADOR JS                          -->
+  <!-- ========================================== -->
+  <script>
+    // Inicializar íconos
+    lucide.createIcons();
+
+    // Lógica de Splash Screen -> Login
+    document.addEventListener("DOMContentLoaded", () => {
+      const splash = document.getElementById("splash-screen");
+      const login = document.getElementById("login-container");
+
+      // Simula el tiempo de carga de assets/autenticación previa (2.2 segundos)
+      setTimeout(() => {
+        splash.classList.add("fade-out");
+        
+        setTimeout(() => {
+          splash.style.display = "none";
+          login.classList.add("fade-in");
+        }, 600);
+      }, 2200);
+    });
+
+    // Alternar visibilidad de contraseña
+    function togglePasswordVisibility() {
+      const passwordInput = document.getElementById("password");
+      const eyeIcon = document.getElementById("eye-icon");
+
+      if (passwordInput.type === "password") {
+        passwordInput.type = "text";
+        eyeIcon.setAttribute("data-lucide", "eye-off");
+      } else {
+        passwordInput.type = "password";
+        eyeIcon.setAttribute("data-lucide", "eye");
+      }
+      lucide.createIcons();
+    }
+  </script>
+</body>
+</html>

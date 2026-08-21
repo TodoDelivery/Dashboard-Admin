@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Todo Delivery - Zonas & Tarifas de Envíos</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              black: '#0A0A0C',
+              dark: '#121217',
+              card: '#18181F',
+              accent: '#E63946',
+              accentHover: '#D62839',
+              gold: '#F4A261',
+              muted: '#71717A',
+              border: '#27272A'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #0A0A0C;
+      color: #F4F4F5;
+      -webkit-tap-highlight-color: transparent;
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #121217;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #27272A;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #3F3F46;
+    }
+  </style>
+</head>
+<body class="min-h-screen font-sans flex flex-col md:flex-row overflow-x-hidden selection:bg-brand-accent selection:text-white">
+
+  <!-- ========================================== -->
+  <!-- 1. SIDEBAR DE NAVEGACIÓN                   -->
+  <!-- ========================================== -->
+  <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-64 bg-brand-dark border-r border-brand-border flex flex-col justify-between transition-transform duration-300 -translate-x-full md:translate-x-0">
+    <div>
+      <div class="h-20 flex items-center px-6 border-b border-brand-border gap-3">
+        <div class="flex items-center justify-center w-10 h-10 bg-brand-accent/10 border border-brand-accent/20 rounded-xl">
+          <i data-lucide="zap" class="w-5 h-5 text-brand-accent fill-brand-accent"></i>
+        </div>
+        <div>
+          <h1 class="text-base font-bold tracking-tight text-white flex items-center gap-1">
+            TODO <span class="text-brand-accent font-semibold tracking-wider uppercase text-xs">Delivery</span>
+          </h1>
+          <p class="text-[10px] uppercase tracking-wider text-brand-muted">Admin Console</p>
+        </div>
+      </div>
+
+      <nav class="p-4 space-y-1.5">
+        <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-400 hover:text-white hover:bg-brand-card font-medium text-sm transition-all">
+          <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-400 hover:text-white hover:bg-brand-card font-medium text-sm transition-all">
+          <i data-lucide="package" class="w-5 h-5"></i>
+          <span>Monitor de Envíos</span>
+        </a>
+        <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-400 hover:text-white hover:bg-brand-card font-medium text-sm transition-all">
+          <i data-lucide="users" class="w-5 h-5"></i>
+          <span>Gestión de Cadetes</span>
+        </a>
+        <!-- Activo: Zonas y Tarifas -->
+        <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-brand-accent text-white font-medium text-sm shadow-lg shadow-brand-accent/20 transition-all">
+          <i data-lucide="map-pin" class="w-5 h-5"></i>
+          <span>Zonas y Tarifas</span>
+        </a>
+        <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-400 hover:text-white hover:bg-brand-card font-medium text-sm transition-all">
+          <i data-lucide="receipt" class="w-5 h-5"></i>
+          <span>Reportes y Caja</span>
+        </a>
+      </nav>
+    </div>
+
+    <div class="p-4 border-t border-brand-border">
+      <div class="flex items-center gap-3 p-3 rounded-xl bg-brand-card/50 border border-brand-border/60 mb-3">
+        <div class="w-10 h-10 rounded-full bg-zinc-800 border border-brand-border flex items-center justify-center font-bold text-white text-sm">
+          AD
+        </div>
+        <div class="overflow-hidden">
+          <h4 class="text-xs font-semibold text-white truncate">Ana Dueña</h4>
+          <p class="text-[11px] text-zinc-400 truncate">admin@tododelivery.com</p>
+        </div>
+      </div>
+      <button class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-brand-border hover:border-brand-accent/50 text-zinc-400 hover:text-white text-xs font-semibold transition-all">
+        <i data-lucide="log-out" class="w-4 h-4"></i>
+        <span>Cerrar Sesión</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ========================================== -->
+  <!-- 2. CONTENEDOR PRINCIPAL                   -->
+  <!-- ========================================== -->
+  <div class="flex-1 md:pl-64 flex flex-col min-h-screen">
+    
+    <!-- Top Header -->
+    <header class="h-20 bg-brand-dark/80 backdrop-blur-md border-b border-brand-border px-6 flex items-center justify-between sticky top-0 z-30">
+      <div class="flex items-center gap-4">
+        <button onclick="toggleSidebar()" class="md:hidden p-2 rounded-xl bg-brand-card border border-brand-border text-zinc-300 hover:text-white">
+          <i data-lucide="menu" class="w-5 h-5"></i>
+        </button>
+        <div>
+          <h2 class="text-lg font-bold text-white tracking-tight">Zonas de Cobertura & Configuración de Tarifas</h2>
+          <p class="text-xs text-brand-muted hidden sm:block">Parámetros de tarificación para la app de clientes y pagos automáticos</p>
+        </div>
+      </div>
+
+      <button onclick="openZoneModal()" class="flex items-center gap-2 bg-brand-accent hover:bg-brand-accentHover text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-lg shadow-brand-accent/20 transition-all active:scale-[0.98]">
+        <i data-lucide="plus-circle" class="w-4 h-4"></i>
+        <span>Nueva Zona</span>
+      </button>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-6 space-y-6 max-w-7xl w-full mx-auto">
+
+      <!-- Fórmulas y Reglas Generales de Costeo -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Tarifa Base Global -->
+        <div class="bg-brand-card border border-brand-border rounded-2xl p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-brand-muted">Bajada de Bandera (Base)</span>
+            <div class="p-2 bg-brand-accent/10 text-brand-accent rounded-xl">
+              <i data-lucide="flag" class="w-4 h-4"></i>
+            </div>
+          </div>
+          <div class="flex items-baseline gap-2">
+            <h3 id="display-base-price" class="text-2xl font-black text-white">$1.200</h3>
+            <span class="text-xs text-zinc-400">fijo por pedido</span>
+          </div>
+          <p class="text-[11px] text-zinc-500 leading-relaxed">Costo mínimo fijo aplicado a cualquier pedido en la PWA de clientes.</p>
+        </div>
+
+        <!-- Costo por Kilómetro -->
+        <div class="bg-brand-card border border-brand-border rounded-2xl p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-brand-muted">Precio por Kilómetro</span>
+            <div class="p-2 bg-emerald-500/10 text-emerald-400 rounded-xl">
+              <i data-lucide="route" class="w-4 h-4"></i>
+            </div>
+          </div>
+          <div class="flex items-baseline gap-2">
+            <h3 id="display-km-price" class="text-2xl font-black text-white">$350</h3>
+            <span class="text-xs text-emerald-400 font-medium">por Km recorrido</span>
+          </div>
+          <p class="text-[11px] text-zinc-500 leading-relaxed">Multiplicador por distancia lineal/ruteo desde el local al destino.</p>
+        </div>
+
+        <!-- Recargo Nocturno / Clima / Extra -->
+        <div class="bg-brand-card border border-brand-border rounded-2xl p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-brand-muted">Tarifa Dinámica (Nocturna)</span>
+            <div class="p-2 bg-brand-gold/10 text-brand-gold rounded-xl">
+              <i data-lucide="moon" class="w-4 h-4"></i>
+            </div>
+          </div>
+          <div class="flex items-baseline gap-2">
+            <h3 id="display-surge-price" class="text-2xl font-black text-brand-gold">+ 20%</h3>
+            <span class="text-xs text-zinc-400">23:00 a 06:00 hs</span>
+          </div>
+          <p class="text-[11px] text-zinc-500 leading-relaxed">Recargo nocturno aplicado automáticamente en horarios de alta demanda.</p>
+        </div>
+
+      </div>
+
+      <!-- Simulador Interactivo de Cotización & Mapa de Zonas -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Simulador en Vivo -->
+        <div class="bg-brand-card border border-brand-border rounded-2xl p-6 flex flex-col justify-between">
+          <div class="space-y-4">
+            <div class="flex items-center gap-2 pb-3 border-b border-brand-border">
+              <i data-lucide="calculator" class="w-5 h-5 text-brand-accent"></i>
+              <h3 class="text-base font-bold text-white">Calculadora de Prueba</h3>
+            </div>
+            <p class="text-xs text-brand-muted">Simula cómo cotizará la aplicación de clientes según los kilómetros y la zona elegida.</p>
+
+            <div class="space-y-3">
+              <div>
+                <label class="block text-[11px] font-semibold uppercase text-zinc-400 mb-1">Distancia estimada (Km)</label>
+                <input 
+                  type="number" 
+                  id="calc-km" 
+                  value="4.5" 
+                  step="0.1" 
+                  min="0.5" 
+                  oninput="calculatePreview()" 
+                  class="w-full bg-brand-dark border border-brand-border text-white text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-brand-accent transition-all font-mono"
+                />
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-semibold uppercase text-zinc-400 mb-1">Zona de Destino</label>
+                <select id="calc-zone" onchange="calculatePreview()" class="w-full bg-brand-dark border border-brand-border text-zinc-300 text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-brand-accent transition-all">
+                  <!-- Se llena dinámicamente -->
+                </select>
+              </div>
+
+              <div class="pt-2">
+                <label class="flex items-center gap-2 cursor-pointer select-none">
+                  <input type="checkbox" id="calc-night" onchange="calculatePreview()" class="w-4 h-4 rounded border-brand-border bg-brand-dark text-brand-accent focus:ring-0 focus:ring-offset-0 cursor-pointer accent-brand-accent">
+                  <span class="text-xs text-zinc-400">Aplicar recargo nocturno (+20%)</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Resultado Preview -->
+          <div class="mt-6 p-4 rounded-2xl bg-brand-dark/90 border border-brand-border space-y-2">
+            <div class="flex justify-between text-xs text-zinc-400">
+              <span>Cálculo Base + Distancia:</span>
+              <span id="preview-subtotal" class="font-mono text-zinc-200">$0</span>
+            </div>
+            <div class="flex justify-between text-xs text-zinc-400">
+              <span>Recargo Zona / Plus:</span>
+              <span id="preview-zone-extra" class="font-mono text-zinc-200">$0</span>
+            </div>
+            <div class="pt-2 border-t border-brand-border/80 flex justify-between items-center text-sm font-bold">
+              <span class="text-white">Total para el Cliente:</span>
+              <span id="preview-total" class="text-emerald-400 font-mono text-lg font-black">$0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabla de Zonas Activas de Cobertura -->
+        <div class="lg:col-span-2 bg-brand-card border border-brand-border rounded-2xl overflow-hidden flex flex-col justify-between">
+          <div>
+            <div class="p-5 border-b border-brand-border flex items-center justify-between">
+              <div>
+                <h3 class="text-base font-bold text-white">Zonas Tarifarias Habilitadas</h3>
+                <p class="text-xs text-brand-muted">Polígonos y radios donde Todo Delivery ofrece servicio</p>
+              </div>
+              <span id="zones-count-badge" class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                4 Zonas Activas
+              </span>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="border-b border-brand-border bg-brand-dark/50 text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
+                    <th class="py-3.5 px-4">Zona / Radio</th>
+                    <th class="py-3.5 px-4">Recargo Adicional</th>
+                    <th class="py-3.5 px-4">Tiempo Estimado</th>
+                    <th class="py-3.5 px-4">Estado</th>
+                    <th class="py-3.5 px-4 text-right">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="zones-table-body" class="divide-y divide-brand-border/60 text-sm">
+                  <!-- Render dinámico -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="p-4 border-t border-brand-border bg-brand-dark/30 flex items-center justify-between text-xs text-zinc-400">
+            <span>Las modificaciones de tarifas impactan inmediatamente en la app del cliente.</span>
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- ========================================== -->
+  <!-- 3. MODAL: CREAR / EDITAR ZONA             -->
+  <!-- ========================================== -->
+  <div id="zone-modal-backdrop" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+    <div id="zone-modal-container" class="w-full max-w-md bg-brand-card border border-brand-border rounded-3xl p-6 sm:p-7 shadow-2xl scale-95 transition-transform duration-300 space-y-5">
+      
+      <div class="flex items-center justify-between border-b border-brand-border pb-4">
+        <div class="flex items-center gap-3">
+          <div class="p-2.5 rounded-xl bg-brand-accent/10 text-brand-accent border border-brand-accent/20">
+            <i data-lucide="map-pin-plus" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">Agregar Zona Tarifaria</h3>
+            <p class="text-xs text-brand-muted">Define el nombre, radio y recargo para este sector</p>
+          </div>
+        </div>
+        <button onclick="closeZoneModal()" class="text-zinc-500 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form class="space-y-4" onsubmit="handleCreateZone(event)">
+        <div class="space-y-1">
+          <label class="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Nombre de la Zona</label>
+          <input type="text" id="modal-zone-name" required placeholder="Ej: Zona Norte / Barrios Privados" class="w-full bg-brand-dark border border-brand-border text-white text-xs rounded-xl px-3.5 py-3 focus:outline-none focus:border-brand-accent transition-all" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div class="space-y-1">
+            <label class="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Radio de Cobertura</label>
+            <input type="text" id="modal-zone-radius" required placeholder="Ej: Hasta 8 Km" class="w-full bg-brand-dark border border-brand-border text-white text-xs rounded-xl px-3.5 py-3 focus:outline-none focus:border-brand-accent transition-all" />
+          </div>
+          <div class="space-y-1">
+            <label class="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Plus / Recargo ($)</label>
+            <input type="number" id="modal-zone-extra" required value="0" placeholder="0" class="w-full bg-brand-dark border border-brand-border text-white text-xs rounded-xl px-3.5 py-3 focus:outline-none focus:border-brand-accent transition-all font-mono" />
+          </div>
+        </div>
+
+        <div class="space-y-1">
+          <label class="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Tiempo Promedio Estimado</label>
+          <input type="text" id="modal-zone-time" required placeholder="Ej: 25 - 35 min" class="w-full bg-brand-dark border border-brand-border text-white text-xs rounded-xl px-3.5 py-3 focus:outline-none focus:border-brand-accent transition-all" />
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-4 border-t border-brand-border">
+          <button type="button" onclick="closeZoneModal()" class="px-4 py-2.5 rounded-xl border border-brand-border text-xs text-zinc-400 hover:text-white transition-all">Cancelar</button>
+          <button type="submit" class="px-5 py-2.5 rounded-xl bg-brand-accent hover:bg-brand-accentHover text-white text-xs font-bold shadow-lg shadow-brand-accent/20 transition-all">Guardar Zona</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- 4. LÓGICA JAVASCRIPT                       -->
+  <!-- ========================================== -->
+  <script>
+    // Variables globales de tarifas
+    const BASE_FEE = 1200;
+    const PRICE_PER_KM = 350;
+
+    let zones = [
+      { id: 1, name: "Microcentro & Alrededores", radius: "Hasta 3 Km", extra: 0, time: "15 - 25 min", active: true },
+      { id: 2, name: "Zona Urbana Intermedia", radius: "Hasta 6 Km", extra: 400, time: "25 - 35 min", active: true },
+      { id: 3, name: "Periferia / Zona Sur", radius: "Hasta 10 Km", extra: 950, time: "35 - 45 min", active: true },
+      { id: 4, name: "Barrios Privados & Country Club", radius: "Hasta 15 Km", extra: 1600, time: "45 - 60 min", active: true }
+    ];
+
+    document.addEventListener("DOMContentLoaded", () => {
+      renderZonesTable();
+      populateZoneSelect();
+      calculatePreview();
+      lucide.createIcons();
+    });
+
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('-translate-x-full');
+    }
+
+    function renderZonesTable() {
+      const tbody = document.getElementById("zones-table-body");
+      tbody.innerHTML = "";
+
+      zones.forEach(z => {
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-brand-dark/40 transition-colors";
+
+        tr.innerHTML = `
+          <td class="py-4 px-4">
+            <div class="flex items-center gap-3">
+              <div class="p-2 rounded-xl bg-zinc-800 border border-brand-border text-brand-accent">
+                <i data-lucide="map-pin" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <span class="block font-semibold text-white">${z.name}</span>
+                <span class="text-[11px] text-zinc-500 font-mono">${z.radius}</span>
+              </div>
+            </div>
+          </td>
+          <td class="py-4 px-4 font-mono font-semibold ${z.extra > 0 ? 'text-brand-gold' : 'text-zinc-400'}">
+            ${z.extra > 0 ? '+ $' + z.extra.toLocaleString() : 'Sin recargo'}
+          </td>
+          <td class="py-4 px-4 text-xs text-zinc-300 font-medium">${z.time}</td>
+          <td class="py-4 px-4">
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${z.active ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-zinc-800 text-zinc-500'}">
+              <span class="w-1.5 h-1.5 rounded-full ${z.active ? 'bg-emerald-400' : 'bg-zinc-500'}"></span> ${z.active ? 'Habilitada' : 'Inactiva'}
+            </span>
+          </td>
+          <td class="py-4 px-4 text-right">
+            <div class="flex items-center justify-end gap-2">
+              <button onclick="toggleZoneStatus(${z.id})" title="${z.active ? 'Desactivar Zona' : 'Activar Zona'}" class="p-2 rounded-xl border border-brand-border text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all">
+                <i data-lucide="${z.active ? 'eye-off' : 'eye'}" class="w-4 h-4"></i>
+              </button>
+              <button onclick="deleteZone(${z.id})" title="Eliminar Zona" class="p-2 rounded-xl border border-brand-border text-red-400 hover:bg-red-500/10 transition-all">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById("zones-count-badge").innerText = `${zones.filter(z => z.active).length} Zonas Activas`;
+      lucide.createIcons();
+    }
+
+    function populateZoneSelect() {
+      const select = document.getElementById("calc-zone");
+      select.innerHTML = "";
+      zones.forEach(z => {
+        const opt = document.createElement("option");
+        opt.value = z.extra;
+        opt.innerText = `${z.name} (${z.extra > 0 ? '+$' + z.extra : 'Sin plus'})`;
+        select.appendChild(opt);
+      });
+    }
+
+    function calculatePreview() {
+      const km = parseFloat(document.getElementById("calc-km").value) || 0;
+      const zoneExtra = parseFloat(document.getElementById("calc-zone").value) || 0;
+      const isNight = document.getElementById("calc-night").checked;
+
+      const subtotal = BASE_FEE + (km * PRICE_PER_KM);
+      let total = subtotal + zoneExtra;
+
+      if (isNight) {
+        total = total * 1.20; // +20%
+      }
+
+      document.getElementById("preview-subtotal").innerText = `$${Math.round(subtotal).toLocaleString()}`;
+      document.getElementById("preview-zone-extra").innerText = `+$${zoneExtra.toLocaleString()}`;
+      document.getElementById("preview-total").innerText = `$${Math.round(total).toLocaleString()}`;
+    }
+
+    function toggleZoneStatus(id) {
+      zones = zones.map(z => z.id === id ? { ...z, active: !z.active } : z);
+      renderZonesTable();
+      populateZoneSelect();
+      calculatePreview();
+    }
+
+    function deleteZone(id) {
+      if (confirm("¿Estás seguro de eliminar esta zona de cobertura?")) {
+        zones = zones.filter(z => z.id !== id);
+        renderZonesTable();
+        populateZoneSelect();
+        calculatePreview();
+      }
+    }
+
+    // Modal Crear Zona
+    function openZoneModal() {
+      const m = document.getElementById('zone-modal-backdrop');
+      const c = document.getElementById('zone-modal-container');
+      m.classList.remove('hidden');
+      setTimeout(() => {
+        m.classList.add('opacity-100');
+        c.classList.remove('scale-95');
+      }, 10);
+    }
+
+    function closeZoneModal() {
+      const m = document.getElementById('zone-modal-backdrop');
+      const c = document.getElementById('zone-modal-container');
+      m.classList.remove('opacity-100');
+      c.classList.add('scale-95');
+      setTimeout(() => m.classList.add('hidden'), 300);
+    }
+
+    function handleCreateZone(e) {
+      e.preventDefault();
+      const name = document.getElementById("modal-zone-name").value;
+      const radius = document.getElementById("modal-zone-radius").value;
+      const extra = parseFloat(document.getElementById("modal-zone-extra").value) || 0;
+      const time = document.getElementById("modal-zone-time").value;
+
+      zones.push({
+        id: Date.now(),
+        name,
+        radius,
+        extra,
+        time,
+        active: true
+      });
+
+      closeZoneModal();
+      renderZonesTable();
+      populateZoneSelect();
+      calculatePreview();
+    }
+  </script>
+</body>
+</html>

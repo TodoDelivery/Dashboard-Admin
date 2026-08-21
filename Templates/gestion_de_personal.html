@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Todo Delivery - Gestión de Cadetes & Credenciales</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              black: '#0A0A0C',
+              dark: '#121217',
+              card: '#18181F',
+              accent: '#E63946',
+              accentHover: '#D62839',
+              gold: '#F4A261',
+              muted: '#71717A',
+              border: '#27272A'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #0A0A0C;
+      color: #F4F4F5;
+      -webkit-tap-highlight-color: transparent;
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #121217;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #27272A;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #3F3F46;
+    }
+  </style>
+</head>
+<body class="min-h-screen font-sans flex flex-col md:flex-row overflow-x-hidden selection:bg-brand-accent selection:text-white">
+
+  <!-- ========================================== -->
+  <!-- 1. SIDEBAR DE NAVEGACIÓN                   -->
+  <!-- ========================================== -->
+  <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-64 bg-brand-dark border-r border-brand-border flex flex-col justify-between transition-transform duration-300 -translate-x-full md:translate-x-0">
+    <div>
+      <div class="h-20 flex items-center px-6 border-b border-brand-border gap-3">
+        <div class="flex items-center justify-center w-10 h-10 bg-brand-accent/10 border border-brand-accent/20 rounded-xl">
+          <i data-lucide="zap" class="w-5 h-5 text-brand-accent fill-brand-accent"></i>
+        </div>
+        <div>
+          <h1 class="text-base font-bold tracking-tight text-white flex items-center gap-1">
+            TODO <span class="text-brand-accent font-semibold tracking-wider uppercase text-xs">Delivery</span>
+          </h1>
+          <p class="text-[10px] uppercase tracking-wider text-brand-muted">Admin Console</p>
+        </div>
+      </div>
+
+      <nav class="p-4 space-y-1.5">
+        <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-400 hover:text-white hover:bg-brand-card font-medium text-sm transition-all">
+          <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-400 hover:text-white hover:bg-brand-card font-medium text-sm transition-all">
+          <i data-lucide="package" class="w-5 h-5"></i>
+          <span>Monitor de Envíos</span>
+        </a>
+        <!-- Activo -->
+        <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-brand-accent text-white font-medium text-sm shadow-lg shadow-brand-accent/20 transition-all">
+          <i data-lucide="users" class="w-5 h-5"></i>
+          <span>Gestión de Cadetes</span>
+          <span id="cadetes-badge" class="ml-auto bg-white/20 text-white text-xs px-2 py-0.5 rounded-full font-semibold">4</span>
+        </a>
+        <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-400 hover:text-white hover:bg-brand-card font-medium text-sm transition-all">
+          <i data-lucide="map-pin" class="w-5 h-5"></i>
+          <span>Zonas y Tarifas</span>
+        </a>
+        <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-400 hover:text-white hover:bg-brand-card font-medium text-sm transition-all">
+          <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+          <span>Reportes y Caja</span>
+        </a>
+      </nav>
+    </div>
+
+    <div class="p-4 border-t border-brand-border">
+      <div class="flex items-center gap-3 p-3 rounded-xl bg-brand-card/50 border border-brand-border/60 mb-3">
+        <div class="w-10 h-10 rounded-full bg-zinc-800 border border-brand-border flex items-center justify-center font-bold text-white text-sm">
+          AD
+        </div>
+        <div class="overflow-hidden">
+          <h4 class="text-xs font-semibold text-white truncate">Ana Dueña</h4>
+          <p class="text-[11px] text-zinc-400 truncate">admin@tododelivery.com</p>
+        </div>
+      </div>
+      <button class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-brand-border hover:border-brand-accent/50 text-zinc-400 hover:text-white text-xs font-semibold transition-all">
+        <i data-lucide="log-out" class="w-4 h-4"></i>
+        <span>Cerrar Sesión</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ========================================== -->
+  <!-- 2. CONTENEDOR PRINCIPAL                   -->
+  <!-- ========================================== -->
+  <div class="flex-1 md:pl-64 flex flex-col min-h-screen">
+    
+    <!-- Top Header -->
+    <header class="h-20 bg-brand-dark/80 backdrop-blur-md border-b border-brand-border px-6 flex items-center justify-between sticky top-0 z-30">
+      <div class="flex items-center gap-4">
+        <button onclick="toggleSidebar()" class="md:hidden p-2 rounded-xl bg-brand-card border border-brand-border text-zinc-300 hover:text-white">
+          <i data-lucide="menu" class="w-5 h-5"></i>
+        </button>
+        <div>
+          <h2 class="text-lg font-bold text-white tracking-tight">Flota de Cadetes</h2>
+          <p class="text-xs text-brand-muted hidden sm:block">Control de credenciales, accesos a la PWA y permisos de reparto</p>
+        </div>
+      </div>
+
+      <!-- Botón Nueva Credencial -->
+      <button onclick="openModal()" class="flex items-center gap-2 bg-brand-accent hover:bg-brand-accentHover text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-lg shadow-brand-accent/20 transition-all active:scale-[0.98]">
+        <i data-lucide="user-plus" class="w-4 h-4"></i>
+        <span>Generar Credencial</span>
+      </button>
+    </header>
+
+    <!-- Main Body -->
+    <main class="flex-1 p-6 space-y-6 max-w-7xl w-full mx-auto">
+
+      <!-- Métricas Rápidas de Flota -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="bg-brand-card border border-brand-border p-4 rounded-2xl flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold uppercase text-brand-muted">Total Registrados</p>
+            <h3 id="stat-total" class="text-2xl font-extrabold text-white mt-1">4</h3>
+          </div>
+          <div class="p-3 bg-zinc-800 rounded-xl text-zinc-300">
+            <i data-lucide="users" class="w-5 h-5"></i>
+          </div>
+        </div>
+        <div class="bg-brand-card border border-brand-border p-4 rounded-2xl flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold uppercase text-brand-muted">Habilitados / Activos</p>
+            <h3 id="stat-active" class="text-2xl font-extrabold text-emerald-400 mt-1">3</h3>
+          </div>
+          <div class="p-3 bg-emerald-500/10 rounded-xl text-emerald-400">
+            <i data-lucide="shield-check" class="w-5 h-5"></i>
+          </div>
+        </div>
+        <div class="bg-brand-card border border-brand-border p-4 rounded-2xl flex items-center justify-between">
+          <div>
+            <p class="text-xs font-semibold uppercase text-brand-muted">Accesos Revocados</p>
+            <h3 id="stat-revoked" class="text-2xl font-extrabold text-red-400 mt-1">1</h3>
+          </div>
+          <div class="p-3 bg-red-500/10 rounded-xl text-red-400">
+            <i data-lucide="shield-alert" class="w-5 h-5"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Barra de Búsqueda y Filtros -->
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-brand-card border border-brand-border p-4 rounded-2xl">
+        <div class="relative w-full sm:w-80">
+          <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500">
+            <i data-lucide="search" class="w-4 h-4"></i>
+          </span>
+          <input 
+            type="text" 
+            id="search-input"
+            onkeyup="filterCadetes()"
+            placeholder="Buscar por nombre, DNI o usuario..." 
+            class="w-full bg-brand-dark border border-brand-border text-white text-xs rounded-xl pl-10 pr-4 py-2.5 placeholder-zinc-500 focus:outline-none focus:border-brand-accent transition-all"
+          />
+        </div>
+        <div class="flex items-center gap-2 w-full sm:w-auto">
+          <select id="vehicle-filter" onchange="filterCadetes()" class="bg-brand-dark border border-brand-border text-zinc-300 text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:border-brand-accent">
+            <option value="all">Todos los vehículos</option>
+            <option value="Moto">Moto</option>
+            <option value="Bicicleta">Bicicleta</option>
+            <option value="Auto">Auto</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Tabla de Cadetes y Control de Credenciales -->
+      <div class="bg-brand-card border border-brand-border rounded-2xl overflow-hidden shadow-xl">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-brand-border bg-brand-dark/50 text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
+                <th class="py-3.5 px-4">Cadete</th>
+                <th class="py-3.5 px-4">Credenciales / Usuario</th>
+                <th class="py-3.5 px-4">Vehículo & Patente</th>
+                <th class="py-3.5 px-4">Estado de Acceso</th>
+                <th class="py-3.5 px-4 text-right">Acciones de Control</th>
+              </tr>
+            </thead>
+            <tbody id="cadetes-table-body" class="divide-y divide-brand-border/60 text-sm">
+              <!-- Renderizado dinámico vía JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- ========================================== -->
+  <!-- 3. MODAL: CREAR CREDENCIAL DE CADETE       -->
+  <!-- ========================================== -->
+  <div id="modal-backdrop" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+    <div id="modal-container" class="w-full max-w-lg bg-brand-card border border-brand-border rounded-3xl p-6 sm:p-8 shadow-2xl scale-95 transition-transform duration-300 space-y-6">
+      
+      <!-- Header Modal -->
+      <div class="flex items-center justify-between border-b border-brand-border pb-4">
+        <div class="flex items-center gap-3">
+          <div class="p-2.5 rounded-xl bg-brand-accent/10 text-brand-accent border border-brand-accent/20">
+            <i data-lucide="key-round" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">Generar Acceso para Cadete</h3>
+            <p class="text-xs text-brand-muted">Crea las credenciales maestras para que ingrese a la PWA</p>
+          </div>
+        </div>
+        <button onclick="closeModal()" class="text-zinc-500 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Formulario de Alta -->
+      <form id="cadete-form" class="space-y-4" onsubmit="handleCreateCadete(event)">
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="space-y-1">
+            <label class="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Nombre Completo</label>
+            <input type="text" id="input-name" required placeholder="Ej: Marcos Silva" class="w-full bg-brand-dark border border-brand-border text-white text-xs rounded-xl px-3.5 py-3 focus:outline-none focus:border-brand-accent transition-all" />
+          </div>
+          <div class="space-y-1">
+            <label class="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">DNI / Documento</label>
+            <input type="text" id="input-dni" required placeholder="Ej: 39821455" class="w-full bg-brand-dark border border-brand-border text-white text-xs rounded-xl px-3.5 py-3 focus:outline-none focus:border-brand-accent transition-all" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="space-y-1">
+            <label class="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Tipo de Vehículo</label>
+            <select id="input-vehicle" class="w-full bg-brand-dark border border-brand-border text-white text-xs rounded-xl px-3.5 py-3 focus:outline-none focus:border-brand-accent transition-all">
+              <option value="Moto">Moto</option>
+              <option value="Bicicleta">Bicicleta</option>
+              <option value="Auto">Auto</option>
+            </select>
+          </div>
+          <div class="space-y-1">
+            <label class="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Patente / Matrícula</label>
+            <input type="text" id="input-plate" placeholder="Ej: A123BCD (Opcional)" class="w-full bg-brand-dark border border-brand-border text-white text-xs rounded-xl px-3.5 py-3 focus:outline-none focus:border-brand-accent transition-all" />
+          </div>
+        </div>
+
+        <!-- Credenciales de Ingreso a la PWA -->
+        <div class="p-4 bg-brand-dark/70 border border-brand-border/80 rounded-2xl space-y-3">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-brand-gold flex items-center gap-1.5">
+            <i data-lucide="lock" class="w-3.5 h-3.5"></i> Credenciales de la PWA de Cadetes
+          </span>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="space-y-1">
+              <label class="text-[10px] text-zinc-400 font-medium">Usuario / Teléfono</label>
+              <input type="text" id="input-username" required placeholder="Ej: cadete.marcos" class="w-full bg-brand-card border border-brand-border text-white text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-brand-accent" />
+            </div>
+            <div class="space-y-1">
+              <label class="text-[10px] text-zinc-400 font-medium">Contraseña Provisoria</label>
+              <input type="text" id="input-password" required value="Todo2026!" class="w-full bg-brand-card border border-brand-border text-brand-gold font-mono text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-brand-accent" />
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-4 border-t border-brand-border">
+          <button type="button" onclick="closeModal()" class="px-4 py-2.5 rounded-xl border border-brand-border text-xs text-zinc-400 hover:text-white transition-all">Cancelar</button>
+          <button type="submit" class="px-5 py-2.5 rounded-xl bg-brand-accent hover:bg-brand-accentHover text-white text-xs font-bold shadow-lg shadow-brand-accent/20 transition-all">Emitir Credenciales</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- 4. MODAL / TOAST DE CREDENCIAL GENERADA   -->
+  <!-- ========================================== -->
+  <div id="credential-modal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+    <div class="w-full max-w-sm bg-brand-card border border-brand-border rounded-3xl p-6 shadow-2xl text-center space-y-4">
+      <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mx-auto flex items-center justify-center">
+        <i data-lucide="check-check" class="w-6 h-6"></i>
+      </div>
+      <div>
+        <h3 class="text-base font-bold text-white">¡Credenciales Creadas!</h3>
+        <p class="text-xs text-brand-muted mt-1">Comparte estos datos con el repartidor para que inicie sesión en su aplicación.</p>
+      </div>
+
+      <div class="bg-brand-dark p-4 rounded-xl text-left border border-brand-border font-mono text-xs space-y-2">
+        <div>
+          <span class="text-zinc-500 block text-[10px]">USUARIO:</span>
+          <span id="copy-user" class="text-white font-semibold"></span>
+        </div>
+        <div>
+          <span class="text-zinc-500 block text-[10px]">PASSWORD TEMPORAL:</span>
+          <span id="copy-pass" class="text-brand-gold font-semibold"></span>
+        </div>
+      </div>
+
+      <button onclick="closeCredentialModal()" class="w-full py-2.5 rounded-xl bg-brand-accent hover:bg-brand-accentHover text-white text-xs font-bold transition-all">
+        Entendido y Copiado
+      </button>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- 5. LÓGICA JAVASCRIPT                       -->
+  <!-- ========================================== -->
+  <script>
+    // Estado inicial simulado de cadetes
+    let cadetes = [
+      { id: 1, name: "Carlos Ramírez", dni: "38.120.450", user: "carlos.r", vehicle: "Moto", plate: "A091KLS", active: true, online: true },
+      { id: 2, name: "Esteban Morales", dni: "41.980.112", user: "esteban.m", vehicle: "Bicicleta", plate: "-", active: true, online: true },
+      { id: 3, name: "Julián López", dni: "35.204.991", user: "julian.l", vehicle: "Moto", plate: "A112OPQ", active: true, online: false },
+      { id: 4, name: "Matías Vega", dni: "33.890.312", user: "matias.v", vehicle: "Auto", plate: "AF432ZX", active: false, online: false } // Acceso revocado
+    ];
+
+    document.addEventListener("DOMContentLoaded", () => {
+      renderTable();
+      lucide.createIcons();
+    });
+
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('-translate-x-full');
+    }
+
+    // Renderizado de tabla y KPIs
+    function renderTable(data = cadetes) {
+      const tbody = document.getElementById("cadetes-table-body");
+      tbody.innerHTML = "";
+
+      data.forEach(c => {
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-brand-dark/40 transition-colors";
+        
+        tr.innerHTML = `
+          <td class="py-4 px-4">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-full bg-zinc-800 border border-brand-border flex items-center justify-center font-bold text-xs text-white">
+                ${c.name.split(' ').map(n=>n[0]).join('')}
+              </div>
+              <div>
+                <span class="block font-semibold text-white">${c.name}</span>
+                <span class="text-[11px] text-zinc-500">DNI: ${c.dni}</span>
+              </div>
+            </div>
+          </td>
+          <td class="py-4 px-4">
+            <span class="text-xs font-mono text-zinc-300 block">@${c.user}</span>
+            <span class="text-[10px] text-zinc-500">PWA Login</span>
+          </td>
+          <td class="py-4 px-4">
+            <div class="flex items-center gap-1.5">
+              <i data-lucide="${c.vehicle === 'Moto' ? 'bike' : c.vehicle === 'Bicicleta' ? 'footprints' : 'car'}" class="w-4 h-4 text-zinc-400"></i>
+              <span class="text-xs text-zinc-300 font-medium">${c.vehicle}</span>
+            </div>
+            <span class="text-[10px] text-zinc-500 font-mono">${c.plate !== '-' ? 'Patente: ' + c.plate : 'Sin patente'}</span>
+          </td>
+          <td class="py-4 px-4">
+            ${c.active 
+              ? `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                   <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Habilitado
+                 </span>`
+              : `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/20">
+                   <span class="w-1.5 h-1.5 rounded-full bg-red-400"></span> Revocado
+                 </span>`
+            }
+          </td>
+          <td class="py-4 px-4 text-right">
+            <div class="flex items-center justify-end gap-2">
+              <button onclick="toggleAccess(${c.id})" title="${c.active ? 'Revocar Acceso' : 'Habilitar Acceso'}" class="p-2 rounded-xl border ${c.active ? 'border-red-500/30 text-red-400 hover:bg-red-500/10' : 'border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10'} transition-all">
+                <i data-lucide="${c.active ? 'shield-off' : 'shield-check'}" class="w-4 h-4"></i>
+              </button>
+              <button onclick="resetPassword('${c.user}')" title="Resetear Clave" class="p-2 rounded-xl border border-brand-border text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all">
+                <i data-lucide="key" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Actualizar KPIs
+      document.getElementById("stat-total").innerText = cadetes.length;
+      document.getElementById("stat-active").innerText = cadetes.filter(c => c.active).length;
+      document.getElementById("stat-revoked").innerText = cadetes.filter(c => !c.active).length;
+      document.getElementById("cadetes-badge").innerText = cadetes.length;
+
+      lucide.createIcons();
+    }
+
+    // Alternar permiso (Revocar / Habilitar)
+    function toggleAccess(id) {
+      cadetes = cadetes.map(c => {
+        if (c.id === id) {
+          return { ...c, active: !c.active };
+        }
+        return c;
+      });
+      filterCadetes();
+    }
+
+    // Filtrar en tiempo real
+    function filterCadetes() {
+      const search = document.getElementById("search-input").value.toLowerCase();
+      const vehicle = document.getElementById("vehicle-filter").value;
+
+      const filtered = cadetes.filter(c => {
+        const matchesSearch = c.name.toLowerCase().includes(search) || c.dni.includes(search) || c.user.toLowerCase().includes(search);
+        const matchesVehicle = vehicle === 'all' || c.vehicle === vehicle;
+        return matchesSearch && matchesVehicle;
+      });
+
+      renderTable(filtered);
+    }
+
+    // Modal Crear Cadete
+    function openModal() {
+      const m = document.getElementById('modal-backdrop');
+      const c = document.getElementById('modal-container');
+      m.classList.remove('hidden');
+      setTimeout(() => {
+        m.classList.add('opacity-100');
+        c.classList.remove('scale-95');
+      }, 10);
+    }
+
+    function closeModal() {
+      const m = document.getElementById('modal-backdrop');
+      const c = document.getElementById('modal-container');
+      m.classList.remove('opacity-100');
+      c.classList.add('scale-95');
+      setTimeout(() => m.classList.add('hidden'), 300);
+      document.getElementById('cadete-form').reset();
+    }
+
+    function handleCreateCadete(e) {
+      e.preventDefault();
+      const name = document.getElementById('input-name').value;
+      const dni = document.getElementById('input-dni').value;
+      const vehicle = document.getElementById('input-vehicle').value;
+      const plate = document.getElementById('input-plate').value || '-';
+      const user = document.getElementById('input-username').value;
+      const pass = document.getElementById('input-password').value;
+
+      const newCadete = {
+        id: Date.now(),
+        name,
+        dni,
+        user,
+        vehicle,
+        plate,
+        active: true,
+        online: false
+      };
+
+      cadetes.unshift(newCadete);
+      closeModal();
+      renderTable();
+
+      // Mostrar modal con los datos generados
+      document.getElementById('copy-user').innerText = user;
+      document.getElementById('copy-pass').innerText = pass;
+      openCredentialModal();
+    }
+
+    function openCredentialModal() {
+      const m = document.getElementById('credential-modal');
+      m.classList.remove('hidden');
+      setTimeout(() => m.classList.add('opacity-100'), 10);
+    }
+
+    function closeCredentialModal() {
+      const m = document.getElementById('credential-modal');
+      m.classList.remove('opacity-100');
+      setTimeout(() => m.classList.add('hidden'), 300);
+    }
+
+    function resetPassword(user) {
+      document.getElementById('copy-user').innerText = user;
+      document.getElementById('copy-pass').innerText = "TodoReset" + Math.floor(100 + Math.random() * 900) + "!";
+      openCredentialModal();
+    }
+  </script>
+</body>
+</html>

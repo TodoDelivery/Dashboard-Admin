@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Todo Delivery - Liquidación, Caja y Comisiones</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              black: '#0A0A0C',
+              dark: '#121217',
+              card: '#18181F',
+              accent: '#E63946',
+              accentHover: '#D62839',
+              gold: '#F4A261',
+              muted: '#71717A',
+              border: '#27272A'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #0A0A0C;
+      color: #F4F4F5;
+      -webkit-tap-highlight-color: transparent;
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #121217;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #27272A;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #3F3F46;
+    }
+  </style>
+</head>
+<body class="min-h-screen font-sans flex flex-col md:flex-row overflow-x-hidden selection:bg-brand-accent selection:text-white">
+
+  <!-- ========================================== -->
+  <!-- 1. SIDEBAR DE NAVEGACIÓN                   -->
+  <!-- ========================================== -->
+  <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-64 bg-brand-dark border-r border-brand-border flex flex-col justify-between transition-transform duration-300 -translate-x-full md:translate-x-0">
+    <div>
+      <div class="h-20 flex items-center px-6 border-b border-brand-border gap-3">
+        <div class="flex items-center justify-center w-10 h-10 bg-brand-accent/10 border border-brand-accent/20 rounded-xl">
+          <i data-lucide="zap" class="w-5 h-5 text-brand-accent fill-brand-accent"></i>
+        </div>
+        <div>
+          <h1 class="text-base font-bold tracking-tight text-white flex items-center gap-1">
+            TODO <span class="text-brand-accent font-semibold tracking-wider uppercase text-xs">Delivery</span>
+          </h1>
+          <p class="text-[10px] uppercase tracking-wider text-brand-muted">Admin Console</p>
+        </div>
+      </div>
+
+      <nav class="p-4 space-y-1.5">
+        <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-400 hover:text-white hover:bg-brand-card font-medium text-sm transition-all">
+          <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-400 hover:text-white hover:bg-brand-card font-medium text-sm transition-all">
+          <i data-lucide="package" class="w-5 h-5"></i>
+          <span>Monitor de Envíos</span>
+        </a>
+        <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-400 hover:text-white hover:bg-brand-card font-medium text-sm transition-all">
+          <i data-lucide="users" class="w-5 h-5"></i>
+          <span>Gestión de Cadetes</span>
+        </a>
+        <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-400 hover:text-white hover:bg-brand-card font-medium text-sm transition-all">
+          <i data-lucide="map-pin" class="w-5 h-5"></i>
+          <span>Zonas y Tarifas</span>
+        </a>
+        <!-- Activo: Reportes y Caja -->
+        <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-brand-accent text-white font-medium text-sm shadow-lg shadow-brand-accent/20 transition-all">
+          <i data-lucide="receipt" class="w-5 h-5"></i>
+          <span>Reportes y Caja</span>
+        </a>
+      </nav>
+    </div>
+
+    <div class="p-4 border-t border-brand-border">
+      <div class="flex items-center gap-3 p-3 rounded-xl bg-brand-card/50 border border-brand-border/60 mb-3">
+        <div class="w-10 h-10 rounded-full bg-zinc-800 border border-brand-border flex items-center justify-center font-bold text-white text-sm">
+          AD
+        </div>
+        <div class="overflow-hidden">
+          <h4 class="text-xs font-semibold text-white truncate">Ana Dueña</h4>
+          <p class="text-[11px] text-zinc-400 truncate">admin@tododelivery.com</p>
+        </div>
+      </div>
+      <button class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-brand-border hover:border-brand-accent/50 text-zinc-400 hover:text-white text-xs font-semibold transition-all">
+        <i data-lucide="log-out" class="w-4 h-4"></i>
+        <span>Cerrar Sesión</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ========================================== -->
+  <!-- 2. CONTENEDOR PRINCIPAL                   -->
+  <!-- ========================================== -->
+  <div class="flex-1 md:pl-64 flex flex-col min-h-screen">
+    
+    <!-- Top Header -->
+    <header class="h-20 bg-brand-dark/80 backdrop-blur-md border-b border-brand-border px-6 flex items-center justify-between sticky top-0 z-30">
+      <div class="flex items-center gap-4">
+        <button onclick="toggleSidebar()" class="md:hidden p-2 rounded-xl bg-brand-card border border-brand-border text-zinc-300 hover:text-white">
+          <i data-lucide="menu" class="w-5 h-5"></i>
+        </button>
+        <div>
+          <h2 class="text-lg font-bold text-white tracking-tight">Liquidación de Comisiones & Rendición de Caja</h2>
+          <p class="text-xs text-brand-muted hidden sm:block">Balance de cobros en mano, retención de plataforma y pagos pendientes a cadetes</p>
+        </div>
+      </div>
+
+      <!-- Acciones de Descarga y Cierre de Jornada -->
+      <div class="flex items-center gap-2.5">
+        <button onclick="exportReport()" class="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl border border-brand-border bg-brand-card hover:bg-zinc-800 text-xs font-medium text-zinc-300 hover:text-white transition-all">
+          <i data-lucide="download" class="w-4 h-4"></i>
+          <span>Exportar Resumen</span>
+        </button>
+        <button onclick="openClosureModal()" class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-accent hover:bg-brand-accentHover text-white text-xs font-bold shadow-lg shadow-brand-accent/20 transition-all active:scale-[0.98]">
+          <i data-lucide="badge-check" class="w-4 h-4"></i>
+          <span>Cerrar Jornada</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-6 space-y-6 max-w-7xl w-full mx-auto">
+
+      <!-- Balance General de Caja (Cards) -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        
+        <!-- Recaudación Total Bruta -->
+        <div class="bg-brand-card border border-brand-border p-5 rounded-2xl relative overflow-hidden">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-semibold uppercase tracking-wider text-brand-muted">Facturación Total</span>
+            <div class="p-2 rounded-xl bg-blue-500/10 text-blue-400">
+              <i data-lucide="badge-dollar-sign" class="w-5 h-5"></i>
+            </div>
+          </div>
+          <h3 id="card-total-sales" class="text-2xl font-extrabold text-white">$245.800</h3>
+          <p class="text-[11px] text-zinc-400 mt-1">Efectivo + Online procesado</p>
+        </div>
+
+        <!-- Efectivo en Calle (A Rendir por Cadetes) -->
+        <div class="bg-brand-card border border-brand-border p-5 rounded-2xl relative overflow-hidden">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-semibold uppercase tracking-wider text-brand-muted">Efectivo en Calle</span>
+            <div class="p-2 rounded-xl bg-amber-500/10 text-amber-400">
+              <i data-lucide="wallet" class="w-5 h-5"></i>
+            </div>
+          </div>
+          <h3 id="card-cash-street" class="text-2xl font-extrabold text-brand-gold">$114.200</h3>
+          <p class="text-[11px] text-zinc-400 mt-1">Dinero físico en mano de cadetes</p>
+        </div>
+
+        <!-- Ganancia Neta de Todo Delivery -->
+        <div class="bg-brand-card border border-brand-border p-5 rounded-2xl relative overflow-hidden">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-semibold uppercase tracking-wider text-brand-muted">Comisión Empresa (15%)</span>
+            <div class="p-2 rounded-xl bg-emerald-500/10 text-emerald-400">
+              <i data-lucide="trending-up" class="w-5 h-5"></i>
+            </div>
+          </div>
+          <h3 id="card-net-earnings" class="text-2xl font-extrabold text-emerald-400">$36.870</h3>
+          <p class="text-[11px] text-zinc-400 mt-1">Ingreso neto retenido del día</p>
+        </div>
+
+        <!-- Total a Pagar a Cadetes -->
+        <div class="bg-brand-card border border-brand-border p-5 rounded-2xl relative overflow-hidden">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-semibold uppercase tracking-wider text-brand-muted">Saldo a Liquidar Flota</span>
+            <div class="p-2 rounded-xl bg-brand-accent/10 text-brand-accent">
+              <i data-lucide="users" class="w-5 h-5"></i>
+            </div>
+          </div>
+          <h3 id="card-cadetes-pay" class="text-2xl font-extrabold text-white">$208.930</h3>
+          <p class="text-[11px] text-zinc-400 mt-1">Remuneración neta de repartidores</p>
+        </div>
+
+      </div>
+
+      <!-- Tabla de Liquidación por Cadete -->
+      <div class="bg-brand-card border border-brand-border rounded-2xl overflow-hidden shadow-xl">
+        <div class="p-5 border-b border-brand-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h3 class="text-base font-bold text-white">Liquidaciones Individuales y Rendición de Mano</h3>
+            <p class="text-xs text-brand-muted">Cálculo de balance por repartidor: Efectivo Cobrado vs. Comisión Ganada</p>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <div class="relative w-full sm:w-64">
+              <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500">
+                <i data-lucide="search" class="w-4 h-4"></i>
+              </span>
+              <input 
+                type="text" 
+                id="search-settlement"
+                onkeyup="renderSettlementTable()"
+                placeholder="Filtrar por cadete..." 
+                class="w-full bg-brand-dark border border-brand-border text-white text-xs rounded-xl pl-10 pr-4 py-2 placeholder-zinc-500 focus:outline-none focus:border-brand-accent transition-all"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-brand-border bg-brand-dark/50 text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">
+                <th class="py-3.5 px-4">Cadete</th>
+                <th class="py-3.5 px-4">Viajes Realizados</th>
+                <th class="py-3.5 px-4">Efectivo Cobrado</th>
+                <th class="py-3.5 px-4">Ganancia Repartidor (85%)</th>
+                <th class="py-3.5 px-4">Comisión Empresa (15%)</th>
+                <th class="py-3.5 px-4">Balance / Ajuste</th>
+                <th class="py-3.5 px-4 text-right">Rendición</th>
+              </tr>
+            </thead>
+            <tbody id="settlement-table-body" class="divide-y divide-brand-border/60 text-sm">
+              <!-- Filas dinámicas -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- ========================================== -->
+  <!-- 3. MODAL DE RENDICIÓN / PAGO INDIVIDUAL    -->
+  <!-- ========================================== -->
+  <div id="settlement-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+    <div id="modal-container" class="w-full max-w-md bg-brand-card border border-brand-border rounded-3xl p-6 sm:p-7 shadow-2xl scale-95 transition-transform duration-300 space-y-5">
+      
+      <div class="flex items-center justify-between border-b border-brand-border pb-4">
+        <div class="flex items-center gap-3">
+          <div class="p-2.5 rounded-xl bg-brand-accent/10 text-brand-accent border border-brand-accent/20">
+            <i data-lucide="hand-coins" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">Rendir Cuenta de Cadete</h3>
+            <p id="modal-cadete-name" class="text-xs text-brand-muted">Cadete: Carlos Ramírez</p>
+          </div>
+        </div>
+        <button onclick="closeSettlementModal()" class="text-zinc-500 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Resumen de Balance del Cadete -->
+      <div class="bg-brand-dark p-4 rounded-2xl border border-brand-border space-y-2.5 text-xs">
+        <div class="flex justify-between text-zinc-400">
+          <span>Efectivo cobrado en mano:</span>
+          <strong id="modal-cash-in-hand" class="text-white font-mono">$0</strong>
+        </div>
+        <div class="flex justify-between text-zinc-400">
+          <span>Honorarios ganados por viajes:</span>
+          <strong id="modal-cadete-earnings" class="text-white font-mono">$0</strong>
+        </div>
+        <div class="pt-2 border-t border-brand-border/60 flex justify-between items-center text-sm font-bold">
+          <span id="modal-balance-label" class="text-zinc-200">Saldo a favor:</span>
+          <span id="modal-balance-amount" class="text-emerald-400 font-mono text-base">$0</span>
+        </div>
+      </div>
+
+      <p id="modal-balance-explanation" class="text-xs text-zinc-400 italic">
+        El cadete debe entregar la diferencia de efectivo a la administración.
+      </p>
+
+      <div class="pt-3 flex items-center justify-end gap-3">
+        <button type="button" onclick="closeSettlementModal()" class="px-4 py-2.5 rounded-xl border border-brand-border text-xs text-zinc-400 hover:text-white transition-all">Cancelar</button>
+        <button type="button" onclick="confirmSettlement()" class="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold shadow-lg shadow-emerald-500/20 transition-all">
+          Confirmar Rendición y Liquidar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- 4. LÓGICA JAVASCRIPT                       -->
+  <!-- ========================================== -->
+  <script>
+    // Datos de liquidación por cadete
+    let cadetesSettlement = [
+      {
+        id: 1,
+        name: "Carlos Ramírez",
+        avatar: "CR",
+        trips: 18,
+        cashCollected: 64000,   // Efectivo recibido de clientes
+        totalVolume: 92000,     // Total bruto generado
+        settled: false
+      },
+      {
+        id: 2,
+        name: "Esteban Morales",
+        avatar: "EM",
+        trips: 14,
+        cashCollected: 32000,
+        totalVolume: 74000,
+        settled: false
+      },
+      {
+        id: 3,
+        name: "Julián López",
+        avatar: "JL",
+        trips: 11,
+        cashCollected: 18200,
+        totalVolume: 51800,
+        settled: true
+      },
+      {
+        id: 4,
+        name: "Matías Vega",
+        avatar: "MV",
+        trips: 6,
+        cashCollected: 0,       // Solo hizo pedidos con pago online
+        totalVolume: 28000,
+        settled: false
+      }
+    ];
+
+    let currentSelectedCadete = null;
+
+    document.addEventListener("DOMContentLoaded", () => {
+      renderSettlementTable();
+      lucide.createIcons();
+    });
+
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('-translate-x-full');
+    }
+
+    function renderSettlementTable() {
+      const search = document.getElementById("search-settlement").value.toLowerCase();
+      const tbody = document.getElementById("settlement-table-body");
+      tbody.innerHTML = "";
+
+      let totalGross = 0;
+      let totalCash = 0;
+      let totalAppCommissions = 0;
+      let totalCadeteNet = 0;
+
+      cadetesSettlement.forEach(c => {
+        const cadeteShare = c.totalVolume * 0.85; // 85% para el repartidor
+        const companyShare = c.totalVolume * 0.15; // 15% retención Todo Delivery
+        
+        // Balance = Honorarios Ganados - Efectivo en mano
+        // Si es positivo: La empresa le DEBE pagar al cadete (ej. hizo muchos viajes online)
+        // Si es negativo: El cadete le DEBE dinero a la empresa (recaudó más efectivo del que le correspondía)
+        const balance = cadeteShare - c.cashCollected;
+
+        totalGross += c.totalVolume;
+        totalCash += c.cashCollected;
+        totalAppCommissions += companyShare;
+        totalCadeteNet += cadeteShare;
+
+        if (c.name.toLowerCase().includes(search)) {
+          const tr = document.createElement("tr");
+          tr.className = "hover:bg-brand-dark/40 transition-colors";
+          
+          tr.innerHTML = `
+            <td class="py-4 px-4">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-full bg-zinc-800 border border-brand-border flex items-center justify-center font-bold text-xs text-white">
+                  ${c.avatar}
+                </div>
+                <div>
+                  <span class="block font-semibold text-white">${c.name}</span>
+                  <span class="text-[11px] ${c.settled ? 'text-emerald-400' : 'text-amber-400'} font-medium">
+                    ${c.settled ? 'Liquidado hoy' : 'Pendiente de cierre'}
+                  </span>
+                </div>
+              </div>
+            </td>
+            <td class="py-4 px-4 font-mono text-zinc-300 font-medium">${c.trips} entregas</td>
+            <td class="py-4 px-4 font-mono text-brand-gold font-semibold">$${c.cashCollected.toLocaleString()}</td>
+            <td class="py-4 px-4 font-mono text-zinc-200 font-semibold">$${cadeteShare.toLocaleString()}</td>
+            <td class="py-4 px-4 font-mono text-emerald-400 font-semibold">$${companyShare.toLocaleString()}</td>
+            <td class="py-4 px-4 font-mono font-bold">
+              ${balance >= 0 
+                ? `<span class="text-emerald-400">+ $${balance.toLocaleString()} (A favor Cadete)</span>` 
+                : `<span class="text-brand-accent">- $${Math.abs(balance).toLocaleString()} (Debe entregar)</span>`
+              }
+            </td>
+            <td class="py-4 px-4 text-right">
+              ${c.settled 
+                ? `<span class="inline-flex items-center gap-1 text-xs text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-xl border border-emerald-500/20 font-medium">
+                     <i data-lucide="check" class="w-3.5 h-3.5"></i> Rendido
+                   </span>`
+                : `<button onclick="openSettlementModal(${c.id})" class="px-3 py-1.5 bg-brand-accent hover:bg-brand-accentHover text-white text-xs font-bold rounded-xl shadow-md transition-all">
+                     Rendir
+                   </button>`
+              }
+            </td>
+          `;
+          tbody.appendChild(tr);
+        }
+      });
+
+      // Actualizar Cards Superiores
+      document.getElementById("card-total-sales").innerText = `$${totalGross.toLocaleString()}`;
+      document.getElementById("card-cash-street").innerText = `$${totalCash.toLocaleString()}`;
+      document.getElementById("card-net-earnings").innerText = `$${totalAppCommissions.toLocaleString()}`;
+      document.getElementById("card-cadetes-pay").innerText = `$${totalCadeteNet.toLocaleString()}`;
+
+      lucide.createIcons();
+    }
+
+    function openSettlementModal(cadeteId) {
+      currentSelectedCadete = cadetesSettlement.find(c => c.id === cadeteId);
+      if (!currentSelectedCadete) return;
+
+      const cadeteShare = currentSelectedCadete.totalVolume * 0.85;
+      const balance = cadeteShare - currentSelectedCadete.cashCollected;
+
+      document.getElementById("modal-cadete-name").innerText = `Cadete: ${currentSelectedCadete.name}`;
+      document.getElementById("modal-cash-in-hand").innerText = `$${currentSelectedCadete.cashCollected.toLocaleString()}`;
+      document.getElementById("modal-cadete-earnings").innerText = `$${cadeteShare.toLocaleString()}`;
+      
+      const balanceLabel = document.getElementById("modal-balance-label");
+      const balanceAmount = document.getElementById("modal-balance-amount");
+      const balanceExp = document.getElementById("modal-balance-explanation");
+
+      if (balance >= 0) {
+        balanceLabel.innerText = "Monto a abonarle al cadete:";
+        balanceAmount.className = "text-emerald-400 font-mono text-base font-bold";
+        balanceAmount.innerText = `$${balance.toLocaleString()}`;
+        balanceExp.innerText = "La empresa debe transferirle o entregarle este saldo al cadete por sus viajes con tarjeta/online.";
+      } else {
+        balanceLabel.innerText = "Monto que el cadete entrega a caja:";
+        balanceAmount.className = "text-brand-accent font-mono text-base font-bold";
+        balanceAmount.innerText = `$${Math.abs(balance).toLocaleString()}`;
+        balanceExp.innerText = "El cadete cobró más efectivo que su comisión ganada. Debe depositar la diferencia en caja.";
+      }
+
+      const m = document.getElementById('settlement-modal');
+      const c = document.getElementById('modal-container');
+      m.classList.remove('hidden');
+      setTimeout(() => {
+        m.classList.add('opacity-100');
+        c.classList.remove('scale-95');
+      }, 10);
+    }
+
+    function closeSettlementModal() {
+      const m = document.getElementById('settlement-modal');
+      const c = document.getElementById('modal-container');
+      m.classList.remove('opacity-100');
+      c.classList.add('scale-95');
+      setTimeout(() => m.classList.add('hidden'), 300);
+    }
+
+    function confirmSettlement() {
+      if (currentSelectedCadete) {
+        currentSelectedCadete.settled = true;
+        closeSettlementModal();
+        renderSettlementTable();
+      }
+    }
+
+    function exportReport() {
+      alert("Generando y descargando el reporte consolidado en formato CSV/Excel...");
+    }
+
+    function openClosureModal() {
+      alert("Cierre de jornada ejecutado con éxito. Se guardó el balance contable del turno.");
+    }
+  </script>
+</body>
+</html>
