@@ -9,7 +9,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- Google Fonts: Inter -->
+  <!-- Google Fonts: Plus Jakarta Sans -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -26,7 +26,7 @@
               black: '#0A0A0C',
               dark: '#121217',
               card: '#18181F',
-              accent: '#E63946',       /* Rojo vibrante estilo delivery */
+              accent: '#E63946',
               accentHover: '#D62839',
               gold: '#F4A261',
               muted: '#71717A',
@@ -43,15 +43,14 @@
       background-color: #0A0A0C;
       color: #F4F4F5;
       -webkit-tap-highlight-color: transparent;
+      transition: opacity 0.3s ease;
     }
 
-    /* Animación de pulso sobrio para el logo */
     @keyframes subtle-pulse {
       0%, 100% { transform: scale(1); opacity: 1; }
       50% { transform: scale(0.97); opacity: 0.9; }
     }
 
-    /* Barra de carga indeterminada minimalista */
     @keyframes loading-bar {
       0% { transform: translateX(-100%); }
       50% { transform: translateX(30%); }
@@ -66,7 +65,6 @@
       animation: loading-bar 1.6s cubic-bezier(0.65, 0, 0.35, 1) infinite;
     }
 
-    /* Transiciones suaves entre estados */
     .fade-out {
       opacity: 0;
       transform: scale(0.98);
@@ -84,20 +82,16 @@
 <body class="min-h-screen font-sans flex items-center justify-center p-4 relative overflow-hidden selection:bg-brand-accent selection:text-white">
 
   <!-- ========================================== -->
-  <!-- 1. SPLASH SCREEN (Pantalla de Carga)       -->
+  <!-- 1. SPLASH SCREEN                           -->
   <!-- ========================================== -->
   <div id="splash-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-between py-12 px-6 bg-brand-black transition-all duration-700">
-    <!-- Glow de fondo decorativo y sutil -->
     <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-brand-accent/10 rounded-full blur-[100px] pointer-events-none"></div>
 
     <div class="w-full"></div>
 
-    <!-- Centro: Isotipo & Marca -->
     <div class="flex flex-col items-center gap-6 z-10">
       <div class="relative flex items-center justify-center w-20 h-20 bg-brand-card border border-brand-border rounded-2xl shadow-2xl animate-subtle">
-        <!-- Ícono con gradiente sutil -->
         <i data-lucide="zap" class="w-10 h-10 text-brand-accent fill-brand-accent"></i>
-        <!-- Borde activo -->
         <div class="absolute inset-0 rounded-2xl border border-brand-accent/30"></div>
       </div>
 
@@ -109,7 +103,6 @@
       </div>
     </div>
 
-    <!-- Inferior: Indicador de carga ultrafino & Badge -->
     <div class="w-full max-w-xs flex flex-col items-center gap-4 z-10">
       <div class="w-44 h-[2px] bg-brand-border rounded-full overflow-hidden relative">
         <div class="absolute top-0 bottom-0 left-0 w-1/2 bg-brand-accent rounded-full animate-progress"></div>
@@ -121,22 +114,20 @@
   </div>
 
   <!-- ========================================== -->
-  <!-- 2. LOGIN TEMPLATE (Inicio de Sesión Admin)  -->
+  <!-- 2. LOGIN TEMPLATE                          -->
   <!-- ========================================== -->
   <main id="login-container" class="w-full max-w-md bg-brand-card/70 border border-brand-border backdrop-blur-xl p-8 sm:p-10 rounded-3xl shadow-2xl opacity-0 translate-y-6 transition-all duration-700 relative z-20">
     
-    <!-- Header del Formulario -->
     <div class="text-center space-y-2 mb-8">
       <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-brand-accent/10 border border-brand-accent/20 mb-2">
         <i data-lucide="shield-check" class="w-6 h-6 text-brand-accent"></i>
       </div>
       <h2 class="text-2xl font-bold tracking-tight text-white">Administración</h2>
-      <p class="text-sm text-brand-muted">Ingresa tus credenciales maestras de <strong class="text-zinc-300 font-medium">Todo Delivery</strong></p>
+      <p class="text-sm text-brand-muted">Ingresa tus credenciales de <strong class="text-zinc-300 font-medium">Todo Delivery</strong></p>
     </div>
 
-    <!-- Formulario -->
-    <form id="admin-login-form" class="space-y-5" onsubmit="event.preventDefault();">
-      <!-- Input: Email -->
+    <form id="admin-login-form" class="space-y-5" onsubmit="handleLogin(event)">
+      <!-- Email -->
       <div class="space-y-1.5">
         <label for="email" class="block text-xs font-semibold uppercase tracking-wider text-zinc-400">Correo Electrónico</label>
         <div class="relative flex items-center">
@@ -153,7 +144,7 @@
         </div>
       </div>
 
-      <!-- Input: Contraseña -->
+      <!-- Password -->
       <div class="space-y-1.5">
         <div class="flex items-center justify-between">
           <label for="password" class="block text-xs font-semibold uppercase tracking-wider text-zinc-400">Contraseña</label>
@@ -181,7 +172,7 @@
         </div>
       </div>
 
-      <!-- Recordar sesión -->
+      <!-- Mantener sesión -->
       <div class="flex items-center justify-between pt-1">
         <label class="flex items-center gap-2.5 cursor-pointer select-none">
           <input type="checkbox" class="w-4 h-4 rounded border-brand-border bg-brand-dark text-brand-accent focus:ring-0 focus:ring-offset-0 cursor-pointer accent-brand-accent">
@@ -189,17 +180,30 @@
         </label>
       </div>
 
-      <!-- Botón de Envío -->
-      <button 
-        type="submit" 
-        class="w-full bg-brand-accent hover:bg-brand-accentHover text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-brand-accent/20 active:scale-[0.99] transition-all flex items-center justify-center gap-2 group"
-      >
-        <span>Ingresar al Sistema</span>
-        <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-0.5 transition-transform"></i>
-      </button>
+      <!-- Botón de Envío Interactivo -->
+<button 
+  type="submit" 
+  id="submit-btn"
+  class="w-full bg-brand-accent hover:bg-brand-accentHover text-white py-3.5 rounded-xl shadow-lg shadow-brand-accent/25 transition-all duration-300 flex items-center justify-center relative overflow-hidden group cursor-pointer active:scale-[0.98] border border-transparent"
+>
+  <!-- Estado Inicial -->
+  <div id="btn-default" class="flex items-center justify-center gap-2 transition-all duration-300 text-sm font-semibold tracking-wide text-white">
+    <span>Ingresar al Sistema</span>
+    <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
+  </div>
+
+  <!-- Estado de Carga (Oculto al inicio -> Fondo negro con letras y spinner blancos) -->
+  <div id="btn-loading" class="absolute inset-0 flex items-center justify-center gap-2.5 opacity-0 pointer-events-none transition-all duration-300 text-white font-bold text-xs tracking-wider uppercase">
+    <!-- Spinner SVG fluido -->
+    <svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-100" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+    </svg>
+    <span>Validando credenciales...</span>
+  </div>
+</button>
     </form>
 
-    <!-- Footer corporativo -->
     <div class="mt-8 pt-6 border-t border-brand-border/60 text-center">
       <p class="text-xs text-zinc-500">
         Todo Delivery Management System &copy; 2026
@@ -211,18 +215,14 @@
   <!-- 3. CONTROLADOR JS                          -->
   <!-- ========================================== -->
   <script>
-    // Inicializar íconos
     lucide.createIcons();
 
-    // Lógica de Splash Screen -> Login
     document.addEventListener("DOMContentLoaded", () => {
       const splash = document.getElementById("splash-screen");
       const login = document.getElementById("login-container");
 
-      // Simula el tiempo de carga de assets/autenticación previa (2.2 segundos)
       setTimeout(() => {
         splash.classList.add("fade-out");
-        
         setTimeout(() => {
           splash.style.display = "none";
           login.classList.add("fade-in");
@@ -230,7 +230,6 @@
       }, 2200);
     });
 
-    // Alternar visibilidad de contraseña
     function togglePasswordVisibility() {
       const passwordInput = document.getElementById("password");
       const eyeIcon = document.getElementById("eye-icon");
@@ -244,6 +243,33 @@
       }
       lucide.createIcons();
     }
+
+    function handleLogin(event) {
+  event.preventDefault();
+
+  const btn = document.getElementById("submit-btn");
+  const defaultState = document.getElementById("btn-default");
+  const loadingState = document.getElementById("btn-loading");
+
+  btn.disabled = true;
+
+  // 1. Cambia el botón a fondo negro con borde sobrio y remueve el fondo/sombra de acento
+  btn.classList.remove("bg-brand-accent", "hover:bg-brand-accentHover", "shadow-brand-accent/25");
+  btn.classList.add("bg-black", "border-zinc-800", "shadow-black/50");
+
+  // 2. Oculta el texto por defecto y muestra la animación de carga
+  defaultState.classList.add("opacity-0", "scale-95");
+  loadingState.classList.remove("opacity-0", "pointer-events-none");
+  loadingState.classList.add("opacity-100");
+
+  // 3. Redirección fluida
+  setTimeout(() => {
+    document.body.style.opacity = "0";
+    setTimeout(() => {
+      window.location.href = "pagina_inicio.html";
+    }, 300);
+  }, 2700);
+}
   </script>
 </body>
 </html>

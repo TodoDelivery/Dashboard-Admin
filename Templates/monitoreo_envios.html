@@ -39,10 +39,20 @@
   </script>
 
   <style>
+    html {
+      background-color: #0A0A0C;
+    }
     body {
       background-color: #0A0A0C;
       color: #F4F4F5;
       -webkit-tap-highlight-color: transparent;
+      opacity: 0;
+      transition: opacity 0.25s ease-out, transform 0.25s ease-out;
+      transform: translateY(4px);
+    }
+    body.page-loaded {
+      opacity: 1;
+      transform: translateY(0);
     }
     ::-webkit-scrollbar {
       width: 6px;
@@ -61,6 +71,46 @@
     .kanban-col {
       min-height: calc(100vh - 250px);
     }
+    /* ===== Radar signature widget ===== */
+  .radar{
+    position: relative;
+    width: 108px;
+    height: 108px;
+    border-radius: 50%;
+    margin: 0 auto;
+    background:
+      radial-gradient(circle, rgba(230,57,70,0.05) 0%, transparent 72%);
+    border: 1px solid #242A38;
+  }
+  .radar::before, .radar::after{
+    content:"";
+    position:absolute; border-radius:50%;
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+  .radar::before{ inset: 16px; }
+  .radar::after{ inset: 34px; }
+  .radar-sweep{
+    position:absolute; inset:0; border-radius:50%;
+    background: conic-gradient(from 0deg, rgba(230,57,70,0.55), rgba(230,57,70,0) 28%, rgba(230,57,70,0) 100%);
+    animation: sweep 4s linear infinite;
+  }
+  .radar-core{
+    position:absolute; top:50%; left:50%; width:6px; height:6px;
+    background: #E63946; border-radius:50%;
+    transform: translate(-50%,-50%);
+    box-shadow: 0 0 8px 1px rgba(230,57,70,0.7);
+  }
+  .radar-blip{
+    position:absolute; width:5px; height:5px; border-radius:50%;
+    background: #F4A261;
+    box-shadow: 0 0 6px 1px rgba(244,162,97,0.7);
+    animation: blip 2.6s ease-in-out infinite;
+  }
+  @keyframes sweep{ to{ transform: rotate(360deg); } }
+  @keyframes blip{
+    0%,100%{ opacity:.35; transform:scale(.85); }
+    50%{ opacity:1; transform:scale(1.15); }
+  }
   </style>
 </head>
 <body class="min-h-screen font-sans flex flex-col md:flex-row overflow-x-hidden selection:bg-brand-accent selection:text-white">
@@ -83,45 +133,59 @@
       </div>
 
       <nav class="p-4 space-y-1.5">
-        <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-400 hover:text-white hover:bg-brand-card font-medium text-sm transition-all">
+        <a href="pagina_inicio.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-400 hover:text-white hover:bg-brand-card font-medium text-sm transition-all">
           <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
           <span>Dashboard</span>
         </a>
         <!-- Activo: Monitor de Envíos -->
-        <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-brand-accent text-white font-medium text-sm shadow-lg shadow-brand-accent/20 transition-all">
+        <a href="monitoreo_envios.html" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-brand-accent text-white font-medium text-sm shadow-lg shadow-brand-accent/20 transition-all">
           <i data-lucide="package" class="w-5 h-5"></i>
           <span>Monitor de Envíos</span>
           <span id="badge-total-active" class="ml-auto bg-white/20 text-white text-xs px-2 py-0.5 rounded-full font-semibold">5</span>
         </a>
-        <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-400 hover:text-white hover:bg-brand-card font-medium text-sm transition-all">
+        <a href="gestion_de_personal.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-400 hover:text-white hover:bg-brand-card font-medium text-sm transition-all">
           <i data-lucide="users" class="w-5 h-5"></i>
           <span>Gestión de Cadetes</span>
         </a>
-        <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-400 hover:text-white hover:bg-brand-card font-medium text-sm transition-all">
+        <a href="ajustes.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-400 hover:text-white hover:bg-brand-card font-medium text-sm transition-all">
           <i data-lucide="map-pin" class="w-5 h-5"></i>
           <span>Zonas y Tarifas</span>
         </a>
-        <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-400 hover:text-white hover:bg-brand-card font-medium text-sm transition-all">
+        <a href="caja.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-400 hover:text-white hover:bg-brand-card font-medium text-sm transition-all">
           <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
           <span>Reportes y Caja</span>
         </a>
       </nav>
     </div>
-
-    <div class="p-4 border-t border-brand-border">
-      <div class="flex items-center gap-3 p-3 rounded-xl bg-brand-card/50 border border-brand-border/60 mb-3">
-        <div class="w-10 h-10 rounded-full bg-zinc-800 border border-brand-border flex items-center justify-center font-bold text-white text-sm">
-          AD
+    <div class="mt-6 px-6">
+      <div class="bg-brand-card border border-brand-border p-4 rounded-2xl">
+        <p class="text-[10px] uppercase tracking-[0.14em] text-brand-muted text-center mb-3">Red Nacional · En vivo</p>
+        <div class="radar">
+          <div class="radar-sweep"></div>
+          <div class="radar-core"></div>
+          <div class="radar-blip" style="top:22%; left:64%; animation-delay:.2s;"></div>
+          <div class="radar-blip" style="top:60%; left:28%; animation-delay:.9s;"></div>
+          <div class="radar-blip" style="top:70%; left:70%; animation-delay:1.6s; background:#E63946; box-shadow:0 0 6px 1px rgba(230,57,70,.7);"></div>
         </div>
-        <div class="overflow-hidden">
-          <h4 class="text-xs font-semibold text-white truncate">Ana Dueña</h4>
-          <p class="text-[11px] text-zinc-400 truncate">admin@tododelivery.com</p>
-        </div>
+        <p class="text-center text-[11px] font-mono text-zinc-400 mt-3">42 unidades <span class="text-emerald-400 font-semibold">activas</span></p>
       </div>
-      <button class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-brand-border hover:border-brand-accent/50 text-zinc-400 hover:text-white text-xs font-semibold transition-all">
-        <i data-lucide="log-out" class="w-4 h-4"></i>
-        <span>Cerrar Sesión</span>
-      </button>
+    </div>
+  </div>
+
+  <div class="p-4 border-t border-brand-border">
+    <div class="flex items-center gap-3 p-3 rounded-xl bg-brand-card/50 border border-brand-border/60 mb-3">
+      <div class="w-10 h-10 rounded-full bg-zinc-800 border border-brand-border flex items-center justify-center font-bold text-white text-sm">
+        AD
+      </div>
+      <div class="overflow-hidden">
+        <h4 class="text-xs font-semibold text-white truncate">Ana Dueña</h4>
+        <p class="text-[11px] text-zinc-400 truncate">admin@tododelivery.com</p>
+      </div>
+    </div>
+    <a href="index.html" class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-brand-border hover:border-brand-accent/50 text-zinc-400 hover:text-white text-xs font-semibold transition-all">
+      <i data-lucide="log-out" class="w-4 h-4"></i>
+      <span>Cerrar Sesión</span>
+    </a>
     </div>
   </aside>
 
@@ -346,8 +410,24 @@
     let selectedPaymentFilter = 'all';
 
     document.addEventListener("DOMContentLoaded", () => {
+      document.body.classList.add("page-loaded");
       renderColumns();
       lucide.createIcons();
+
+      // Transición de salida de página al hacer clic en enlaces
+      document.addEventListener("click", (e) => {
+        const link = e.target.closest("a");
+        if (link) {
+          const href = link.getAttribute("href");
+          if (href && href !== "#" && !href.startsWith("javascript:") && !link.hasAttribute("download") && link.target !== "_blank") {
+            e.preventDefault();
+            document.body.classList.remove("page-loaded");
+            setTimeout(() => {
+              window.location.href = href;
+            }, 250);
+          }
+        }
+      });
     });
 
     function toggleSidebar() {
