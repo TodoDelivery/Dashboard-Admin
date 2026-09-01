@@ -153,9 +153,13 @@
         </a>
       </nav>
     </div>
-    <div class="mt-6 px-6">
-      <div class="bg-brand-card border border-brand-border p-4 rounded-2xl">
-        <p class="text-[10px] uppercase tracking-[0.14em] text-brand-muted text-center mb-3">Red Nacional · En vivo</p>
+    <!-- Widget Radar Red Local -->
+    <div class="px-6 my-auto">
+      <div onclick="openRadarMapModal()" class="bg-brand-card border border-brand-border p-4 rounded-2xl cursor-pointer hover:border-brand-accent/60 transition-all group select-none" title="Ver mapa de cadetes en vivo">
+        <div class="flex items-center justify-center gap-1 mb-3">
+          <p class="text-[10px] uppercase tracking-[0.14em] text-brand-muted text-center group-hover:text-brand-accent transition-colors">Red Local · En vivo</p>
+          <i data-lucide="maximize-2" class="w-3 h-3 text-zinc-500 group-hover:text-brand-accent transition-colors"></i>
+        </div>
         <div class="radar">
           <div class="radar-sweep"></div>
           <div class="radar-core"></div>
@@ -163,22 +167,19 @@
           <div class="radar-blip" style="top:60%; left:28%; animation-delay:.9s;"></div>
           <div class="radar-blip" style="top:70%; left:70%; animation-delay:1.6s; background:#E63946; box-shadow:0 0 6px 1px rgba(230,57,70,.7);"></div>
         </div>
-        <p class="text-center text-[11px] font-mono text-zinc-400 mt-3">42 unidades <span class="text-emerald-400 font-semibold">activas</span></p>
+        <p id="radar-cadetes-count" class="text-center text-[11px] font-mono text-zinc-400 mt-3"><span class="animate-pulse">...</span> unidades <span class="text-emerald-400 font-semibold">activas</span></p>
       </div>
     </div>
-  </div>
 
   <div class="p-4 border-t border-brand-border">
     <div class="flex items-center gap-3 p-3 rounded-xl bg-brand-card/50 border border-brand-border/60 mb-3">
-      <div class="w-10 h-10 rounded-full bg-zinc-800 border border-brand-border flex items-center justify-center font-bold text-white text-sm">
-        AD
-      </div>
+      <div class="w-10 h-10 rounded-full bg-zinc-800 border border-brand-border flex items-center justify-center font-bold text-white text-sm">DP</div>
       <div class="overflow-hidden">
-        <h4 class="text-xs font-semibold text-white truncate">Ana Dueña</h4>
-        <p class="text-[11px] text-zinc-400 truncate">admin@tododelivery.com</p>
+        <h4 class="text-xs font-semibold text-white truncate">Diana Parada</h4>
+        <p class="text-[11px] text-zinc-400 truncate">tododelivery24@gmail.com</p>
       </div>
     </div>
-    <a href="index.html" class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-brand-border hover:border-brand-accent/50 text-zinc-400 hover:text-white text-xs font-semibold transition-all">
+    <a href="../index.html" class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-brand-border hover:border-brand-accent/50 text-zinc-400 hover:text-white text-xs font-semibold transition-all">
       <i data-lucide="log-out" class="w-4 h-4"></i>
       <span>Cerrar Sesión</span>
     </a>
@@ -212,51 +213,59 @@
     <main class="flex-1 p-6 space-y-6 max-w-7xl w-full mx-auto">
 
       <!-- Fórmulas y Reglas Generales de Costeo -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="flex items-center justify-between">
+        <h3 class="text-base font-bold text-white">Tarifas Globales</h3>
+        <button onclick="openCotizModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-brand-border bg-brand-card hover:bg-zinc-800 text-xs font-medium text-zinc-300 hover:text-white transition-all">
+          <i data-lucide="edit-3" class="w-4 h-4"></i>
+          <span>Editar Tarifas</span>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-2">
         
         <!-- Tarifa Base Global -->
-        <div class="bg-brand-card border border-brand-border rounded-2xl p-5 space-y-3">
+        <div onclick="openCotizModal()" class="bg-brand-card border border-brand-border hover:border-brand-accent/50 rounded-2xl p-5 space-y-3 cursor-pointer transition-all group">
           <div class="flex items-center justify-between">
-            <span class="text-xs font-bold uppercase tracking-wider text-brand-muted">Bajada de Bandera (Base)</span>
-            <div class="p-2 bg-brand-accent/10 text-brand-accent rounded-xl">
+            <span class="text-xs font-bold uppercase tracking-wider text-brand-muted group-hover:text-zinc-300 transition-colors">Bajada de Bandera (Base)</span>
+            <div class="p-2 bg-brand-accent/10 text-brand-accent rounded-xl group-hover:bg-brand-accent group-hover:text-white transition-colors">
               <i data-lucide="flag" class="w-4 h-4"></i>
             </div>
           </div>
           <div class="flex items-baseline gap-2">
-            <h3 id="display-base-price" class="text-2xl font-black text-white">$1.200</h3>
+            <h3 id="display-base-price" class="text-2xl font-black text-white"><span class="animate-pulse">...</span></h3>
             <span class="text-xs text-zinc-400">fijo por pedido</span>
           </div>
           <p class="text-[11px] text-zinc-500 leading-relaxed">Costo mínimo fijo aplicado a cualquier pedido en la PWA de clientes.</p>
         </div>
 
         <!-- Costo por Kilómetro -->
-        <div class="bg-brand-card border border-brand-border rounded-2xl p-5 space-y-3">
+        <div onclick="openCotizModal()" class="bg-brand-card border border-brand-border hover:border-emerald-500/50 rounded-2xl p-5 space-y-3 cursor-pointer transition-all group">
           <div class="flex items-center justify-between">
-            <span class="text-xs font-bold uppercase tracking-wider text-brand-muted">Precio por Kilómetro</span>
-            <div class="p-2 bg-emerald-500/10 text-emerald-400 rounded-xl">
+            <span class="text-xs font-bold uppercase tracking-wider text-brand-muted group-hover:text-zinc-300 transition-colors">Precio por Kilómetro</span>
+            <div class="p-2 bg-emerald-500/10 text-emerald-400 rounded-xl group-hover:bg-emerald-500 group-hover:text-white transition-colors">
               <i data-lucide="route" class="w-4 h-4"></i>
             </div>
           </div>
           <div class="flex items-baseline gap-2">
-            <h3 id="display-km-price" class="text-2xl font-black text-white">$350</h3>
+            <h3 id="display-km-price" class="text-2xl font-black text-white"><span class="animate-pulse">...</span></h3>
             <span class="text-xs text-emerald-400 font-medium">por Km recorrido</span>
           </div>
           <p class="text-[11px] text-zinc-500 leading-relaxed">Multiplicador por distancia lineal/ruteo desde el local al destino.</p>
         </div>
 
         <!-- Recargo Nocturno / Clima / Extra -->
-        <div class="bg-brand-card border border-brand-border rounded-2xl p-5 space-y-3">
+        <div onclick="openCotizModal()" class="bg-brand-card border border-brand-border hover:border-brand-gold/50 rounded-2xl p-5 space-y-3 cursor-pointer transition-all group">
           <div class="flex items-center justify-between">
-            <span class="text-xs font-bold uppercase tracking-wider text-brand-muted">Tarifa Dinámica (Nocturna)</span>
-            <div class="p-2 bg-brand-gold/10 text-brand-gold rounded-xl">
+            <span class="text-xs font-bold uppercase tracking-wider text-brand-muted group-hover:text-zinc-300 transition-colors">Tarifa Dinámica (Nocturna)</span>
+            <div class="p-2 bg-brand-gold/10 text-brand-gold rounded-xl group-hover:bg-brand-gold group-hover:text-black transition-colors">
               <i data-lucide="moon" class="w-4 h-4"></i>
             </div>
           </div>
           <div class="flex items-baseline gap-2">
-            <h3 id="display-surge-price" class="text-2xl font-black text-brand-gold">+ 20%</h3>
-            <span class="text-xs text-zinc-400">23:00 a 06:00 hs</span>
+            <h3 id="display-surge-price" class="text-2xl font-black text-brand-gold"><span class="animate-pulse">...</span></h3>
+            <span class="text-xs text-zinc-400">dinámica / nocturna</span>
           </div>
-          <p class="text-[11px] text-zinc-500 leading-relaxed">Recargo nocturno aplicado automáticamente en horarios de alta demanda.</p>
+          <p class="text-[11px] text-zinc-500 leading-relaxed">Recargo porcentual aplicado en horarios de alta demanda o lluvia.</p>
         </div>
 
       </div>
@@ -297,7 +306,7 @@
               <div class="pt-2">
                 <label class="flex items-center gap-2 cursor-pointer select-none">
                   <input type="checkbox" id="calc-night" onchange="calculatePreview()" class="w-4 h-4 rounded border-brand-border bg-brand-dark text-brand-accent focus:ring-0 focus:ring-offset-0 cursor-pointer accent-brand-accent">
-                  <span class="text-xs text-zinc-400">Aplicar recargo nocturno (+20%)</span>
+                  <span id="label-night" class="text-xs text-zinc-400">Aplicar tarifa dinámica</span>
                 </label>
               </div>
             </div>
@@ -307,15 +316,15 @@
           <div class="mt-6 p-4 rounded-2xl bg-brand-dark/90 border border-brand-border space-y-2">
             <div class="flex justify-between text-xs text-zinc-400">
               <span>Cálculo Base + Distancia:</span>
-              <span id="preview-subtotal" class="font-mono text-zinc-200">$0</span>
+              <span id="preview-subtotal" class="font-mono text-zinc-200"><span class="animate-pulse">...</span></span>
             </div>
             <div class="flex justify-between text-xs text-zinc-400">
               <span>Recargo Zona / Plus:</span>
-              <span id="preview-zone-extra" class="font-mono text-zinc-200">$0</span>
+              <span id="preview-zone-extra" class="font-mono text-zinc-200"><span class="animate-pulse">...</span></span>
             </div>
             <div class="pt-2 border-t border-brand-border/80 flex justify-between items-center text-sm font-bold">
               <span class="text-white">Total para el Cliente:</span>
-              <span id="preview-total" class="text-emerald-400 font-mono text-lg font-black">$0</span>
+              <span id="preview-total" class="text-emerald-400 font-mono text-lg font-black"><span class="animate-pulse">...</span></span>
             </div>
           </div>
         </div>
@@ -327,6 +336,7 @@
               <div>
                 <h3 class="text-base font-bold text-white">Zonas Tarifarias Habilitadas</h3>
                 <p class="text-xs text-brand-muted">Polígonos y radios donde Todo Delivery ofrece servicio</p>
+                <span class="text-[10px] text-amber-400/80 font-medium italic mt-1 block">* Nota: Esta división por zonas está de manera conceptual (guardada localmente).</span>
               </div>
               <span id="zones-count-badge" class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                 4 Zonas Activas
@@ -414,25 +424,57 @@
   </div>
 
   <!-- ========================================== -->
+  <!-- MODAL: EDITAR TARIFAS GLOBALES            -->
+  <!-- ========================================== -->
+  <div id="cotiz-modal-backdrop" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+    <div id="cotiz-modal-container" class="w-full max-w-md bg-brand-card border border-brand-border rounded-3xl p-6 sm:p-7 shadow-2xl scale-95 transition-transform duration-300 space-y-5">
+      
+      <div class="flex items-center justify-between border-b border-brand-border pb-4">
+        <div class="flex items-center gap-3">
+          <div class="p-2.5 rounded-xl bg-brand-accent/10 text-brand-accent border border-brand-accent/20">
+            <i data-lucide="dollar-sign" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">Editar Tarifas Globales</h3>
+            <p class="text-xs text-brand-muted">Modifica los valores base de la DB</p>
+          </div>
+        </div>
+        <button onclick="closeCotizModal()" class="text-zinc-500 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form class="space-y-4" onsubmit="handleSaveCotiz(event)">
+        <div class="space-y-1">
+          <label class="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Bajada de Bandera ($)</label>
+          <input type="number" step="0.01" id="input-bajada" required class="w-full bg-brand-dark border border-brand-border text-white text-xs rounded-xl px-3.5 py-3 focus:outline-none focus:border-brand-accent transition-all font-mono" />
+        </div>
+
+        <div class="space-y-1">
+          <label class="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Tarifa por Km ($)</label>
+          <input type="number" step="0.01" id="input-km" required class="w-full bg-brand-dark border border-brand-border text-white text-xs rounded-xl px-3.5 py-3 focus:outline-none focus:border-brand-accent transition-all font-mono" />
+        </div>
+
+        <div class="space-y-1">
+          <label class="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">% Tarifa Dinámica</label>
+          <input type="number" step="0.01" id="input-dinamica" required class="w-full bg-brand-dark border border-brand-border text-white text-xs rounded-xl px-3.5 py-3 focus:outline-none focus:border-brand-accent transition-all font-mono" />
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-4 border-t border-brand-border">
+          <button type="button" onclick="closeCotizModal()" class="px-4 py-2.5 rounded-xl border border-brand-border text-xs text-zinc-400 hover:text-white transition-all">Cancelar</button>
+          <button type="submit" class="px-5 py-2.5 rounded-xl bg-brand-accent hover:bg-brand-accentHover text-white text-xs font-bold shadow-lg shadow-brand-accent/20 transition-all">Guardar Cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
   <!-- 4. LÓGICA JAVASCRIPT                       -->
   <!-- ========================================== -->
+  <script type="module" src="../scripts/ajustes_api.js"></script>
   <script>
-    // Variables globales de tarifas
-    const BASE_FEE = 1200;
-    const PRICE_PER_KM = 350;
-
-    let zones = [
-      { id: 1, name: "Microcentro & Alrededores", radius: "Hasta 3 Km", extra: 0, time: "15 - 25 min", active: true },
-      { id: 2, name: "Zona Urbana Intermedia", radius: "Hasta 6 Km", extra: 400, time: "25 - 35 min", active: true },
-      { id: 3, name: "Periferia / Zona Sur", radius: "Hasta 10 Km", extra: 950, time: "35 - 45 min", active: true },
-      { id: 4, name: "Barrios Privados & Country Club", radius: "Hasta 15 Km", extra: 1600, time: "45 - 60 min", active: true }
-    ];
-
     document.addEventListener("DOMContentLoaded", () => {
       document.body.classList.add("page-loaded");
-      renderZonesTable();
-      populateZoneSelect();
-      calculatePreview();
       lucide.createIcons();
 
       // Transición de salida de página al hacer clic en enlaces
@@ -454,138 +496,7 @@
     function toggleSidebar() {
       document.getElementById('sidebar').classList.toggle('-translate-x-full');
     }
-
-    function renderZonesTable() {
-      const tbody = document.getElementById("zones-table-body");
-      tbody.innerHTML = "";
-
-      zones.forEach(z => {
-        const tr = document.createElement("tr");
-        tr.className = "hover:bg-brand-dark/40 transition-colors";
-
-        tr.innerHTML = `
-          <td class="py-4 px-4">
-            <div class="flex items-center gap-3">
-              <div class="p-2 rounded-xl bg-zinc-800 border border-brand-border text-brand-accent">
-                <i data-lucide="map-pin" class="w-4 h-4"></i>
-              </div>
-              <div>
-                <span class="block font-semibold text-white">${z.name}</span>
-                <span class="text-[11px] text-zinc-500 font-mono">${z.radius}</span>
-              </div>
-            </div>
-          </td>
-          <td class="py-4 px-4 font-mono font-semibold ${z.extra > 0 ? 'text-brand-gold' : 'text-zinc-400'}">
-            ${z.extra > 0 ? '+ $' + z.extra.toLocaleString() : 'Sin recargo'}
-          </td>
-          <td class="py-4 px-4 text-xs text-zinc-300 font-medium">${z.time}</td>
-          <td class="py-4 px-4">
-            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${z.active ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-zinc-800 text-zinc-500'}">
-              <span class="w-1.5 h-1.5 rounded-full ${z.active ? 'bg-emerald-400' : 'bg-zinc-500'}"></span> ${z.active ? 'Habilitada' : 'Inactiva'}
-            </span>
-          </td>
-          <td class="py-4 px-4 text-right">
-            <div class="flex items-center justify-end gap-2">
-              <button onclick="toggleZoneStatus(${z.id})" title="${z.active ? 'Desactivar Zona' : 'Activar Zona'}" class="p-2 rounded-xl border border-brand-border text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all">
-                <i data-lucide="${z.active ? 'eye-off' : 'eye'}" class="w-4 h-4"></i>
-              </button>
-              <button onclick="deleteZone(${z.id})" title="Eliminar Zona" class="p-2 rounded-xl border border-brand-border text-red-400 hover:bg-red-500/10 transition-all">
-                <i data-lucide="trash-2" class="w-4 h-4"></i>
-              </button>
-            </div>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-
-      document.getElementById("zones-count-badge").innerText = `${zones.filter(z => z.active).length} Zonas Activas`;
-      lucide.createIcons();
-    }
-
-    function populateZoneSelect() {
-      const select = document.getElementById("calc-zone");
-      select.innerHTML = "";
-      zones.forEach(z => {
-        const opt = document.createElement("option");
-        opt.value = z.extra;
-        opt.innerText = `${z.name} (${z.extra > 0 ? '+$' + z.extra : 'Sin plus'})`;
-        select.appendChild(opt);
-      });
-    }
-
-    function calculatePreview() {
-      const km = parseFloat(document.getElementById("calc-km").value) || 0;
-      const zoneExtra = parseFloat(document.getElementById("calc-zone").value) || 0;
-      const isNight = document.getElementById("calc-night").checked;
-
-      const subtotal = BASE_FEE + (km * PRICE_PER_KM);
-      let total = subtotal + zoneExtra;
-
-      if (isNight) {
-        total = total * 1.20; // +20%
-      }
-
-      document.getElementById("preview-subtotal").innerText = `$${Math.round(subtotal).toLocaleString()}`;
-      document.getElementById("preview-zone-extra").innerText = `+$${zoneExtra.toLocaleString()}`;
-      document.getElementById("preview-total").innerText = `$${Math.round(total).toLocaleString()}`;
-    }
-
-    function toggleZoneStatus(id) {
-      zones = zones.map(z => z.id === id ? { ...z, active: !z.active } : z);
-      renderZonesTable();
-      populateZoneSelect();
-      calculatePreview();
-    }
-
-    function deleteZone(id) {
-      if (confirm("¿Estás seguro de eliminar esta zona de cobertura?")) {
-        zones = zones.filter(z => z.id !== id);
-        renderZonesTable();
-        populateZoneSelect();
-        calculatePreview();
-      }
-    }
-
-    // Modal Crear Zona
-    function openZoneModal() {
-      const m = document.getElementById('zone-modal-backdrop');
-      const c = document.getElementById('zone-modal-container');
-      m.classList.remove('hidden');
-      setTimeout(() => {
-        m.classList.add('opacity-100');
-        c.classList.remove('scale-95');
-      }, 10);
-    }
-
-    function closeZoneModal() {
-      const m = document.getElementById('zone-modal-backdrop');
-      const c = document.getElementById('zone-modal-container');
-      m.classList.remove('opacity-100');
-      c.classList.add('scale-95');
-      setTimeout(() => m.classList.add('hidden'), 300);
-    }
-
-    function handleCreateZone(e) {
-      e.preventDefault();
-      const name = document.getElementById("modal-zone-name").value;
-      const radius = document.getElementById("modal-zone-radius").value;
-      const extra = parseFloat(document.getElementById("modal-zone-extra").value) || 0;
-      const time = document.getElementById("modal-zone-time").value;
-
-      zones.push({
-        id: Date.now(),
-        name,
-        radius,
-        extra,
-        time,
-        active: true
-      });
-
-      closeZoneModal();
-      renderZonesTable();
-      populateZoneSelect();
-      calculatePreview();
-    }
   </script>
+  <script type="module" src="../scripts/sidebar_radar.js"></script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Todo Delivery - Panel de Control</title>
+  <title>Todo Delivery - Admin Dashboard</title>
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -54,47 +54,6 @@
       opacity: 1;
       transform: translateY(0);
     }
-    /* ===== Radar signature widget ===== */
-  .radar{
-    position: relative;
-    width: 108px;
-    height: 108px;
-    border-radius: 50%;
-    margin: 0 auto;
-    background:
-      radial-gradient(circle, rgba(230,57,70,0.05) 0%, transparent 72%);
-    border: 1px solid #242A38;
-  }
-  .radar::before, .radar::after{
-    content:"";
-    position:absolute; border-radius:50%;
-    border: 1px solid rgba(255,255,255,0.05);
-  }
-  .radar::before{ inset: 16px; }
-  .radar::after{ inset: 34px; }
-  .radar-sweep{
-    position:absolute; inset:0; border-radius:50%;
-    background: conic-gradient(from 0deg, rgba(230,57,70,0.55), rgba(230,57,70,0) 28%, rgba(230,57,70,0) 100%);
-    animation: sweep 4s linear infinite;
-  }
-  .radar-core{
-    position:absolute; top:50%; left:50%; width:6px; height:6px;
-    background: #E63946; border-radius:50%;
-    transform: translate(-50%,-50%);
-    box-shadow: 0 0 8px 1px rgba(230,57,70,0.7);
-  }
-  .radar-blip{
-    position:absolute; width:5px; height:5px; border-radius:50%;
-    background: #F4A261;
-    box-shadow: 0 0 6px 1px rgba(244,162,97,0.7);
-    animation: blip 2.6s ease-in-out infinite;
-  }
-  @keyframes sweep{ to{ transform: rotate(360deg); } }
-  @keyframes blip{
-    0%,100%{ opacity:.35; transform:scale(.85); }
-    50%{ opacity:1; transform:scale(1.15); }
-  }
-    /* Scrollbar personalizada minimalista */
     ::-webkit-scrollbar {
       width: 6px;
       height: 6px;
@@ -108,6 +67,56 @@
     }
     ::-webkit-scrollbar-thumb:hover {
       background: #3F3F46;
+    }
+    /* ===== Radar signature widget ===== */
+    .radar {
+      position: relative;
+      width: 108px;
+      height: 108px;
+      border-radius: 50%;
+      margin: 0 auto;
+      background: radial-gradient(circle, rgba(230,57,70,0.05) 0%, transparent 72%);
+      border: 1px solid #242A38;
+    }
+    .radar::before, .radar::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .radar::before { inset: 16px; }
+    .radar::after { inset: 34px; }
+    .radar-sweep {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: conic-gradient(from 0deg, rgba(230,57,70,0.55), rgba(230,57,70,0) 28%, rgba(230,57,70,0) 100%);
+      animation: sweep 4s linear infinite;
+    }
+    .radar-core {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 6px;
+      height: 6px;
+      background: #E63946;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 8px 1px rgba(230,57,70,0.7);
+    }
+    .radar-blip {
+      position: absolute;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #F4A261;
+      box-shadow: 0 0 6px 1px rgba(244,162,97,0.7);
+      animation: blip 2.6s ease-in-out infinite;
+    }
+    @keyframes sweep { to { transform: rotate(360deg); } }
+    @keyframes blip {
+      0%, 100% { opacity: .35; transform: scale(.85); }
+      50% { opacity: 1; transform: scale(1.15); }
     }
   </style>
 </head>
@@ -140,7 +149,6 @@
         <a href="monitoreo_envios.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-400 hover:text-white hover:bg-brand-card font-medium text-sm transition-all">
           <i data-lucide="package" class="w-5 h-5"></i>
           <span>Monitor de Envíos</span>
-          <span class="ml-auto bg-brand-accent/20 text-brand-accent text-xs px-2 py-0.5 rounded-full font-semibold">12</span>
         </a>
         <a href="gestion_de_personal.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-400 hover:text-white hover:bg-brand-card font-medium text-sm transition-all">
           <i data-lucide="users" class="w-5 h-5"></i>
@@ -156,9 +164,14 @@
         </a>
       </nav>
     </div>
-    <div class="mt-6 px-6">
-      <div class="bg-brand-card border border-brand-border p-4 rounded-2xl">
-        <p class="text-[10px] uppercase tracking-[0.14em] text-brand-muted text-center mb-3">Red Nacional · En vivo</p>
+
+    <!-- Widget Radar Red Local -->
+    <div class="px-6 my-auto">
+      <div onclick="openRadarMapModal()" class="bg-brand-card border border-brand-border p-4 rounded-2xl cursor-pointer hover:border-brand-accent/60 transition-all group select-none" title="Ver mapa de cadetes en vivo">
+        <div class="flex items-center justify-center gap-1 mb-3">
+          <p class="text-[10px] uppercase tracking-[0.14em] text-brand-muted text-center group-hover:text-brand-accent transition-colors">Red Local · En vivo</p>
+          <i data-lucide="maximize-2" class="w-3 h-3 text-zinc-500 group-hover:text-brand-accent transition-colors"></i>
+        </div>
         <div class="radar">
           <div class="radar-sweep"></div>
           <div class="radar-core"></div>
@@ -166,28 +179,25 @@
           <div class="radar-blip" style="top:60%; left:28%; animation-delay:.9s;"></div>
           <div class="radar-blip" style="top:70%; left:70%; animation-delay:1.6s; background:#E63946; box-shadow:0 0 6px 1px rgba(230,57,70,.7);"></div>
         </div>
-        <p class="text-center text-[11px] font-mono text-zinc-400 mt-3">42 unidades <span class="text-emerald-400 font-semibold">activas</span></p>
+        <p id="radar-cadetes-count" class="text-center text-[11px] font-mono text-zinc-400 mt-3"><span class="animate-pulse">...</span> unidades <span class="text-emerald-400 font-semibold">activas</span></p>
       </div>
     </div>
-  </div>
 
-  <!-- Perfil del Admin & Cerrar Sesión -->
-  <div class="p-4 border-t border-brand-border">
-    <div class="flex items-center gap-3 p-3 rounded-xl bg-brand-card/50 border border-brand-border/60 mb-3">
-      <div class="w-10 h-10 rounded-full bg-zinc-800 border border-brand-border flex items-center justify-center font-bold text-white text-sm">
-        AD
+    <!-- Perfil del Admin & Cerrar Sesión -->
+    <div class="p-4 border-t border-brand-border">
+      <div class="flex items-center gap-3 p-3 rounded-xl bg-brand-card/50 border border-brand-border/60 mb-3">
+        <div class="w-10 h-10 rounded-full bg-zinc-800 border border-brand-border flex items-center justify-center font-bold text-white text-sm">DP</div>
+        <div class="overflow-hidden">
+          <h4 class="text-xs font-semibold text-white truncate">Diana Parada</h4>
+          <p class="text-[11px] text-zinc-400 truncate">tododelivery24@gmail.com</p>
+        </div>
       </div>
-      <div class="overflow-hidden">
-        <h4 class="text-xs font-semibold text-white truncate">Ana Dueña</h4>
-        <p class="text-[11px] text-zinc-400 truncate">admin@tododelivery.com</p>
-      </div>
+      <a href="../index.html" class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-brand-border hover:border-brand-accent/50 text-zinc-400 hover:text-white text-xs font-semibold transition-all">
+        <i data-lucide="log-out" class="w-4 h-4"></i>
+        <span>Cerrar Sesión</span>
+      </a>
     </div>
-    <a href="index.html" class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-brand-border hover:border-brand-accent/50 text-zinc-400 hover:text-white text-xs font-semibold transition-all">
-      <i data-lucide="log-out" class="w-4 h-4"></i>
-      <span>Cerrar Sesión</span>
-    </a>
-  </div>
-</aside>
+  </aside>
 
   <!-- ========================================== -->
   <!-- 2. CONTENEDOR PRINCIPAL                   -->
@@ -213,10 +223,41 @@
           <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
           <span class="text-xs font-medium text-emerald-400">Sistema Operativo</span>
         </div>
-        <button class="relative p-2.5 rounded-xl bg-brand-card border border-brand-border text-zinc-300 hover:text-white hover:border-brand-accent/40 transition-all">
-          <i data-lucide="bell" class="w-5 h-5"></i>
-          <span class="absolute top-2 right-2 w-2 h-2 bg-brand-accent rounded-full"></span>
-        </button>
+
+        <div class="relative">
+          <button onclick="toggleNotificationsDropdown(event)" id="notifications-btn" class="relative p-2.5 rounded-xl bg-brand-card border border-brand-border text-zinc-300 hover:text-white hover:border-brand-accent/40 transition-all cursor-pointer select-none">
+            <i data-lucide="bell" class="w-5 h-5 pointer-events-none"></i>
+            <span class="absolute top-2 right-2 w-2 h-2 bg-brand-accent rounded-full animate-pulse pointer-events-none"></span>
+          </button>
+
+          <!-- Dropdown Notificaciones / Próximamente -->
+          <div id="notifications-dropdown" onclick="event.stopPropagation()" class="hidden absolute right-0 top-full mt-3 w-80 bg-brand-card border border-brand-border rounded-2xl shadow-2xl p-5 z-50 transform origin-top-right">
+            <div class="flex items-center justify-between border-b border-brand-border pb-3 mb-4">
+              <div class="flex items-center gap-2">
+                <div class="p-1.5 rounded-lg bg-brand-accent/10 text-brand-accent border border-brand-accent/20">
+                  <i data-lucide="bell" class="w-4 h-4"></i>
+                </div>
+                <h4 class="text-xs font-bold text-white uppercase tracking-wider">Notificaciones</h4>
+              </div>
+              <span class="text-[10px] font-bold bg-brand-accent/10 text-brand-accent px-2 py-0.5 rounded-full border border-brand-accent/20">Beta</span>
+            </div>
+            
+            <div class="py-4 flex flex-col items-center justify-center text-center space-y-3">
+              <div class="w-12 h-12 rounded-2xl bg-brand-dark border border-brand-border flex items-center justify-center text-brand-gold shadow-lg">
+                <i data-lucide="sparkles" class="w-6 h-6 text-brand-gold"></i>
+              </div>
+              <div>
+                <h5 class="text-sm font-extrabold text-white">Centro de Notificaciones</h5>
+                <span class="inline-block mt-1 text-[11px] font-bold tracking-wider uppercase text-brand-gold bg-brand-gold/10 px-2.5 py-0.5 rounded-full border border-brand-gold/20">
+                  Próximamente
+                </span>
+              </div>
+              <p class="text-xs text-zinc-400 max-w-[230px] leading-relaxed">
+                Alertas automáticas de pedidos entrantes, cadetes disponibles y reportes de facturación en vivo.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     </header>
 
@@ -234,10 +275,9 @@
             </div>
           </div>
           <div class="flex items-baseline gap-2">
-            <h3 class="text-2xl font-extrabold text-white">148</h3>
-            <span class="text-xs font-semibold text-emerald-400 flex items-center">+12% vs ayer</span>
+            <h3 id="kpi-pedidos-hoy" class="text-2xl font-extrabold text-white"><span class="animate-pulse">...</span></h3>
           </div>
-          <p class="text-[11px] text-zinc-500 mt-1">12 en curso en este momento</p>
+          <p id="kpi-pedidos-curso-text" class="text-[11px] text-zinc-500 mt-1">0 en curso en este momento</p>
         </div>
 
         <!-- KPI 2 -->
@@ -249,10 +289,10 @@
             </div>
           </div>
           <div class="flex items-baseline gap-2">
-            <h3 class="text-2xl font-extrabold text-white">8 / 10</h3>
-            <span class="text-xs font-semibold text-zinc-400">En línea</span>
+            <h3 id="kpi-cadetes-activos" class="text-2xl font-extrabold text-white"><span class="animate-pulse">...</span></h3>
+            <span class="text-xs font-semibold text-zinc-400">En el Radar</span>
           </div>
-          <p class="text-[11px] text-zinc-500 mt-1">2 con sesión pausada</p>
+          <p class="text-[11px] text-zinc-500 mt-1">Conectados en la app</p>
         </div>
 
         <!-- KPI 3 -->
@@ -264,10 +304,9 @@
             </div>
           </div>
           <div class="flex items-baseline gap-2">
-            <h3 class="text-2xl font-extrabold text-white">$245.800</h3>
-            <span class="text-xs font-semibold text-emerald-400">+8.4%</span>
+            <h3 id="kpi-recaudacion" class="text-2xl font-extrabold text-white"><span class="animate-pulse">...</span></h3>
           </div>
-          <p class="text-[11px] text-zinc-500 mt-1">Comisiones retenidas: $36.800</p>
+          <p class="text-[11px] text-zinc-500 mt-1">Generado en la jornada</p>
         </div>
 
         <!-- KPI 4 -->
@@ -279,10 +318,10 @@
             </div>
           </div>
           <div class="flex items-baseline gap-2">
-            <h3 class="text-2xl font-extrabold text-white">28 min</h3>
-            <span class="text-xs font-semibold text-emerald-400">-3 min</span>
+            <h3 id="kpi-tiempo-promedio" class="text-2xl font-extrabold text-white"><span class="animate-pulse">...</span></h3>
+            <span id="kpi-tiempo-diff" class="text-xs font-semibold text-emerald-400"></span>
           </div>
-          <p class="text-[11px] text-zinc-500 mt-1">Rendimiento óptimo de flota</p>
+          <p id="kpi-tiempo-subtext" class="text-[11px] text-zinc-500 mt-1">Calculado por pedido</p>
         </div>
       </div>
 
@@ -310,49 +349,8 @@
                   <th class="py-3 px-3 text-right">Total</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-brand-border/60 text-sm">
-                <tr class="hover:bg-brand-dark/50 transition-colors">
-                  <td class="py-3.5 px-3 font-semibold text-white">#TD-4892</td>
-                  <td class="py-3.5 px-3">
-                    <span class="block text-zinc-200">María Gómez</span>
-                    <span class="text-[11px] text-zinc-500">Burger House</span>
-                  </td>
-                  <td class="py-3.5 px-3 text-zinc-300">Carlos R.</td>
-                  <td class="py-3.5 px-3">
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                      <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> En camino
-                    </span>
-                  </td>
-                  <td class="py-3.5 px-3 text-right font-semibold text-white">$4.500</td>
-                </tr>
-                <tr class="hover:bg-brand-dark/50 transition-colors">
-                  <td class="py-3.5 px-3 font-semibold text-white">#TD-4891</td>
-                  <td class="py-3.5 px-3">
-                    <span class="block text-zinc-200">Lucas Pérez</span>
-                    <span class="text-[11px] text-zinc-500">Sushi Master</span>
-                  </td>
-                  <td class="py-3.5 px-3 text-zinc-300">Esteban M.</td>
-                  <td class="py-3.5 px-3">
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Entregado
-                    </span>
-                  </td>
-                  <td class="py-3.5 px-3 text-right font-semibold text-white">$9.200</td>
-                </tr>
-                <tr class="hover:bg-brand-dark/50 transition-colors">
-                  <td class="py-3.5 px-3 font-semibold text-white">#TD-4890</td>
-                  <td class="py-3.5 px-3">
-                    <span class="block text-zinc-200">Sofía Ruiz</span>
-                    <span class="text-[11px] text-zinc-500">Café Central</span>
-                  </td>
-                  <td class="py-3.5 px-3 text-zinc-500 italic">Asignando...</td>
-                  <td class="py-3.5 px-3">
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                      <span class="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></span> Buscando cadete
-                    </span>
-                  </td>
-                  <td class="py-3.5 px-3 text-right font-semibold text-white">$2.800</td>
-                </tr>
+              <tbody id="dashboard-pedidos-tbody" class="divide-y divide-brand-border/60 text-sm">
+                <!-- Se llenará con JS -->
               </tbody>
             </table>
           </div>
@@ -363,53 +361,13 @@
           <div>
             <div class="flex items-center justify-between mb-4">
               <h3 class="text-base font-bold text-white">Flota de Cadetes</h3>
-              <span class="text-xs bg-brand-dark px-2.5 py-1 rounded-lg text-zinc-400 border border-brand-border font-medium">8 Activos</span>
+              <span id="flota-badge-activos" class="text-xs bg-brand-dark px-2.5 py-1 rounded-lg text-zinc-400 border border-brand-border font-medium"><span id="flota-count">0</span> Activos</span>
             </div>
             <p class="text-xs text-brand-muted mb-5">Control rápido de accesos y estados actuales en calle.</p>
 
             <!-- Lista de Cadetes -->
-            <div class="space-y-3">
-              <div class="flex items-center justify-between p-3 rounded-xl bg-brand-dark/60 border border-brand-border/60">
-                <div class="flex items-center gap-3">
-                  <div class="relative">
-                    <div class="w-9 h-9 rounded-full bg-zinc-800 flex items-center justify-center font-bold text-xs text-white">CR</div>
-                    <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-brand-dark"></span>
-                  </div>
-                  <div>
-                    <h5 class="text-xs font-bold text-white">Carlos Ramírez</h5>
-                    <p class="text-[10px] text-zinc-400">Moto • En viaje #4892</p>
-                  </div>
-                </div>
-                <span class="text-[11px] text-emerald-400 font-medium bg-emerald-500/10 px-2 py-0.5 rounded">En ruta</span>
-              </div>
-
-              <div class="flex items-center justify-between p-3 rounded-xl bg-brand-dark/60 border border-brand-border/60">
-                <div class="flex items-center gap-3">
-                  <div class="relative">
-                    <div class="w-9 h-9 rounded-full bg-zinc-800 flex items-center justify-center font-bold text-xs text-white">EM</div>
-                    <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-brand-dark"></span>
-                  </div>
-                  <div>
-                    <h5 class="text-xs font-bold text-white">Esteban Morales</h5>
-                    <p class="text-[10px] text-zinc-400">Bicicleta • Libre</p>
-                  </div>
-                </div>
-                <span class="text-[11px] text-zinc-400 font-medium bg-zinc-800 px-2 py-0.5 rounded">Disponible</span>
-              </div>
-
-              <div class="flex items-center justify-between p-3 rounded-xl bg-brand-dark/60 border border-brand-border/60">
-                <div class="flex items-center gap-3">
-                  <div class="relative">
-                    <div class="w-9 h-9 rounded-full bg-zinc-800 flex items-center justify-center font-bold text-xs text-white">JL</div>
-                    <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-zinc-600 border-2 border-brand-dark"></span>
-                  </div>
-                  <div>
-                    <h5 class="text-xs font-bold text-white">Julián López</h5>
-                    <p class="text-[10px] text-zinc-500">Moto • Fuera de servicio</p>
-                  </div>
-                </div>
-                <span class="text-[11px] text-zinc-500 font-medium bg-zinc-800/50 px-2 py-0.5 rounded">Offline</span>
-              </div>
+            <div id="dashboard-flota-container" class="space-y-3">
+              <!-- Se llenará con JS -->
             </div>
           </div>
 
@@ -429,6 +387,7 @@
   <!-- ========================================== -->
   <!-- 3. CONTROLADOR JS                          -->
   <!-- ========================================== -->
+  <script type="module" src="../scripts/dashboard_api.js"></script>
   <script>
     // Inicializar iconos Lucide
     lucide.createIcons();
@@ -438,6 +397,29 @@
       const sidebar = document.getElementById('sidebar');
       sidebar.classList.toggle('-translate-x-full');
     }
+
+    // Toggle Notificaciones Dropdown
+    window.toggleNotificationsDropdown = function(event) {
+      if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+      }
+      const dropdown = document.getElementById('notifications-dropdown');
+      if (dropdown) {
+        dropdown.classList.toggle('hidden');
+        if (!dropdown.classList.contains('hidden') && window.lucide) {
+          window.lucide.createIcons();
+        }
+      }
+    };
+
+    // Cerrar dropdown al hacer clic fuera
+    document.addEventListener('click', (e) => {
+      const dropdown = document.getElementById('notifications-dropdown');
+      if (dropdown && !dropdown.classList.contains('hidden')) {
+        dropdown.classList.add('hidden');
+      }
+    });
 
     // Transición de entrada y salida de página
     document.addEventListener("DOMContentLoaded", () => {
@@ -458,5 +440,6 @@
       });
     });
   </script>
+  <script type="module" src="../scripts/sidebar_radar.js"></script>
 </body>
 </html>

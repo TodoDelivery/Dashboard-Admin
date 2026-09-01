@@ -127,17 +127,17 @@
     </div>
 
     <form id="admin-login-form" class="space-y-5" onsubmit="handleLogin(event)">
-      <!-- Email -->
+      <!-- Email / User -->
       <div class="space-y-1.5">
-        <label for="email" class="block text-xs font-semibold uppercase tracking-wider text-zinc-400">Correo Electrónico</label>
+        <label for="email" class="block text-xs font-semibold uppercase tracking-wider text-zinc-400">Usuario</label>
         <div class="relative flex items-center">
           <span class="absolute left-4 text-zinc-500">
-            <i data-lucide="mail" class="w-5 h-5"></i>
+            <i data-lucide="user" class="w-5 h-5"></i>
           </span>
           <input 
-            type="email" 
+            type="text" 
             id="email" 
-            placeholder="admin@tododelivery.com" 
+            placeholder="Diana" 
             required
             class="w-full bg-brand-dark/90 border border-brand-border text-white text-sm rounded-xl pl-12 pr-4 py-3.5 placeholder-zinc-600 focus:outline-none focus:border-brand-accent focus:ring-1 focus:ring-brand-accent transition-all"
           />
@@ -244,32 +244,61 @@
       lucide.createIcons();
     }
 
-    function handleLogin(event) {
-  event.preventDefault();
+    async function sha256(message) {
+      const msgBuffer = new TextEncoder().encode(message);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      return hashHex;
+    }
 
-  const btn = document.getElementById("submit-btn");
-  const defaultState = document.getElementById("btn-default");
-  const loadingState = document.getElementById("btn-loading");
+    async function handleLogin(event) {
+      event.preventDefault();
 
-  btn.disabled = true;
+      const user = document.getElementById("email").value;
+      const pass = document.getElementById("password").value;
 
-  // 1. Cambia el botón a fondo negro con borde sobrio y remueve el fondo/sombra de acento
-  btn.classList.remove("bg-brand-accent", "hover:bg-brand-accentHover", "shadow-brand-accent/25");
-  btn.classList.add("bg-black", "border-zinc-800", "shadow-black/50");
+      const btn = document.getElementById("submit-btn");
+      const defaultState = document.getElementById("btn-default");
+      const loadingState = document.getElementById("btn-loading");
 
-  // 2. Oculta el texto por defecto y muestra la animación de carga
-  defaultState.classList.add("opacity-0", "scale-95");
-  loadingState.classList.remove("opacity-0", "pointer-events-none");
-  loadingState.classList.add("opacity-100");
+      btn.disabled = true;
 
-  // 3. Redirección fluida
-  setTimeout(() => {
-    document.body.style.opacity = "0";
-    setTimeout(() => {
-      window.location.href = "pagina_inicio.html";
-    }, 300);
-  }, 2700);
-}
+      // 1. Cambia el botón a fondo negro con borde sobrio y remueve el fondo/sombra de acento
+      btn.classList.remove("bg-brand-accent", "hover:bg-brand-accentHover", "shadow-brand-accent/25");
+      btn.classList.add("bg-black", "border-zinc-800", "shadow-black/50");
+
+      // 2. Oculta el texto por defecto y muestra la animación de carga
+      defaultState.classList.add("opacity-0", "scale-95");
+      loadingState.classList.remove("opacity-0", "pointer-events-none");
+      loadingState.classList.add("opacity-100");
+
+      // Validar credenciales
+      const passHash = await sha256(pass);
+      const targetHash = await sha256("tododelivery2026");
+
+      if (user !== "Diana" || passHash !== targetHash) {
+        setTimeout(() => {
+          alert("Credenciales incorrectas");
+          // Revertir botón
+          btn.disabled = false;
+          btn.classList.add("bg-brand-accent", "hover:bg-brand-accentHover", "shadow-brand-accent/25");
+          btn.classList.remove("bg-black", "border-zinc-800", "shadow-black/50");
+          defaultState.classList.remove("opacity-0", "scale-95");
+          loadingState.classList.add("opacity-0", "pointer-events-none");
+          loadingState.classList.remove("opacity-100");
+        }, 1000);
+        return;
+      }
+
+      // 3. Redirección fluida
+      setTimeout(() => {
+        document.body.style.opacity = "0";
+        setTimeout(() => {
+          window.location.href = "Templates/pagina_inicio.html";
+        }, 300);
+      }, 1500);
+    }
   </script>
 </body>
 </html>

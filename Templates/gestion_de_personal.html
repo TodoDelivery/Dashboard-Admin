@@ -69,45 +69,55 @@
       background: #3F3F46;
     }
     /* ===== Radar signature widget ===== */
-  .radar{
-    position: relative;
-    width: 108px;
-    height: 108px;
-    border-radius: 50%;
-    margin: 0 auto;
-    background:
-      radial-gradient(circle, rgba(230,57,70,0.05) 0%, transparent 72%);
-    border: 1px solid #242A38;
-  }
-  .radar::before, .radar::after{
-    content:"";
-    position:absolute; border-radius:50%;
-    border: 1px solid rgba(255,255,255,0.05);
-  }
-  .radar::before{ inset: 16px; }
-  .radar::after{ inset: 34px; }
-  .radar-sweep{
-    position:absolute; inset:0; border-radius:50%;
-    background: conic-gradient(from 0deg, rgba(230,57,70,0.55), rgba(230,57,70,0) 28%, rgba(230,57,70,0) 100%);
-    animation: sweep 4s linear infinite;
-  }
-  .radar-core{
-    position:absolute; top:50%; left:50%; width:6px; height:6px;
-    background: #E63946; border-radius:50%;
-    transform: translate(-50%,-50%);
-    box-shadow: 0 0 8px 1px rgba(230,57,70,0.7);
-  }
-  .radar-blip{
-    position:absolute; width:5px; height:5px; border-radius:50%;
-    background: #F4A261;
-    box-shadow: 0 0 6px 1px rgba(244,162,97,0.7);
-    animation: blip 2.6s ease-in-out infinite;
-  }
-  @keyframes sweep{ to{ transform: rotate(360deg); } }
-  @keyframes blip{
-    0%,100%{ opacity:.35; transform:scale(.85); }
-    50%{ opacity:1; transform:scale(1.15); }
-  }
+    .radar {
+      position: relative;
+      width: 108px;
+      height: 108px;
+      border-radius: 50%;
+      margin: 0 auto;
+      background: radial-gradient(circle, rgba(230,57,70,0.05) 0%, transparent 72%);
+      border: 1px solid #242A38;
+    }
+    .radar::before, .radar::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .radar::before { inset: 16px; }
+    .radar::after { inset: 34px; }
+    .radar-sweep {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: conic-gradient(from 0deg, rgba(230,57,70,0.55), rgba(230,57,70,0) 28%, rgba(230,57,70,0) 100%);
+      animation: sweep 4s linear infinite;
+    }
+    .radar-core {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 6px;
+      height: 6px;
+      background: #E63946;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 8px 1px rgba(230,57,70,0.7);
+    }
+    .radar-blip {
+      position: absolute;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #F4A261;
+      box-shadow: 0 0 6px 1px rgba(244,162,97,0.7);
+      animation: blip 2.6s ease-in-out infinite;
+    }
+    @keyframes sweep { to { transform: rotate(360deg); } }
+    @keyframes blip {
+      0%, 100% { opacity: .35; transform: scale(.85); }
+      50% { opacity: 1; transform: scale(1.15); }
+    }
   </style>
 </head>
 <body class="min-h-screen font-sans flex flex-col md:flex-row overflow-x-hidden selection:bg-brand-accent selection:text-white">
@@ -117,6 +127,7 @@
   <!-- ========================================== -->
   <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-64 bg-brand-dark border-r border-brand-border flex flex-col justify-between transition-transform duration-300 -translate-x-full md:translate-x-0">
     <div>
+      <!-- Logo Header -->
       <div class="h-20 flex items-center px-6 border-b border-brand-border gap-3">
         <div class="flex items-center justify-center w-10 h-10 bg-brand-accent/10 border border-brand-accent/20 rounded-xl">
           <i data-lucide="zap" class="w-5 h-5 text-brand-accent fill-brand-accent"></i>
@@ -129,6 +140,7 @@
         </div>
       </div>
 
+      <!-- Menú de Opciones -->
       <nav class="p-4 space-y-1.5">
         <a href="pagina_inicio.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-400 hover:text-white hover:bg-brand-card font-medium text-sm transition-all">
           <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
@@ -142,7 +154,6 @@
         <a href="gestion_de_personal.html" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-brand-accent text-white font-medium text-sm shadow-lg shadow-brand-accent/20 transition-all">
           <i data-lucide="users" class="w-5 h-5"></i>
           <span>Gestión de Cadetes</span>
-          <span id="cadetes-badge" class="ml-auto bg-white/20 text-white text-xs px-2 py-0.5 rounded-full font-semibold">4</span>
         </a>
         <a href="ajustes.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-400 hover:text-white hover:bg-brand-card font-medium text-sm transition-all">
           <i data-lucide="map-pin" class="w-5 h-5"></i>
@@ -154,9 +165,14 @@
         </a>
       </nav>
     </div>
-    <div class="mt-6 px-6">
-      <div class="bg-brand-card border border-brand-border p-4 rounded-2xl">
-        <p class="text-[10px] uppercase tracking-[0.14em] text-brand-muted text-center mb-3">Red Nacional · En vivo</p>
+
+    <!-- Widget Radar Red Local -->
+    <div class="px-6 my-auto">
+      <div onclick="openRadarMapModal()" class="bg-brand-card border border-brand-border p-4 rounded-2xl cursor-pointer hover:border-brand-accent/60 transition-all group select-none" title="Ver mapa de cadetes en vivo">
+        <div class="flex items-center justify-center gap-1 mb-3">
+          <p class="text-[10px] uppercase tracking-[0.14em] text-brand-muted text-center group-hover:text-brand-accent transition-colors">Red Local · En vivo</p>
+          <i data-lucide="maximize-2" class="w-3 h-3 text-zinc-500 group-hover:text-brand-accent transition-colors"></i>
+        </div>
         <div class="radar">
           <div class="radar-sweep"></div>
           <div class="radar-core"></div>
@@ -164,25 +180,23 @@
           <div class="radar-blip" style="top:60%; left:28%; animation-delay:.9s;"></div>
           <div class="radar-blip" style="top:70%; left:70%; animation-delay:1.6s; background:#E63946; box-shadow:0 0 6px 1px rgba(230,57,70,.7);"></div>
         </div>
-        <p class="text-center text-[11px] font-mono text-zinc-400 mt-3">42 unidades <span class="text-emerald-400 font-semibold">activas</span></p>
+        <p id="radar-cadetes-count" class="text-center text-[11px] font-mono text-zinc-400 mt-3"><span class="animate-pulse">...</span> unidades <span class="text-emerald-400 font-semibold">activas</span></p>
       </div>
     </div>
-  </div>
 
-  <div class="p-4 border-t border-brand-border">
-    <div class="flex items-center gap-3 p-3 rounded-xl bg-brand-card/50 border border-brand-border/60 mb-3">
-      <div class="w-10 h-10 rounded-full bg-zinc-800 border border-brand-border flex items-center justify-center font-bold text-white text-sm">
-        AD
+    <!-- Perfil Admin -->
+    <div class="p-4 border-t border-brand-border">
+      <div class="flex items-center gap-3 p-3 rounded-xl bg-brand-card/50 border border-brand-border/60 mb-3">
+        <div class="w-10 h-10 rounded-full bg-zinc-800 border border-brand-border flex items-center justify-center font-bold text-white text-sm">DP</div>
+        <div class="overflow-hidden">
+          <h4 class="text-xs font-semibold text-white truncate">Diana Parada</h4>
+          <p class="text-[11px] text-zinc-400 truncate">tododelivery24@gmail.com</p>
+        </div>
       </div>
-      <div class="overflow-hidden">
-        <h4 class="text-xs font-semibold text-white truncate">Ana Dueña</h4>
-        <p class="text-[11px] text-zinc-400 truncate">admin@tododelivery.com</p>
-      </div>
-    </div>
-    <a href="index.html" class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-brand-border hover:border-brand-accent/50 text-zinc-400 hover:text-white text-xs font-semibold transition-all">
-      <i data-lucide="log-out" class="w-4 h-4"></i>
-      <span>Cerrar Sesión</span>
-    </a>
+      <a href="index.html" class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-brand-border hover:border-brand-accent/50 text-zinc-400 hover:text-white text-xs font-semibold transition-all">
+        <i data-lucide="log-out" class="w-4 h-4"></i>
+        <span>Cerrar Sesión</span>
+      </a>
     </div>
   </aside>
 
@@ -203,50 +217,19 @@
         </div>
       </div>
 
-      <!-- Botón Nueva Credencial -->
+      <!-- Botón Registrar Cadete -->
       <button onclick="openModal()" class="flex items-center gap-2 bg-brand-accent hover:bg-brand-accentHover text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-lg shadow-brand-accent/20 transition-all active:scale-[0.98]">
         <i data-lucide="user-plus" class="w-4 h-4"></i>
-        <span>Generar Credencial</span>
+        <span>Registrar un cadete</span>
       </button>
     </header>
 
     <!-- Main Body -->
     <main class="flex-1 p-6 space-y-6 max-w-7xl w-full mx-auto">
 
-      <!-- Métricas Rápidas de Flota -->
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div class="bg-brand-card border border-brand-border p-4 rounded-2xl flex items-center justify-between">
-          <div>
-            <p class="text-xs font-semibold uppercase text-brand-muted">Total Registrados</p>
-            <h3 id="stat-total" class="text-2xl font-extrabold text-white mt-1">4</h3>
-          </div>
-          <div class="p-3 bg-zinc-800 rounded-xl text-zinc-300">
-            <i data-lucide="users" class="w-5 h-5"></i>
-          </div>
-        </div>
-        <div class="bg-brand-card border border-brand-border p-4 rounded-2xl flex items-center justify-between">
-          <div>
-            <p class="text-xs font-semibold uppercase text-brand-muted">Habilitados / Activos</p>
-            <h3 id="stat-active" class="text-2xl font-extrabold text-emerald-400 mt-1">3</h3>
-          </div>
-          <div class="p-3 bg-emerald-500/10 rounded-xl text-emerald-400">
-            <i data-lucide="shield-check" class="w-5 h-5"></i>
-          </div>
-        </div>
-        <div class="bg-brand-card border border-brand-border p-4 rounded-2xl flex items-center justify-between">
-          <div>
-            <p class="text-xs font-semibold uppercase text-brand-muted">Accesos Revocados</p>
-            <h3 id="stat-revoked" class="text-2xl font-extrabold text-red-400 mt-1">1</h3>
-          </div>
-          <div class="p-3 bg-red-500/10 rounded-xl text-red-400">
-            <i data-lucide="shield-alert" class="w-5 h-5"></i>
-          </div>
-        </div>
-      </div>
-
-      <!-- Barra de Búsqueda y Filtros -->
-      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-brand-card border border-brand-border p-4 rounded-2xl">
-        <div class="relative w-full sm:w-80">
+      <!-- Barra de Búsqueda -->
+      <div class="flex items-center justify-between gap-4 bg-brand-card border border-brand-border p-4 rounded-2xl">
+        <div class="relative w-full max-w-md">
           <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500">
             <i data-lucide="search" class="w-4 h-4"></i>
           </span>
@@ -258,17 +241,9 @@
             class="w-full bg-brand-dark border border-brand-border text-white text-xs rounded-xl pl-10 pr-4 py-2.5 placeholder-zinc-500 focus:outline-none focus:border-brand-accent transition-all"
           />
         </div>
-        <div class="flex items-center gap-2 w-full sm:w-auto">
-          <select id="vehicle-filter" onchange="filterCadetes()" class="bg-brand-dark border border-brand-border text-zinc-300 text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:border-brand-accent">
-            <option value="all">Todos los vehículos</option>
-            <option value="Moto">Moto</option>
-            <option value="Bicicleta">Bicicleta</option>
-            <option value="Auto">Auto</option>
-          </select>
-        </div>
       </div>
 
-      <!-- Tabla de Cadetes y Control de Credenciales -->
+      <!-- Tabla de Cadetes -->
       <div class="bg-brand-card border border-brand-border rounded-2xl overflow-hidden shadow-xl">
         <div class="overflow-x-auto">
           <table class="w-full text-left border-collapse">
@@ -277,8 +252,7 @@
                 <th class="py-3.5 px-4">Cadete</th>
                 <th class="py-3.5 px-4">Credenciales / Usuario</th>
                 <th class="py-3.5 px-4">Vehículo & Patente</th>
-                <th class="py-3.5 px-4">Estado de Acceso</th>
-                <th class="py-3.5 px-4 text-right">Acciones de Control</th>
+                <th class="py-3.5 px-4 text-right">Acciones</th>
               </tr>
             </thead>
             <tbody id="cadetes-table-body" class="divide-y divide-brand-border/60 text-sm">
@@ -293,7 +267,7 @@
   </div>
 
   <!-- ========================================== -->
-  <!-- 3. MODAL: CREAR CREDENCIAL DE CADETE       -->
+  <!-- 3. MODAL: REGISTRAR CADETE                -->
   <!-- ========================================== -->
   <div id="modal-backdrop" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
     <div id="modal-container" class="w-full max-w-lg bg-brand-card border border-brand-border rounded-3xl p-6 sm:p-8 shadow-2xl scale-95 transition-transform duration-300 space-y-6">
@@ -305,8 +279,8 @@
             <i data-lucide="key-round" class="w-5 h-5"></i>
           </div>
           <div>
-            <h3 class="text-base font-bold text-white">Generar Acceso para Cadete</h3>
-            <p class="text-xs text-brand-muted">Crea las credenciales maestras para que ingrese a la PWA</p>
+            <h3 class="text-base font-bold text-white">Registrar Cadete</h3>
+            <p class="text-xs text-brand-muted">Añade un nuevo repartidor a la plataforma</p>
           </div>
         </div>
         <button onclick="closeModal()" class="text-zinc-500 hover:text-white p-1 rounded-lg">
@@ -362,7 +336,7 @@
 
         <div class="flex items-center justify-end gap-3 pt-4 border-t border-brand-border">
           <button type="button" onclick="closeModal()" class="px-4 py-2.5 rounded-xl border border-brand-border text-xs text-zinc-400 hover:text-white transition-all">Cancelar</button>
-          <button type="submit" class="px-5 py-2.5 rounded-xl bg-brand-accent hover:bg-brand-accentHover text-white text-xs font-bold shadow-lg shadow-brand-accent/20 transition-all">Emitir Credenciales</button>
+          <button type="submit" class="px-5 py-2.5 rounded-xl bg-brand-accent hover:bg-brand-accentHover text-white text-xs font-bold shadow-lg shadow-brand-accent/20 transition-all">Registrar Cadete</button>
         </div>
       </form>
     </div>
@@ -402,20 +376,19 @@
   <!-- 5. LÓGICA JAVASCRIPT                       -->
   <!-- ========================================== -->
   <script>
-    // Estado inicial simulado de cadetes
-    let cadetes = [
-      { id: 1, name: "Carlos Ramírez", dni: "38.120.450", user: "carlos.r", vehicle: "Moto", plate: "A091KLS", active: true, online: true },
-      { id: 2, name: "Esteban Morales", dni: "41.980.112", user: "esteban.m", vehicle: "Bicicleta", plate: "-", active: true, online: true },
-      { id: 3, name: "Julián López", dni: "35.204.991", user: "julian.l", vehicle: "Moto", plate: "A112OPQ", active: true, online: false },
-      { id: 4, name: "Matías Vega", dni: "33.890.312", user: "matias.v", vehicle: "Auto", plate: "AF432ZX", active: false, online: false } // Acceso revocado
-    ];
+    // Inicializar iconos Lucide
+    lucide.createIcons();
 
+    // Toggle Sidebar para dispositivos móviles
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      sidebar.classList.toggle('-translate-x-full');
+    }
+
+    // Transición de entrada y salida de página
     document.addEventListener("DOMContentLoaded", () => {
       document.body.classList.add("page-loaded");
-      renderTable();
-      lucide.createIcons();
 
-      // Transición de salida de página al hacer clic en enlaces
       document.addEventListener("click", (e) => {
         const link = e.target.closest("a");
         if (link) {
@@ -425,173 +398,13 @@
             document.body.classList.remove("page-loaded");
             setTimeout(() => {
               window.location.href = href;
-            }, 250);
+            }, 300);
           }
         }
       });
     });
-
-    function toggleSidebar() {
-      document.getElementById('sidebar').classList.toggle('-translate-x-full');
-    }
-
-    // Renderizado de tabla y KPIs
-    function renderTable(data = cadetes) {
-      const tbody = document.getElementById("cadetes-table-body");
-      tbody.innerHTML = "";
-
-      data.forEach(c => {
-        const tr = document.createElement("tr");
-        tr.className = "hover:bg-brand-dark/40 transition-colors";
-        
-        tr.innerHTML = `
-          <td class="py-4 px-4">
-            <div class="flex items-center gap-3">
-              <div class="w-9 h-9 rounded-full bg-zinc-800 border border-brand-border flex items-center justify-center font-bold text-xs text-white">
-                ${c.name.split(' ').map(n=>n[0]).join('')}
-              </div>
-              <div>
-                <span class="block font-semibold text-white">${c.name}</span>
-                <span class="text-[11px] text-zinc-500">DNI: ${c.dni}</span>
-              </div>
-            </div>
-          </td>
-          <td class="py-4 px-4">
-            <span class="text-xs font-mono text-zinc-300 block">@${c.user}</span>
-            <span class="text-[10px] text-zinc-500">PWA Login</span>
-          </td>
-          <td class="py-4 px-4">
-            <div class="flex items-center gap-1.5">
-              <i data-lucide="${c.vehicle === 'Moto' ? 'bike' : c.vehicle === 'Bicicleta' ? 'footprints' : 'car'}" class="w-4 h-4 text-zinc-400"></i>
-              <span class="text-xs text-zinc-300 font-medium">${c.vehicle}</span>
-            </div>
-            <span class="text-[10px] text-zinc-500 font-mono">${c.plate !== '-' ? 'Patente: ' + c.plate : 'Sin patente'}</span>
-          </td>
-          <td class="py-4 px-4">
-            ${c.active 
-              ? `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                   <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Habilitado
-                 </span>`
-              : `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/20">
-                   <span class="w-1.5 h-1.5 rounded-full bg-red-400"></span> Revocado
-                 </span>`
-            }
-          </td>
-          <td class="py-4 px-4 text-right">
-            <div class="flex items-center justify-end gap-2">
-              <button onclick="toggleAccess(${c.id})" title="${c.active ? 'Revocar Acceso' : 'Habilitar Acceso'}" class="p-2 rounded-xl border ${c.active ? 'border-red-500/30 text-red-400 hover:bg-red-500/10' : 'border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10'} transition-all">
-                <i data-lucide="${c.active ? 'shield-off' : 'shield-check'}" class="w-4 h-4"></i>
-              </button>
-              <button onclick="resetPassword('${c.user}')" title="Resetear Clave" class="p-2 rounded-xl border border-brand-border text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all">
-                <i data-lucide="key" class="w-4 h-4"></i>
-              </button>
-            </div>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-
-      // Actualizar KPIs
-      document.getElementById("stat-total").innerText = cadetes.length;
-      document.getElementById("stat-active").innerText = cadetes.filter(c => c.active).length;
-      document.getElementById("stat-revoked").innerText = cadetes.filter(c => !c.active).length;
-      document.getElementById("cadetes-badge").innerText = cadetes.length;
-
-      lucide.createIcons();
-    }
-
-    // Alternar permiso (Revocar / Habilitar)
-    function toggleAccess(id) {
-      cadetes = cadetes.map(c => {
-        if (c.id === id) {
-          return { ...c, active: !c.active };
-        }
-        return c;
-      });
-      filterCadetes();
-    }
-
-    // Filtrar en tiempo real
-    function filterCadetes() {
-      const search = document.getElementById("search-input").value.toLowerCase();
-      const vehicle = document.getElementById("vehicle-filter").value;
-
-      const filtered = cadetes.filter(c => {
-        const matchesSearch = c.name.toLowerCase().includes(search) || c.dni.includes(search) || c.user.toLowerCase().includes(search);
-        const matchesVehicle = vehicle === 'all' || c.vehicle === vehicle;
-        return matchesSearch && matchesVehicle;
-      });
-
-      renderTable(filtered);
-    }
-
-    // Modal Crear Cadete
-    function openModal() {
-      const m = document.getElementById('modal-backdrop');
-      const c = document.getElementById('modal-container');
-      m.classList.remove('hidden');
-      setTimeout(() => {
-        m.classList.add('opacity-100');
-        c.classList.remove('scale-95');
-      }, 10);
-    }
-
-    function closeModal() {
-      const m = document.getElementById('modal-backdrop');
-      const c = document.getElementById('modal-container');
-      m.classList.remove('opacity-100');
-      c.classList.add('scale-95');
-      setTimeout(() => m.classList.add('hidden'), 300);
-      document.getElementById('cadete-form').reset();
-    }
-
-    function handleCreateCadete(e) {
-      e.preventDefault();
-      const name = document.getElementById('input-name').value;
-      const dni = document.getElementById('input-dni').value;
-      const vehicle = document.getElementById('input-vehicle').value;
-      const plate = document.getElementById('input-plate').value || '-';
-      const user = document.getElementById('input-username').value;
-      const pass = document.getElementById('input-password').value;
-
-      const newCadete = {
-        id: Date.now(),
-        name,
-        dni,
-        user,
-        vehicle,
-        plate,
-        active: true,
-        online: false
-      };
-
-      cadetes.unshift(newCadete);
-      closeModal();
-      renderTable();
-
-      // Mostrar modal con los datos generados
-      document.getElementById('copy-user').innerText = user;
-      document.getElementById('copy-pass').innerText = pass;
-      openCredentialModal();
-    }
-
-    function openCredentialModal() {
-      const m = document.getElementById('credential-modal');
-      m.classList.remove('hidden');
-      setTimeout(() => m.classList.add('opacity-100'), 10);
-    }
-
-    function closeCredentialModal() {
-      const m = document.getElementById('credential-modal');
-      m.classList.remove('opacity-100');
-      setTimeout(() => m.classList.add('hidden'), 300);
-    }
-
-    function resetPassword(user) {
-      document.getElementById('copy-user').innerText = user;
-      document.getElementById('copy-pass').innerText = "TodoReset" + Math.floor(100 + Math.random() * 900) + "!";
-      openCredentialModal();
-    }
   </script>
+  <script type="module" src="../scripts/cadetes_api.js"></script>
+  <script type="module" src="../scripts/sidebar_radar.js"></script>
 </body>
 </html>

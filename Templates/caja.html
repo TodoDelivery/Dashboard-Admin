@@ -152,10 +152,13 @@
           <span>Reportes y Caja</span>
         </a>
       </nav>
-    </div>
-    <div class="mt-6 px-6">
-      <div class="bg-brand-card border border-brand-border p-4 rounded-2xl">
-        <p class="text-[10px] uppercase tracking-[0.14em] text-brand-muted text-center mb-3">Red Nacional · En vivo</p>
+    <!-- Widget Radar Red Local -->
+    <div class="px-6 my-auto">
+      <div onclick="openRadarMapModal()" class="bg-brand-card border border-brand-border p-4 rounded-2xl cursor-pointer hover:border-brand-accent/60 transition-all group select-none" title="Ver mapa de cadetes en vivo">
+        <div class="flex items-center justify-center gap-1 mb-3">
+          <p class="text-[10px] uppercase tracking-[0.14em] text-brand-muted text-center group-hover:text-brand-accent transition-colors">Red Local · En vivo</p>
+          <i data-lucide="maximize-2" class="w-3 h-3 text-zinc-500 group-hover:text-brand-accent transition-colors"></i>
+        </div>
         <div class="radar">
           <div class="radar-sweep"></div>
           <div class="radar-core"></div>
@@ -163,22 +166,20 @@
           <div class="radar-blip" style="top:60%; left:28%; animation-delay:.9s;"></div>
           <div class="radar-blip" style="top:70%; left:70%; animation-delay:1.6s; background:#E63946; box-shadow:0 0 6px 1px rgba(230,57,70,.7);"></div>
         </div>
-        <p class="text-center text-[11px] font-mono text-zinc-400 mt-3">42 unidades <span class="text-emerald-400 font-semibold">activas</span></p>
+        <p id="radar-cadetes-count" class="text-center text-[11px] font-mono text-zinc-400 mt-3"><span class="animate-pulse">...</span> unidades <span class="text-emerald-400 font-semibold">activas</span></p>
       </div>
     </div>
   </div>
 
   <div class="p-4 border-t border-brand-border">
     <div class="flex items-center gap-3 p-3 rounded-xl bg-brand-card/50 border border-brand-border/60 mb-3">
-      <div class="w-10 h-10 rounded-full bg-zinc-800 border border-brand-border flex items-center justify-center font-bold text-white text-sm">
-        AD
-      </div>
+      <div class="w-10 h-10 rounded-full bg-zinc-800 border border-brand-border flex items-center justify-center font-bold text-white text-sm">DP</div>
       <div class="overflow-hidden">
-        <h4 class="text-xs font-semibold text-white truncate">Ana Dueña</h4>
-        <p class="text-[11px] text-zinc-400 truncate">admin@tododelivery.com</p>
+        <h4 class="text-xs font-semibold text-white truncate">Diana Parada</h4>
+        <p class="text-[11px] text-zinc-400 truncate">tododelivery24@gmail.com</p>
       </div>
     </div>
-    <a href="index.html" class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-brand-border hover:border-brand-accent/50 text-zinc-400 hover:text-white text-xs font-semibold transition-all">
+    <a href="../index.html" class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-brand-border hover:border-brand-accent/50 text-zinc-400 hover:text-white text-xs font-semibold transition-all">
       <i data-lucide="log-out" class="w-4 h-4"></i>
       <span>Cerrar Sesión</span>
     </a>
@@ -229,7 +230,7 @@
               <i data-lucide="badge-dollar-sign" class="w-5 h-5"></i>
             </div>
           </div>
-          <h3 id="card-total-sales" class="text-2xl font-extrabold text-white">$245.800</h3>
+          <h3 id="card-total-sales" class="text-2xl font-extrabold text-white"><span class="animate-pulse">...</span></h3>
           <p class="text-[11px] text-zinc-400 mt-1">Efectivo + Online procesado</p>
         </div>
 
@@ -241,7 +242,7 @@
               <i data-lucide="wallet" class="w-5 h-5"></i>
             </div>
           </div>
-          <h3 id="card-cash-street" class="text-2xl font-extrabold text-brand-gold">$114.200</h3>
+          <h3 id="card-cash-street" class="text-2xl font-extrabold text-brand-gold"><span class="animate-pulse">...</span></h3>
           <p class="text-[11px] text-zinc-400 mt-1">Dinero físico en mano de cadetes</p>
         </div>
 
@@ -253,7 +254,7 @@
               <i data-lucide="trending-up" class="w-5 h-5"></i>
             </div>
           </div>
-          <h3 id="card-net-earnings" class="text-2xl font-extrabold text-emerald-400">$36.870</h3>
+          <h3 id="card-net-earnings" class="text-2xl font-extrabold text-emerald-400"><span class="animate-pulse">...</span></h3>
           <p class="text-[11px] text-zinc-400 mt-1">Ingreso neto retenido del día</p>
         </div>
 
@@ -265,7 +266,7 @@
               <i data-lucide="users" class="w-5 h-5"></i>
             </div>
           </div>
-          <h3 id="card-cadetes-pay" class="text-2xl font-extrabold text-white">$208.930</h3>
+          <h3 id="card-cadetes-pay" class="text-2xl font-extrabold text-white"><span class="animate-pulse">...</span></h3>
           <p class="text-[11px] text-zinc-400 mt-1">Remuneración neta de repartidores</p>
         </div>
 
@@ -344,15 +345,15 @@
       <div class="bg-brand-dark p-4 rounded-2xl border border-brand-border space-y-2.5 text-xs">
         <div class="flex justify-between text-zinc-400">
           <span>Efectivo cobrado en mano:</span>
-          <strong id="modal-cash-in-hand" class="text-white font-mono">$0</strong>
+          <strong id="modal-cash-in-hand" class="text-white font-mono"><span class="animate-pulse">...</span></strong>
         </div>
         <div class="flex justify-between text-zinc-400">
           <span>Honorarios ganados por viajes:</span>
-          <strong id="modal-cadete-earnings" class="text-white font-mono">$0</strong>
+          <strong id="modal-cadete-earnings" class="text-white font-mono"><span class="animate-pulse">...</span></strong>
         </div>
         <div class="pt-2 border-t border-brand-border/60 flex justify-between items-center text-sm font-bold">
           <span id="modal-balance-label" class="text-zinc-200">Saldo a favor:</span>
-          <span id="modal-balance-amount" class="text-emerald-400 font-mono text-base">$0</span>
+          <span id="modal-balance-amount" class="text-emerald-400 font-mono text-base"><span class="animate-pulse">...</span></span>
         </div>
       </div>
 
@@ -372,52 +373,10 @@
   <!-- ========================================== -->
   <!-- 4. LÓGICA JAVASCRIPT                       -->
   <!-- ========================================== -->
+  <script type="module" src="../scripts/caja_api.js"></script>
   <script>
-    // Datos de liquidación por cadete
-    let cadetesSettlement = [
-      {
-        id: 1,
-        name: "Carlos Ramírez",
-        avatar: "CR",
-        trips: 18,
-        cashCollected: 64000,   // Efectivo recibido de clientes
-        totalVolume: 92000,     // Total bruto generado
-        settled: false
-      },
-      {
-        id: 2,
-        name: "Esteban Morales",
-        avatar: "EM",
-        trips: 14,
-        cashCollected: 32000,
-        totalVolume: 74000,
-        settled: false
-      },
-      {
-        id: 3,
-        name: "Julián López",
-        avatar: "JL",
-        trips: 11,
-        cashCollected: 18200,
-        totalVolume: 51800,
-        settled: true
-      },
-      {
-        id: 4,
-        name: "Matías Vega",
-        avatar: "MV",
-        trips: 6,
-        cashCollected: 0,       // Solo hizo pedidos con pago online
-        totalVolume: 28000,
-        settled: false
-      }
-    ];
-
-    let currentSelectedCadete = null;
-
     document.addEventListener("DOMContentLoaded", () => {
       document.body.classList.add("page-loaded");
-      renderSettlementTable();
       lucide.createIcons();
 
       // Transición de salida de página al hacer clic en enlaces
@@ -439,142 +398,7 @@
     function toggleSidebar() {
       document.getElementById('sidebar').classList.toggle('-translate-x-full');
     }
-
-    function renderSettlementTable() {
-      const search = document.getElementById("search-settlement").value.toLowerCase();
-      const tbody = document.getElementById("settlement-table-body");
-      tbody.innerHTML = "";
-
-      let totalGross = 0;
-      let totalCash = 0;
-      let totalAppCommissions = 0;
-      let totalCadeteNet = 0;
-
-      cadetesSettlement.forEach(c => {
-        const cadeteShare = c.totalVolume * 0.85; // 85% para el repartidor
-        const companyShare = c.totalVolume * 0.15; // 15% retención Todo Delivery
-        
-        // Balance = Honorarios Ganados - Efectivo en mano
-        // Si es positivo: La empresa le DEBE pagar al cadete (ej. hizo muchos viajes online)
-        // Si es negativo: El cadete le DEBE dinero a la empresa (recaudó más efectivo del que le correspondía)
-        const balance = cadeteShare - c.cashCollected;
-
-        totalGross += c.totalVolume;
-        totalCash += c.cashCollected;
-        totalAppCommissions += companyShare;
-        totalCadeteNet += cadeteShare;
-
-        if (c.name.toLowerCase().includes(search)) {
-          const tr = document.createElement("tr");
-          tr.className = "hover:bg-brand-dark/40 transition-colors";
-          
-          tr.innerHTML = `
-            <td class="py-4 px-4">
-              <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-full bg-zinc-800 border border-brand-border flex items-center justify-center font-bold text-xs text-white">
-                  ${c.avatar}
-                </div>
-                <div>
-                  <span class="block font-semibold text-white">${c.name}</span>
-                  <span class="text-[11px] ${c.settled ? 'text-emerald-400' : 'text-amber-400'} font-medium">
-                    ${c.settled ? 'Liquidado hoy' : 'Pendiente de cierre'}
-                  </span>
-                </div>
-              </div>
-            </td>
-            <td class="py-4 px-4 font-mono text-zinc-300 font-medium">${c.trips} entregas</td>
-            <td class="py-4 px-4 font-mono text-brand-gold font-semibold">$${c.cashCollected.toLocaleString()}</td>
-            <td class="py-4 px-4 font-mono text-zinc-200 font-semibold">$${cadeteShare.toLocaleString()}</td>
-            <td class="py-4 px-4 font-mono text-emerald-400 font-semibold">$${companyShare.toLocaleString()}</td>
-            <td class="py-4 px-4 font-mono font-bold">
-              ${balance >= 0 
-                ? `<span class="text-emerald-400">+ $${balance.toLocaleString()} (A favor Cadete)</span>` 
-                : `<span class="text-brand-accent">- $${Math.abs(balance).toLocaleString()} (Debe entregar)</span>`
-              }
-            </td>
-            <td class="py-4 px-4 text-right">
-              ${c.settled 
-                ? `<span class="inline-flex items-center gap-1 text-xs text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-xl border border-emerald-500/20 font-medium">
-                     <i data-lucide="check" class="w-3.5 h-3.5"></i> Rendido
-                   </span>`
-                : `<button onclick="openSettlementModal(${c.id})" class="px-3 py-1.5 bg-brand-accent hover:bg-brand-accentHover text-white text-xs font-bold rounded-xl shadow-md transition-all">
-                     Rendir
-                   </button>`
-              }
-            </td>
-          `;
-          tbody.appendChild(tr);
-        }
-      });
-
-      // Actualizar Cards Superiores
-      document.getElementById("card-total-sales").innerText = `$${totalGross.toLocaleString()}`;
-      document.getElementById("card-cash-street").innerText = `$${totalCash.toLocaleString()}`;
-      document.getElementById("card-net-earnings").innerText = `$${totalAppCommissions.toLocaleString()}`;
-      document.getElementById("card-cadetes-pay").innerText = `$${totalCadeteNet.toLocaleString()}`;
-
-      lucide.createIcons();
-    }
-
-    function openSettlementModal(cadeteId) {
-      currentSelectedCadete = cadetesSettlement.find(c => c.id === cadeteId);
-      if (!currentSelectedCadete) return;
-
-      const cadeteShare = currentSelectedCadete.totalVolume * 0.85;
-      const balance = cadeteShare - currentSelectedCadete.cashCollected;
-
-      document.getElementById("modal-cadete-name").innerText = `Cadete: ${currentSelectedCadete.name}`;
-      document.getElementById("modal-cash-in-hand").innerText = `$${currentSelectedCadete.cashCollected.toLocaleString()}`;
-      document.getElementById("modal-cadete-earnings").innerText = `$${cadeteShare.toLocaleString()}`;
-      
-      const balanceLabel = document.getElementById("modal-balance-label");
-      const balanceAmount = document.getElementById("modal-balance-amount");
-      const balanceExp = document.getElementById("modal-balance-explanation");
-
-      if (balance >= 0) {
-        balanceLabel.innerText = "Monto a abonarle al cadete:";
-        balanceAmount.className = "text-emerald-400 font-mono text-base font-bold";
-        balanceAmount.innerText = `$${balance.toLocaleString()}`;
-        balanceExp.innerText = "La empresa debe transferirle o entregarle este saldo al cadete por sus viajes con tarjeta/online.";
-      } else {
-        balanceLabel.innerText = "Monto que el cadete entrega a caja:";
-        balanceAmount.className = "text-brand-accent font-mono text-base font-bold";
-        balanceAmount.innerText = `$${Math.abs(balance).toLocaleString()}`;
-        balanceExp.innerText = "El cadete cobró más efectivo que su comisión ganada. Debe depositar la diferencia en caja.";
-      }
-
-      const m = document.getElementById('settlement-modal');
-      const c = document.getElementById('modal-container');
-      m.classList.remove('hidden');
-      setTimeout(() => {
-        m.classList.add('opacity-100');
-        c.classList.remove('scale-95');
-      }, 10);
-    }
-
-    function closeSettlementModal() {
-      const m = document.getElementById('settlement-modal');
-      const c = document.getElementById('modal-container');
-      m.classList.remove('opacity-100');
-      c.classList.add('scale-95');
-      setTimeout(() => m.classList.add('hidden'), 300);
-    }
-
-    function confirmSettlement() {
-      if (currentSelectedCadete) {
-        currentSelectedCadete.settled = true;
-        closeSettlementModal();
-        renderSettlementTable();
-      }
-    }
-
-    function exportReport() {
-      alert("Generando y descargando el reporte consolidado en formato CSV/Excel...");
-    }
-
-    function openClosureModal() {
-      alert("Cierre de jornada ejecutado con éxito. Se guardó el balance contable del turno.");
-    }
   </script>
+  <script type="module" src="../scripts/sidebar_radar.js"></script>
 </body>
 </html>

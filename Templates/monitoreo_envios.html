@@ -72,45 +72,55 @@
       min-height: calc(100vh - 250px);
     }
     /* ===== Radar signature widget ===== */
-  .radar{
-    position: relative;
-    width: 108px;
-    height: 108px;
-    border-radius: 50%;
-    margin: 0 auto;
-    background:
-      radial-gradient(circle, rgba(230,57,70,0.05) 0%, transparent 72%);
-    border: 1px solid #242A38;
-  }
-  .radar::before, .radar::after{
-    content:"";
-    position:absolute; border-radius:50%;
-    border: 1px solid rgba(255,255,255,0.05);
-  }
-  .radar::before{ inset: 16px; }
-  .radar::after{ inset: 34px; }
-  .radar-sweep{
-    position:absolute; inset:0; border-radius:50%;
-    background: conic-gradient(from 0deg, rgba(230,57,70,0.55), rgba(230,57,70,0) 28%, rgba(230,57,70,0) 100%);
-    animation: sweep 4s linear infinite;
-  }
-  .radar-core{
-    position:absolute; top:50%; left:50%; width:6px; height:6px;
-    background: #E63946; border-radius:50%;
-    transform: translate(-50%,-50%);
-    box-shadow: 0 0 8px 1px rgba(230,57,70,0.7);
-  }
-  .radar-blip{
-    position:absolute; width:5px; height:5px; border-radius:50%;
-    background: #F4A261;
-    box-shadow: 0 0 6px 1px rgba(244,162,97,0.7);
-    animation: blip 2.6s ease-in-out infinite;
-  }
-  @keyframes sweep{ to{ transform: rotate(360deg); } }
-  @keyframes blip{
-    0%,100%{ opacity:.35; transform:scale(.85); }
-    50%{ opacity:1; transform:scale(1.15); }
-  }
+    .radar {
+      position: relative;
+      width: 108px;
+      height: 108px;
+      border-radius: 50%;
+      margin: 0 auto;
+      background: radial-gradient(circle, rgba(230,57,70,0.05) 0%, transparent 72%);
+      border: 1px solid #242A38;
+    }
+    .radar::before, .radar::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .radar::before { inset: 16px; }
+    .radar::after { inset: 34px; }
+    .radar-sweep {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: conic-gradient(from 0deg, rgba(230,57,70,0.55), rgba(230,57,70,0) 28%, rgba(230,57,70,0) 100%);
+      animation: sweep 4s linear infinite;
+    }
+    .radar-core {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 6px;
+      height: 6px;
+      background: #E63946;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 8px 1px rgba(230,57,70,0.7);
+    }
+    .radar-blip {
+      position: absolute;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #F4A261;
+      box-shadow: 0 0 6px 1px rgba(244,162,97,0.7);
+      animation: blip 2.6s ease-in-out infinite;
+    }
+    @keyframes sweep { to { transform: rotate(360deg); } }
+    @keyframes blip {
+      0%, 100% { opacity: .35; transform: scale(.85); }
+      50% { opacity: 1; transform: scale(1.15); }
+    }
   </style>
 </head>
 <body class="min-h-screen font-sans flex flex-col md:flex-row overflow-x-hidden selection:bg-brand-accent selection:text-white">
@@ -137,11 +147,10 @@
           <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
           <span>Dashboard</span>
         </a>
-        <!-- Activo: Monitor de Envíos -->
+        <!-- Activo -->
         <a href="monitoreo_envios.html" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-brand-accent text-white font-medium text-sm shadow-lg shadow-brand-accent/20 transition-all">
           <i data-lucide="package" class="w-5 h-5"></i>
           <span>Monitor de Envíos</span>
-          <span id="badge-total-active" class="ml-auto bg-white/20 text-white text-xs px-2 py-0.5 rounded-full font-semibold">5</span>
         </a>
         <a href="gestion_de_personal.html" class="flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-400 hover:text-white hover:bg-brand-card font-medium text-sm transition-all">
           <i data-lucide="users" class="w-5 h-5"></i>
@@ -156,10 +165,13 @@
           <span>Reportes y Caja</span>
         </a>
       </nav>
-    </div>
-    <div class="mt-6 px-6">
-      <div class="bg-brand-card border border-brand-border p-4 rounded-2xl">
-        <p class="text-[10px] uppercase tracking-[0.14em] text-brand-muted text-center mb-3">Red Nacional · En vivo</p>
+    <!-- Widget Radar Red Local -->
+    <div class="px-6 my-auto">
+      <div onclick="openRadarMapModal()" class="bg-brand-card border border-brand-border p-4 rounded-2xl cursor-pointer hover:border-brand-accent/60 transition-all group select-none" title="Ver mapa de cadetes en vivo">
+        <div class="flex items-center justify-center gap-1 mb-3">
+          <p class="text-[10px] uppercase tracking-[0.14em] text-brand-muted text-center group-hover:text-brand-accent transition-colors">Red Local · En vivo</p>
+          <i data-lucide="maximize-2" class="w-3 h-3 text-zinc-500 group-hover:text-brand-accent transition-colors"></i>
+        </div>
         <div class="radar">
           <div class="radar-sweep"></div>
           <div class="radar-core"></div>
@@ -167,25 +179,22 @@
           <div class="radar-blip" style="top:60%; left:28%; animation-delay:.9s;"></div>
           <div class="radar-blip" style="top:70%; left:70%; animation-delay:1.6s; background:#E63946; box-shadow:0 0 6px 1px rgba(230,57,70,.7);"></div>
         </div>
-        <p class="text-center text-[11px] font-mono text-zinc-400 mt-3">42 unidades <span class="text-emerald-400 font-semibold">activas</span></p>
+        <p id="radar-cadetes-count" class="text-center text-[11px] font-mono text-zinc-400 mt-3"><span class="animate-pulse">...</span> unidades <span class="text-emerald-400 font-semibold">activas</span></p>
       </div>
     </div>
-  </div>
 
-  <div class="p-4 border-t border-brand-border">
-    <div class="flex items-center gap-3 p-3 rounded-xl bg-brand-card/50 border border-brand-border/60 mb-3">
-      <div class="w-10 h-10 rounded-full bg-zinc-800 border border-brand-border flex items-center justify-center font-bold text-white text-sm">
-        AD
+    <div class="p-4 border-t border-brand-border">
+      <div class="flex items-center gap-3 p-3 rounded-xl bg-brand-card/50 border border-brand-border/60 mb-3">
+        <div class="w-10 h-10 rounded-full bg-zinc-800 border border-brand-border flex items-center justify-center font-bold text-white text-sm">DP</div>
+        <div class="overflow-hidden">
+          <h4 class="text-xs font-semibold text-white truncate">Diana Parada</h4>
+          <p class="text-[11px] text-zinc-400 truncate">tododelivery24@gmail.com</p>
+        </div>
       </div>
-      <div class="overflow-hidden">
-        <h4 class="text-xs font-semibold text-white truncate">Ana Dueña</h4>
-        <p class="text-[11px] text-zinc-400 truncate">admin@tododelivery.com</p>
-      </div>
-    </div>
-    <a href="index.html" class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-brand-border hover:border-brand-accent/50 text-zinc-400 hover:text-white text-xs font-semibold transition-all">
-      <i data-lucide="log-out" class="w-4 h-4"></i>
-      <span>Cerrar Sesión</span>
-    </a>
+      <a href="../index.html" class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-brand-border hover:border-brand-accent/50 text-zinc-400 hover:text-white text-xs font-semibold transition-all">
+        <i data-lucide="log-out" class="w-4 h-4"></i>
+        <span>Cerrar Sesión</span>
+      </a>
     </div>
   </aside>
 
@@ -210,35 +219,21 @@
           <p class="text-xs text-brand-muted hidden sm:block">Tablero dinámico de despachos, pedidos entrantes y reasignación de flota</p>
         </div>
       </div>
-
-      <!-- Resumen de Cadetes Disponibles -->
-      <div class="flex items-center gap-3">
-        <div class="hidden lg:flex items-center gap-2 bg-brand-card border border-brand-border px-3.5 py-1.5 rounded-xl">
-          <i data-lucide="bike" class="w-4 h-4 text-emerald-400"></i>
-          <span class="text-xs text-zinc-300 font-medium"><strong class="text-white" id="cadetes-libres-count">2</strong> Cadetes Libres</span>
-        </div>
-      </div>
     </header>
 
-    <!-- Subheader: Búsqueda y Filtros Rápidos -->
-    <div class="px-6 py-4 border-b border-brand-border/60 bg-brand-black flex flex-col sm:flex-row items-center justify-between gap-4">
-      <div class="relative w-full sm:w-80">
+    <!-- Subheader: Búsqueda Rápida -->
+    <div class="px-6 py-4 border-b border-brand-border/60 bg-brand-black flex items-center justify-between gap-4">
+      <div class="relative w-full max-w-md">
         <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500">
           <i data-lucide="search" class="w-4 h-4"></i>
         </span>
         <input 
           type="text" 
           id="order-search"
-          onkeyup="renderColumns()"
-          placeholder="Buscar por ID, cliente o comercio..." 
+          oninput="handleSearch(event)"
+          placeholder="Buscar por ID, cliente, dirección o paquete..." 
           class="w-full bg-brand-card border border-brand-border text-white text-xs rounded-xl pl-10 pr-4 py-2.5 placeholder-zinc-500 focus:outline-none focus:border-brand-accent transition-all"
         />
-      </div>
-
-      <div class="flex items-center gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
-        <button onclick="filterPayment('all')" class="px-3 py-1.5 rounded-lg bg-zinc-800 text-xs text-zinc-200 font-medium hover:bg-zinc-700 transition-colors">Todos los pagos</button>
-        <button onclick="filterPayment('Efectivo')" class="px-3 py-1.5 rounded-lg bg-brand-card border border-brand-border text-xs text-zinc-400 font-medium hover:text-white transition-colors">Efectivo</button>
-        <button onclick="filterPayment('Online')" class="px-3 py-1.5 rounded-lg bg-brand-card border border-brand-border text-xs text-zinc-400 font-medium hover:text-white transition-colors">Online</button>
       </div>
     </div>
 
@@ -253,7 +248,7 @@
               <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
               <h3 class="text-xs font-bold uppercase tracking-wider text-white">Por Asignar</h3>
             </div>
-            <span id="count-unassigned" class="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs px-2 py-0.5 rounded-full font-bold">0</span>
+            <span id="count-unassigned" class="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs px-2 py-0.5 rounded-full font-bold"><span class="animate-pulse">...</span></span>
           </div>
 
           <div id="col-unassigned" class="flex-1 space-y-3.5 overflow-y-auto pr-1">
@@ -268,7 +263,7 @@
               <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
               <h3 class="text-xs font-bold uppercase tracking-wider text-white">En Curso / En Ruta</h3>
             </div>
-            <span id="count-in-transit" class="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs px-2 py-0.5 rounded-full font-bold">0</span>
+            <span id="count-in-transit" class="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs px-2 py-0.5 rounded-full font-bold"><span class="animate-pulse">...</span></span>
           </div>
 
           <div id="col-in-transit" class="flex-1 space-y-3.5 overflow-y-auto pr-1">
@@ -283,7 +278,7 @@
               <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
               <h3 class="text-xs font-bold uppercase tracking-wider text-white">Entregados Hoy</h3>
             </div>
-            <span id="count-delivered" class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs px-2 py-0.5 rounded-full font-bold">0</span>
+            <span id="count-delivered" class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs px-2 py-0.5 rounded-full font-bold"><span class="animate-pulse">...</span></span>
           </div>
 
           <div id="col-delivered" class="flex-1 space-y-3.5 overflow-y-auto pr-1">
@@ -319,7 +314,7 @@
 
       <!-- Lista de Selección de Cadetes -->
       <div class="space-y-3">
-        <p class="text-xs font-semibold uppercase tracking-wider text-zinc-400">Selecciona un Cadete Habilitado:</p>
+        <p class="text-xs font-semibold uppercase tracking-wider text-zinc-400">Selecciona un Cadete:</p>
         <div id="cadetes-select-list" class="space-y-2 max-h-60 overflow-y-auto pr-1">
           <!-- Renderizado dinámico de cadetes -->
         </div>
@@ -334,84 +329,10 @@
   <!-- ========================================== -->
   <!-- 4. LÓGICA JAVASCRIPT                       -->
   <!-- ========================================== -->
+  <script type="module" src="../scripts/monitoreo_api.js"></script>
   <script>
-    // Cadetes habilitados del sistema
-    const availableCadetes = [
-      { id: 1, name: "Carlos Ramírez", vehicle: "Moto", status: "busy", activeOrder: "TD-4892" },
-      { id: 2, name: "Esteban Morales", vehicle: "Bicicleta", status: "free", activeOrder: null },
-      { id: 3, name: "Julián López", vehicle: "Moto", status: "free", activeOrder: null }
-    ];
-
-    // Colección de pedidos en vivo
-    let orders = [
-      {
-        id: "TD-4895",
-        time: "Hace 3 min",
-        origin: "Burger House (Sucursal Centro)",
-        destination: "Av. Libertador 1420, 4to B",
-        customer: "Lucía Fernández",
-        items: "2x Combo Doble Queso + Papas",
-        total: 5800,
-        payment: "Efectivo",
-        status: "unassigned",
-        cadete: null
-      },
-      {
-        id: "TD-4894",
-        time: "Hace 8 min",
-        origin: "Sushi Master",
-        destination: "Calle Mitre 845",
-        customer: "Mariano Costa",
-        items: "30 Piezas Clásicas",
-        total: 12400,
-        payment: "Online",
-        status: "unassigned",
-        cadete: null
-      },
-      {
-        id: "TD-4892",
-        time: "Hace 16 min",
-        origin: "Parrilla Don Pepe",
-        destination: "San Martín 2041",
-        customer: "Gonzalo Benítez",
-        items: "1x Vacío al Plato c/ Ensalada",
-        total: 8200,
-        payment: "Online",
-        status: "in_transit",
-        cadete: "Carlos Ramírez"
-      },
-      {
-        id: "TD-4890",
-        time: "Hace 35 min",
-        origin: "Café Central",
-        destination: "Alvear 510",
-        customer: "Sofía Ruiz",
-        items: "1x Latte + 2x Medialunas",
-        total: 3100,
-        payment: "Efectivo",
-        status: "delivered",
-        cadete: "Esteban Morales"
-      },
-      {
-        id: "TD-4889",
-        time: "Hace 52 min",
-        origin: "Farmacia San José",
-        destination: "Rivadavia 112",
-        customer: "Estela Méndez",
-        items: "Medicamentos varios",
-        total: 4600,
-        payment: "Online",
-        status: "delivered",
-        cadete: "Julián López"
-      }
-    ];
-
-    let currentSelectedOrderId = null;
-    let selectedPaymentFilter = 'all';
-
     document.addEventListener("DOMContentLoaded", () => {
       document.body.classList.add("page-loaded");
-      renderColumns();
       lucide.createIcons();
 
       // Transición de salida de página al hacer clic en enlaces
@@ -433,192 +354,7 @@
     function toggleSidebar() {
       document.getElementById('sidebar').classList.toggle('-translate-x-full');
     }
-
-    function filterPayment(type) {
-      selectedPaymentFilter = type;
-      renderColumns();
-    }
-
-    function renderColumns() {
-      const search = document.getElementById("order-search").value.toLowerCase();
-      
-      const filtered = orders.filter(o => {
-        const matchesSearch = o.id.toLowerCase().includes(search) || 
-                              o.customer.toLowerCase().includes(search) || 
-                              o.origin.toLowerCase().includes(search) ||
-                              o.destination.toLowerCase().includes(search);
-        const matchesPayment = selectedPaymentFilter === 'all' || o.payment === selectedPaymentFilter;
-        return matchesSearch && matchesPayment;
-      });
-
-      const unassigned = filtered.filter(o => o.status === 'unassigned');
-      const inTransit = filtered.filter(o => o.status === 'in_transit');
-      const delivered = filtered.filter(o => o.status === 'delivered');
-
-      document.getElementById("count-unassigned").innerText = unassigned.length;
-      document.getElementById("count-in-transit").innerText = inTransit.length;
-      document.getElementById("count-delivered").innerText = delivered.length;
-      document.getElementById("badge-total-active").innerText = unassigned.length + inTransit.length;
-
-      const libres = availableCadetes.filter(c => c.status === 'free').length;
-      document.getElementById("cadetes-libres-count").innerText = libres;
-
-      renderCardList("col-unassigned", unassigned);
-      renderCardList("col-in-transit", inTransit);
-      renderCardList("col-delivered", delivered);
-
-      lucide.createIcons();
-    }
-
-    function renderCardList(containerId, list) {
-      const container = document.getElementById(containerId);
-      container.innerHTML = "";
-
-      if (list.length === 0) {
-        container.innerHTML = `
-          <div class="h-32 flex flex-col items-center justify-center text-zinc-600 border border-dashed border-brand-border/60 rounded-xl">
-            <i data-lucide="inbox" class="w-6 h-6 mb-1"></i>
-            <span class="text-xs">Sin pedidos en este estado</span>
-          </div>
-        `;
-        return;
-      }
-
-      list.forEach(order => {
-        const card = document.createElement("div");
-        card.className = "bg-brand-card border border-brand-border rounded-2xl p-4 space-y-3.5 hover:border-zinc-600 transition-all shadow-lg";
-
-        const isUnassigned = order.status === 'unassigned';
-        const isInTransit = order.status === 'in_transit';
-
-        card.innerHTML = `
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <span class="font-bold text-white text-xs font-mono">${order.id}</span>
-              <span class="text-[10px] text-zinc-400 bg-brand-dark px-2 py-0.5 rounded border border-brand-border">${order.time}</span>
-            </div>
-            <span class="text-[11px] font-bold ${order.payment === 'Efectivo' ? 'text-brand-gold' : 'text-emerald-400'}">
-              $${order.total.toLocaleString()} • ${order.payment}
-            </span>
-          </div>
-
-          <div class="space-y-1.5 text-xs">
-            <div class="flex items-start gap-2 text-zinc-300">
-              <i data-lucide="store" class="w-3.5 h-3.5 text-zinc-500 mt-0.5 shrink-0"></i>
-              <span class="truncate font-medium">${order.origin}</span>
-            </div>
-            <div class="flex items-start gap-2 text-zinc-300">
-              <i data-lucide="map-pin" class="w-3.5 h-3.5 text-brand-accent mt-0.5 shrink-0"></i>
-              <span class="truncate font-medium">${order.destination}</span>
-            </div>
-          </div>
-
-          <div class="p-2 bg-brand-dark/70 rounded-xl border border-brand-border/60 text-[11px] text-zinc-400 flex items-center justify-between">
-            <span class="truncate">Cliente: <strong class="text-zinc-200">${order.customer}</strong></span>
-            <span class="text-zinc-500 font-mono text-[10px]">Detalles</span>
-          </div>
-
-          <div class="pt-2 border-t border-brand-border/60 flex items-center justify-between">
-            <div class="flex items-center gap-1.5">
-              ${order.cadete 
-                ? `<div class="w-6 h-6 rounded-full bg-zinc-800 text-white text-[10px] flex items-center justify-center font-bold">${order.cadete.split(' ').map(n=>n[0]).join('')}</div>
-                   <span class="text-xs text-zinc-300 font-medium">${order.cadete}</span>`
-                : `<span class="text-xs text-amber-400 font-medium flex items-center gap-1"><i data-lucide="alert-circle" class="w-3.5 h-3.5"></i> Sin asignar</span>`
-              }
-            </div>
-
-            <div class="flex items-center gap-1.5">
-              ${isUnassigned ? `
-                <button onclick="openAssignModal('${order.id}')" class="px-3 py-1.5 bg-brand-accent hover:bg-brand-accentHover text-white text-xs font-bold rounded-xl shadow-md transition-all flex items-center gap-1">
-                  <i data-lucide="user-check" class="w-3.5 h-3.5"></i> Despachar
-                </button>
-              ` : ''}
-
-              ${isInTransit ? `
-                <button onclick="markDelivered('${order.id}')" title="Marcar como entregado" class="p-1.5 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white border border-emerald-500/20 rounded-lg transition-all">
-                  <i data-lucide="check" class="w-3.5 h-3.5"></i>
-                </button>
-                <button onclick="openAssignModal('${order.id}')" title="Reasignar cadete" class="p-1.5 bg-brand-dark text-zinc-400 hover:text-white border border-brand-border rounded-lg transition-all">
-                  <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
-                </button>
-              ` : ''}
-            </div>
-          </div>
-        `;
-        container.appendChild(card);
-      });
-    }
-
-    // Acciones de Asignación
-    function openAssignModal(orderId) {
-      currentSelectedOrderId = orderId;
-      document.getElementById("modal-order-title").innerText = `Pedido #${orderId}`;
-      
-      const listContainer = document.getElementById("cadetes-select-list");
-      listContainer.innerHTML = "";
-
-      availableCadetes.forEach(cadete => {
-        const item = document.createElement("button");
-        item.type = "button";
-        item.onclick = () => assignCadeteToOrder(cadete.name);
-        item.className = "w-full flex items-center justify-between p-3 rounded-xl bg-brand-dark border border-brand-border hover:border-brand-accent/50 text-left transition-all group";
-        
-        item.innerHTML = `
-          <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center font-bold text-xs text-white">
-              ${cadete.name.split(' ').map(n=>n[0]).join('')}
-            </div>
-            <div>
-              <h5 class="text-xs font-bold text-white group-hover:text-brand-accent transition-colors">${cadete.name}</h5>
-              <p class="text-[10px] text-zinc-400">${cadete.vehicle} • ${cadete.status === 'free' ? 'Libre' : 'En ruta (' + cadete.activeOrder + ')'}</p>
-            </div>
-          </div>
-          <span class="text-xs font-bold ${cadete.status === 'free' ? 'text-emerald-400' : 'text-amber-400'}">
-            ${cadete.status === 'free' ? 'Asignar' : 'Reasignar'}
-          </span>
-        `;
-        listContainer.appendChild(item);
-      });
-
-      const m = document.getElementById('assign-modal');
-      const c = document.getElementById('assign-container');
-      m.classList.remove('hidden');
-      setTimeout(() => {
-        m.classList.add('opacity-100');
-        c.classList.remove('scale-95');
-      }, 10);
-      lucide.createIcons();
-    }
-
-    function closeAssignModal() {
-      const m = document.getElementById('assign-modal');
-      const c = document.getElementById('assign-container');
-      m.classList.remove('opacity-100');
-      c.classList.add('scale-95');
-      setTimeout(() => m.classList.add('hidden'), 300);
-    }
-
-    function assignCadeteToOrder(cadeteName) {
-      orders = orders.map(o => {
-        if (o.id === currentSelectedOrderId) {
-          return { ...o, cadete: cadeteName, status: 'in_transit' };
-        }
-        return o;
-      });
-
-      closeAssignModal();
-      renderColumns();
-    }
-
-    function markDelivered(orderId) {
-      orders = orders.map(o => {
-        if (o.id === orderId) {
-          return { ...o, status: 'delivered' };
-        }
-        return o;
-      });
-      renderColumns();
-    }
   </script>
+  <script type="module" src="../scripts/sidebar_radar.js"></script>
 </body>
 </html>
