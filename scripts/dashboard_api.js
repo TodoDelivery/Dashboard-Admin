@@ -5,8 +5,8 @@ let cadetesActivos = new Map();
 let pedidosActivos = [];
 let totalRecaudacion = 0;
 
-// Canal para recibir posiciones y conexiones en tiempo real
-const PRESENCE_CHANNEL_NAME = 'cadetes_presence';
+// Canal para recibir posiciones y conexiones en tiempo real ('cadetes-disponibles')
+const PRESENCE_CHANNEL_NAME = 'cadetes-disponibles';
 const channelPresence = supabase.channel(PRESENCE_CHANNEL_NAME);
 
 export async function initDashboard() {
@@ -121,17 +121,24 @@ function iniciarRadarPresence() {
       cadetesActivos.clear();
       
       for (const id in state) {
-        // Obtenemos el registro más reciente del estado del cadete
-        const cadete = state[id][state[id].length - 1];
-        if (cadete && cadete.estado_cad && cadete.estado_cad !== 'offline') {
-          cadetesActivos.set(cadete.id_cad, cadete);
+        if (id.startsWith('admin_')) continue;
+        const presences = state[id];
+        if (Array.isArray(presences) && presences.length > 0) {
+          const cadete = presences[presences.length - 1];
+          if (cadete && cadete.estado_cad && cadete.estado_cad !== 'offline') {
+            const realId = cadete.id_cad || Number(id.replace(/^cad_/, '')) || id;
+            cadetesActivos.set(realId, cadete);
+          }
         }
       }
       
       actualizarKPICadetes(cadetesActivos.size);
       renderizarFlota();
-    })
-    .subscribe();
+    });
+
+  if (channelPresence.state !== 'joined' && channelPresence.state !== 'joining') {
+    channelPresence.subscribe();
+  }
 }
 
 function actualizarKPICadetes(count = 0) {
@@ -178,7 +185,11 @@ function renderizarTablaPedidos() {
     const clienteNombre = p.Clientes ? p.Clientes.nombre_cliente : 'Consumidor Final';
     
     const tr = document.createElement('tr');
-    tr.className = 'hover:bg-brand-dark/50 transition-colors';
+    tr.className = 'hover:bg-brand-dark/70 transition-colors cursor-pointer group';
+    tr.title = `Ver detalles del pedido #TD-${p.id_pedido} en Monitor de Envíos`;
+    tr.onclick = () => {
+      window.location.href = `monitoreo_envios.html?orderId=${p.id_pedido}`;
+    };
     tr.innerHTML = `
       <td class="py-3.5 px-3 font-semibold text-white font-mono text-xs">#TD-${p.id_pedido}</td>
       <td class="py-3.5 px-3">
