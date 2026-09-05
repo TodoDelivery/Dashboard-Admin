@@ -31,16 +31,17 @@ async function fetchCadetes() {
   if (!error && data) {
     cadetes = data.map(c => {
       let vehicle = 'Moto';
-      let plate = '-';
-      if (c.vehiculo_cad) {
-        if (c.vehiculo_cad.includes(' - ')) {
-          const parts = c.vehiculo_cad.split(' - ');
-          vehicle = parts[0] || 'Moto';
-          plate = parts[1] || '-';
-        } else {
-          vehicle = c.vehiculo_cad;
-        }
+      let plate = null;
+      if (c.patente && c.patente.trim() && c.patente !== '-') {
+        plate = c.patente.trim().toUpperCase();
+      } else if (c.vehiculo_cad && c.vehiculo_cad.includes(' - ')) {
+        const parts = c.vehiculo_cad.split(' - ');
+        vehicle = parts[0] || 'Moto';
+        plate = parts[1] && parts[1].trim() ? parts[1].trim().toUpperCase() : null;
+      } else if (c.vehiculo_cad) {
+        vehicle = c.vehiculo_cad;
       }
+
       return {
         id: c.id_cad,
         name: c.nombre_cad || 'Sin Nombre',
@@ -203,11 +204,25 @@ window.renderTable = () => {
           <span class="text-xs text-zinc-300 font-mono">${c.phone}</span>
         </td>
         <td class="py-4 px-4">
-          <div class="flex items-center gap-1.5">
+          <div class="flex items-center gap-1.5 mb-1.5">
             <i data-lucide="${c.vehicle === 'Moto' ? 'bike' : c.vehicle === 'Bicicleta' ? 'footprints' : 'car'}" class="w-4 h-4 text-zinc-400"></i>
             <span class="text-xs text-zinc-300 font-medium">${c.vehicle}</span>
           </div>
-          <span class="text-[10px] text-zinc-500 font-mono">${c.plate !== '-' ? 'Patente: ' + c.plate : 'Sin patente'}</span>
+          ${c.plate ? `
+            <div class="flex items-center gap-1.5">
+              <span class="inline-flex items-center gap-1 text-[11px] font-mono font-bold text-white bg-zinc-800/90 px-2 py-0.5 rounded border border-zinc-700 tracking-wider shadow-inner">
+                <i data-lucide="tag" class="w-3 h-3 text-brand-gold"></i> ${c.plate}
+              </span>
+              <button onclick="openQuickPlateModal(${c.id})" class="text-zinc-500 hover:text-brand-gold transition-colors p-1 rounded hover:bg-zinc-800" title="Modificar patente de ${c.name}">
+                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+          ` : `
+            <button onclick="openQuickPlateModal(${c.id})" class="inline-flex items-center gap-1.5 text-[10px] text-amber-400 hover:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 px-2.5 py-1 rounded-lg border border-amber-500/30 transition-all font-semibold group cursor-pointer" title="Hacer clic para subir la patente de ${c.name}">
+              <i data-lucide="upload" class="w-3 h-3 group-hover:-translate-y-0.5 transition-transform text-amber-400"></i>
+              <span>Subir patente requerida</span>
+            </button>
+          `}
         </td>
         <td class="py-4 px-4">
           <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${statusColor}">
@@ -357,7 +372,34 @@ window.openCadeteModal = (id = null) => {
       }
     }
 
-    document.getElementById('input-plate').value = cad.plate !== '-' ? cad.plate : '';
+    const plateInput = document.getElementById('input-plate');
+    const plateBadge = document.getElementById('plate-current-badge');
+    const plateHelp = document.getElementById('plate-help-text');
+
+    if (cad.plate) {
+      if (plateInput) {
+        plateInput.value = cad.plate;
+        plateInput.placeholder = `Modificar patente actual: ${cad.plate}`;
+      }
+      if (plateBadge) {
+        plateBadge.innerHTML = `<span class="text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 font-bold"><i data-lucide="check" class="w-3 h-3 inline mr-1"></i>Actual: ${cad.plate}</span>`;
+      }
+      if (plateHelp) {
+        plateHelp.innerText = `Patente actual: ${cad.plate}. Puedes modificarla en cualquier momento.`;
+      }
+    } else {
+      if (plateInput) {
+        plateInput.value = '';
+        plateInput.placeholder = 'Sin patente registrada - Ingrese o suba la patente aquí (ej: AA123BB)';
+      }
+      if (plateBadge) {
+        plateBadge.innerHTML = `<span class="text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 font-semibold"><i data-lucide="alert-circle" class="w-3 h-3 inline mr-1"></i>Subir patente pendiente</span>`;
+      }
+      if (plateHelp) {
+        plateHelp.innerText = 'El cadete aún no tiene patente asignada. Ingrese la matrícula para subirla.';
+      }
+    }
+
     document.getElementById('input-password').value = '';
     document.getElementById('input-password').required = false;
   } else {
@@ -369,6 +411,17 @@ window.openCadeteModal = (id = null) => {
     const form = document.getElementById('cadete-form');
     if (form) form.reset();
     if (selectVehicle) selectVehicle.value = 'Moto';
+
+    const plateInput = document.getElementById('input-plate');
+    const plateBadge = document.getElementById('plate-current-badge');
+    const plateHelp = document.getElementById('plate-help-text');
+    if (plateInput) {
+      plateInput.value = '';
+      plateInput.placeholder = 'Ingrese patente o matrícula (ej: AA123BB)';
+    }
+    if (plateBadge) plateBadge.innerHTML = '';
+    if (plateHelp) plateHelp.innerText = 'Opcional para bicicleta o transporte sin motor.';
+
     document.getElementById('input-password').value = 'Todo2026!';
     document.getElementById('input-password').required = true;
   }
@@ -422,7 +475,8 @@ window.handleSaveCadete = async (e) => {
   const plate = document.getElementById('input-plate').value.trim();
   const pass = document.getElementById('input-password').value.trim();
 
-  const vehicleStr = plate ? `${vehicle} - ${plate}` : vehicle;
+  const formattedPlate = plate ? plate.toUpperCase() : null;
+  const vehicleStr = formattedPlate ? `${vehicle} - ${formattedPlate}` : vehicle;
 
   if (editingCadeteId) {
     // MODO EDICIÓN
@@ -430,7 +484,8 @@ window.handleSaveCadete = async (e) => {
       nombre_cad: name,
       alias_cad: alias,
       telef_cad: dni,
-      vehiculo_cad: vehicleStr
+      vehiculo_cad: vehicleStr,
+      patente: formattedPlate
     };
 
     if (pass) {
@@ -448,6 +503,7 @@ window.handleSaveCadete = async (e) => {
       closeModal();
       await fetchCadetes();
       filterData();
+      mostrarToast(`Cadete #${editingCadeteId} actualizado correctamente`, 'success');
     }
   } else {
     // MODO CREACIÓN
@@ -459,6 +515,7 @@ window.handleSaveCadete = async (e) => {
         alias_cad: alias,
         telef_cad: dni,
         vehiculo_cad: vehicleStr,
+        patente: formattedPlate,
         contra_cad: passHash,
         estado_cad: 'offline'
       }])
@@ -470,6 +527,7 @@ window.handleSaveCadete = async (e) => {
       closeModal();
       await fetchCadetes();
       filterData();
+      mostrarToast(`Cadete registrado exitosamente`, 'success');
 
       // Credenciales: El usuario es el NOMBRE del cadete
       document.getElementById('copy-user').innerText = name;
@@ -615,6 +673,162 @@ window.closeCredentialModal = () => {
     setTimeout(() => m.classList.add('hidden'), 300);
   }
 };
+
+/* ====================================================
+   QUICK PLATE MODAL (MODIFICACIÓN RÁPIDA DE PATENTE)
+   ==================================================== */
+
+let quickEditingCadeteId = null;
+
+window.openQuickPlateModal = (id) => {
+  const cad = cadetes.find(c => c.id === id);
+  if (!cad) return;
+
+  quickEditingCadeteId = id;
+  const nameEl = document.getElementById('quick-plate-cadete-name');
+  if (nameEl) nameEl.innerText = `${cad.name} (ID #${cad.id}) • ${cad.vehicle}`;
+
+  const statusBox = document.getElementById('quick-plate-status-content');
+  const inputEl = document.getElementById('quick-input-plate');
+
+  if (cad.plate) {
+    if (statusBox) {
+      statusBox.innerHTML = `
+        <span class="text-xs text-zinc-300">Patente actual:</span>
+        <span class="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-white bg-zinc-800 px-2.5 py-1 rounded-lg border border-zinc-700 shadow-inner">
+          <i data-lucide="tag" class="w-3.5 h-3.5 text-brand-gold"></i> ${cad.plate}
+        </span>
+      `;
+    }
+    if (inputEl) {
+      inputEl.value = cad.plate;
+      inputEl.placeholder = `Modificar patente actual: ${cad.plate}`;
+    }
+  } else {
+    if (statusBox) {
+      statusBox.innerHTML = `
+        <span class="text-xs text-amber-400 flex items-center gap-1.5 font-semibold">
+          <i data-lucide="alert-circle" class="w-4 h-4"></i>
+          Sin patente registrada
+        </span>
+        <span class="text-[11px] text-zinc-400 font-medium bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded">Pendiente de subir</span>
+      `;
+    }
+    if (inputEl) {
+      inputEl.value = '';
+      inputEl.placeholder = 'Ingrese la nueva patente para subirla (ej: AA 123 BB)';
+    }
+  }
+
+  const m = document.getElementById('quick-plate-modal');
+  const c = document.getElementById('quick-plate-container');
+  if (m && c) {
+    m.classList.remove('hidden');
+    setTimeout(() => {
+      m.classList.add('opacity-100');
+      c.classList.remove('scale-95');
+      if (inputEl) inputEl.focus();
+    }, 10);
+  }
+
+  if (window.lucide) window.lucide.createIcons();
+};
+
+window.closeQuickPlateModal = () => {
+  const m = document.getElementById('quick-plate-modal');
+  const c = document.getElementById('quick-plate-container');
+  if (m && c) {
+    m.classList.remove('opacity-100');
+    c.classList.add('scale-95');
+    setTimeout(() => m.classList.add('hidden'), 300);
+  }
+  quickEditingCadeteId = null;
+};
+
+window.handleSaveQuickPlate = async (e) => {
+  e.preventDefault();
+  if (!quickEditingCadeteId) return;
+
+  const inputEl = document.getElementById('quick-input-plate');
+  const rawPlate = inputEl ? inputEl.value.trim() : '';
+  const newPlate = rawPlate ? rawPlate.toUpperCase() : null;
+
+  const btnSave = document.getElementById('btn-save-quick-plate');
+  const originalText = btnSave ? btnSave.innerHTML : '';
+  if (btnSave) {
+    btnSave.disabled = true;
+    btnSave.innerHTML = `<i data-lucide="loader" class="w-4 h-4 animate-spin"></i> Guardando...`;
+    if (window.lucide) window.lucide.createIcons();
+  }
+
+  const cad = cadetes.find(c => c.id === quickEditingCadeteId);
+  const vehicleBase = cad ? cad.vehicle : 'Moto';
+  const vehicleStr = newPlate ? `${vehicleBase} - ${newPlate}` : vehicleBase;
+
+  const { error } = await supabase
+    .from('Cadetes')
+    .update({
+      patente: newPlate,
+      vehiculo_cad: vehicleStr
+    })
+    .eq('id_cad', quickEditingCadeteId);
+
+  if (btnSave) {
+    btnSave.disabled = false;
+    btnSave.innerHTML = originalText;
+  }
+
+  if (error) {
+    alert("Error al actualizar la patente en Supabase: " + error.message);
+  } else {
+    closeQuickPlateModal();
+    await fetchCadetes();
+    filterData();
+    mostrarToast(newPlate ? `Patente ${newPlate} asignada a ${cad ? cad.name : 'cadete'}` : `Patente removida con éxito`, 'success');
+  }
+};
+
+/* ====================================================
+   TOAST NOTIFICATIONS
+   ==================================================== */
+
+function mostrarToast(mensaje, tipo = 'info') {
+  const container = document.getElementById("toast-container");
+  if (!container) return;
+
+  const toast = document.createElement("div");
+  const colors = {
+    success: 'bg-emerald-500/95 text-white border-emerald-400',
+    error: 'bg-brand-accent/95 text-white border-brand-accentHover',
+    warning: 'bg-amber-500/95 text-white border-amber-400',
+    info: 'bg-zinc-800/95 text-zinc-100 border-brand-border'
+  };
+
+  const icons = {
+    success: 'check-circle',
+    error: 'alert-triangle',
+    warning: 'alert-circle',
+    info: 'info'
+  };
+
+  toast.className = `flex items-center gap-3 px-4 py-3 rounded-2xl border shadow-2xl backdrop-blur-md text-xs font-semibold transform transition-all duration-300 translate-y-2 opacity-0 ${colors[tipo] || colors.info}`;
+  toast.innerHTML = `
+    <i data-lucide="${icons[tipo] || 'info'}" class="w-4 h-4 shrink-0"></i>
+    <span>${mensaje}</span>
+  `;
+
+  container.appendChild(toast);
+  if (window.lucide) window.lucide.createIcons();
+
+  setTimeout(() => {
+    toast.classList.remove('translate-y-2', 'opacity-0');
+  }, 10);
+
+  setTimeout(() => {
+    toast.classList.add('translate-y-2', 'opacity-0');
+    setTimeout(() => toast.remove(), 300);
+  }, 3500);
+}
 
 window.addEventListener('DOMContentLoaded', () => {
   initPersonal();

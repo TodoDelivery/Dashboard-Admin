@@ -389,10 +389,17 @@
           </div>
         </div>
 
-        <div class="space-y-1">
-          <label class="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Patente / Matrícula</label>
-          <input type="text" id="input-plate" placeholder="Ej: A123BCD (Opcional)"
-            class="w-full bg-brand-dark border border-brand-border text-white text-xs rounded-xl px-3.5 py-3 focus:outline-none focus:border-brand-accent transition-all" />
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between">
+            <label class="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Patente / Matrícula</label>
+            <span id="plate-current-badge" class="text-[10px] font-medium"></span>
+          </div>
+          <div class="relative">
+            <input type="text" id="input-plate" placeholder="Sin patente registrada - Ingrese para subir la patente"
+              class="w-full bg-brand-dark border border-brand-border text-white text-xs rounded-xl pl-9 pr-4 py-3 focus:outline-none focus:border-brand-accent transition-all uppercase placeholder:normal-case font-mono" />
+            <i data-lucide="hash" class="w-4 h-4 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2"></i>
+          </div>
+          <p id="plate-help-text" class="text-[10px] text-zinc-500 italic"></p>
         </div>
 
         <!-- Credenciales de la PWA -->
@@ -502,6 +509,65 @@
       </button>
     </div>
   </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL RÁPIDO: MODIFICAR / SUBIR PATENTE   -->
+  <!-- ========================================== -->
+  <div id="quick-plate-modal"
+    class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+    <div id="quick-plate-container"
+      class="w-full max-w-md bg-brand-card border border-brand-border rounded-3xl p-6 sm:p-7 shadow-2xl scale-95 transition-transform duration-300 space-y-5">
+      
+      <div class="flex items-center justify-between border-b border-brand-border pb-4">
+        <div class="flex items-center gap-3">
+          <div class="p-2.5 rounded-xl bg-brand-accent/10 text-brand-accent border border-brand-accent/20">
+            <i data-lucide="car" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">Modificar Patente</h3>
+            <p id="quick-plate-cadete-name" class="text-xs text-brand-muted">Cadete</p>
+          </div>
+        </div>
+        <button onclick="closeQuickPlateModal()" class="text-zinc-500 hover:text-white p-1 rounded-lg">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Estado actual de la patente -->
+      <div id="quick-plate-current-box" class="p-3.5 rounded-2xl bg-brand-dark border border-brand-border space-y-1">
+        <span class="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold block">Estado Actual</span>
+        <div id="quick-plate-status-content" class="flex items-center justify-between">
+          <!-- Renderizado dinámico -->
+        </div>
+      </div>
+
+      <form onsubmit="handleSaveQuickPlate(event)" class="space-y-4">
+        <div class="space-y-1.5">
+          <label class="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Nueva Patente / Matrícula</label>
+          <div class="relative">
+            <input type="text" id="quick-input-plate" required
+              placeholder="Ingrese o suba la patente aquí (ej: AB123CD)"
+              class="w-full bg-brand-dark border border-brand-border text-white text-sm rounded-xl pl-10 pr-4 py-3 focus:outline-none focus:border-brand-accent transition-all font-mono uppercase placeholder:normal-case" />
+            <i data-lucide="hash" class="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+          </div>
+          <p class="text-[10px] text-zinc-500 italic">Formato estándar de matrícula vehicular (ej: AA123BB o ABC123)</p>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-3 border-t border-brand-border">
+          <button type="button" onclick="closeQuickPlateModal()"
+            class="px-4 py-2.5 rounded-xl border border-brand-border text-xs text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all">Cancelar</button>
+          <button type="submit" id="btn-save-quick-plate"
+            class="px-5 py-2.5 rounded-xl bg-brand-accent hover:bg-brand-accentHover text-white text-xs font-bold shadow-lg shadow-brand-accent/20 transition-all active:scale-[0.98] flex items-center gap-2">
+            <i data-lucide="save" class="w-4 h-4"></i>
+            <span>Guardar Patente</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Contenedor flotante para notificaciones Toast -->
+  <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 max-w-sm pointer-events-none"></div>
 
   <!-- ========================================== -->
   <!-- 6. LÓGICA JAVASCRIPT                       -->
