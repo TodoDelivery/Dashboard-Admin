@@ -247,7 +247,25 @@ function syncDashboardKPIs() {
   if (kpiEl) kpiEl.innerText = `${activeCount}`;
   const flotaCountEl = document.getElementById('flota-count');
   if (flotaCountEl) flotaCountEl.innerText = `${activeCount}`;
+
+  if (typeof window.cargarFlotaCadetes === 'function') {
+    window.cargarFlotaCadetes();
+  }
 }
+
+window.getActiveCadetesList = () => {
+  return registeredCadetesCache
+    .filter(c => isCadeteActive(c))
+    .map(c => {
+      const cadId = c.id_cad ?? c.id;
+      const presence = activeCadetesMap.get(cadId) || activeCadetesMap.get(String(cadId)) || activeCadetesMap.get(Number(cadId));
+      const loc = cadetesLastLocationMap.get(cadId) || cadetesLastLocationMap.get(String(cadId)) || cadetesLastLocationMap.get(Number(cadId));
+      return {
+        ...c,
+        estado_cad: (presence && presence.estado_cad) || (loc && loc.isEnCurso ? 'ocupado' : (c.estado_cad || 'disponible'))
+      };
+    });
+};
 
 async function fetchRegisteredCadetes() {
   const { data, error } = await supabase.from('Cadetes').select('*').order('id_cad', { ascending: true });
