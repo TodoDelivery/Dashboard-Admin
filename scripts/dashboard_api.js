@@ -6,6 +6,17 @@ import { supabase } from './conexion_supabase.js';
 let cadetesActivos = new Map();
 let pedidosActivos = [];
 let totalRecaudacion = 0;
+let statsTiempo = {
+  total: 0,
+  promedio: 0,
+  varianza: 0,
+  desviacion: 0,
+  min: 0,
+  max: 0,
+  rapidos: 0,
+  normales: 0,
+  demorados: 0
+};
 
 const PRESENCE_CHANNEL_NAME = 'cadetes-disponibles';
 let channelPresence = null;
@@ -81,6 +92,8 @@ async function cargarKPIsBase() {
     const tiempoPromedioEl = document.getElementById('kpi-tiempo-promedio');
     const tiempoDiffEl = document.getElementById('kpi-tiempo-diff');
     const tiempoSubtextEl = document.getElementById('kpi-tiempo-subtext');
+    const tiempoVarianzaEl = document.getElementById('kpi-tiempo-varianza');
+    const varianzaSubtextEl = document.getElementById('kpi-tiempo-varianza-subtext');
 
     if (!errTiempo && pedidosTiempo && pedidosTiempo.length > 0) {
       const tiemposValidos = pedidosTiempo
@@ -88,17 +101,52 @@ async function cargarKPIsBase() {
         .filter(t => !isNaN(t) && t > 0);
 
       if (tiemposValidos.length > 0) {
-        const avg = Math.round(tiemposValidos.reduce((acc, cur) => acc + cur, 0) / tiemposValidos.length);
+        const total = tiemposValidos.length;
+        const sum = tiemposValidos.reduce((acc, cur) => acc + cur, 0);
+        const mean = sum / total;
+        const avg = Math.round(mean);
+        const varianza = tiemposValidos.reduce((acc, cur) => acc + Math.pow(cur - mean, 2), 0) / total;
+        const desviacion = Math.sqrt(varianza);
+        const desviacionMin = Math.round(desviacion * 10) / 10;
+        const minVal = Math.min(...tiemposValidos);
+        const maxVal = Math.max(...tiemposValidos);
+        const rapidos = tiemposValidos.filter(t => t < 25).length;
+        const normales = tiemposValidos.filter(t => t >= 25 && t <= 40).length;
+        const demorados = tiemposValidos.filter(t => t > 40).length;
+
+        statsTiempo = {
+          total,
+          promedio: avg,
+          varianza: Math.round(varianza * 10) / 10,
+          desviacion: desviacionMin,
+          min: minVal,
+          max: maxVal,
+          rapidos,
+          normales,
+          demorados
+        };
+
         if (tiempoPromedioEl) tiempoPromedioEl.innerText = `${avg} min`;
         if (tiempoDiffEl) tiempoDiffEl.innerText = avg <= 35 ? 'Óptimo' : 'Demorado';
-        if (tiempoSubtextEl) tiempoSubtextEl.innerText = `Calculado sobre ${tiemposValidos.length} pedidos`;
+        if (tiempoSubtextEl) tiempoSubtextEl.innerText = `Calculado sobre ${total} pedidos`;
+
+        if (tiempoVarianzaEl) {
+          tiempoVarianzaEl.innerText = `± ${desviacionMin} min`;
+        }
+        if (varianzaSubtextEl) {
+          varianzaSubtextEl.innerText = `Los pedidos suelen variar en ±${desviacionMin} min respecto al promedio`;
+        }
       } else {
+        statsTiempo = { total: 0, promedio: 0, varianza: 0, desviacion: 0, min: 0, max: 0, rapidos: 0, normales: 0, demorados: 0 };
         if (tiempoPromedioEl) tiempoPromedioEl.innerText = `0 min`;
         if (tiempoDiffEl) tiempoDiffEl.innerText = '';
+        if (tiempoVarianzaEl) tiempoVarianzaEl.innerText = `± 0 min`;
       }
     } else {
+      statsTiempo = { total: 0, promedio: 0, varianza: 0, desviacion: 0, min: 0, max: 0, rapidos: 0, normales: 0, demorados: 0 };
       if (tiempoPromedioEl) tiempoPromedioEl.innerText = `0 min`;
       if (tiempoDiffEl) tiempoDiffEl.innerText = '';
+      if (tiempoVarianzaEl) tiempoVarianzaEl.innerText = `± 0 min`;
     }
   } catch (e) {
     console.error('[Dashboard] Error cargando KPIs:', e);
@@ -459,9 +507,109 @@ if (document.readyState === 'loading') {
   initDashboard();
 }
 
+// =========================================================================
+// CONTROLADOR DEL MODAL DE DESGLOSE DE TIEMPO PROMEDIO & VARIANZA
+// =========================================================================
+export function openTiempoPromedioModal() {
+  const modal = document.getElementById('modal-tiempo-desglose');
+  const card = document.getElementById('modal-tiempo-card');
+  if (!modal || !card) return;
+
+  const { total, promedio, varianza, desviacion, min, max, rapidos, normales, demorados } = statsTiempo;
+
+  const statAvg = document.getElementById('modal-stat-avg');
+  const statDesv = document.getElementById('modal-stat-desv');
+  const statRango = document.getElementById('modal-stat-rango');
+  const statVar = document.getElementById('modal-stat-var');
+  const statTotal = document.getElementById('modal-stat-total-pedidos');
+  const statMin = document.getElementById('modal-stat-min');
+  const statMax = document.getElementById('modal-stat-max');
+  const diagTexto = document.getElementById('modal-diagnostico-texto');
+
+  if (statAvg) statAvg.innerText = `${promedio} min`;
+  if (statDesv) statDesv.innerText = `± ${desviacion} min`;
+  if (statRango) {
+    const rangoMin = Math.max(1, Math.round(promedio - desviacion));
+    const rangoMax = Math.round(promedio + desviacion);
+    statRango.innerText = total > 0 ? `${rangoMin} a ${rangoMax} min` : '0 min';
+  }
+  if (statVar) statVar.innerText = `${varianza} min²`;
+  if (statTotal) statTotal.innerText = `${total} pedidos evaluados`;
+  if (statMin) statMin.innerText = total > 0 ? `${min} min` : '-';
+  if (statMax) statMax.innerText = total > 0 ? `${max} min` : '-';
+
+  // Porcentajes de barras
+  const pRapidos = total > 0 ? Math.round((rapidos / total) * 100) : 0;
+  const pNormales = total > 0 ? Math.round((normales / total) * 100) : 0;
+  const pDemorados = total > 0 ? Math.round((demorados / total) * 100) : 0;
+
+  const rapCount = document.getElementById('modal-dist-rapidos-count');
+  const normCount = document.getElementById('modal-dist-normales-count');
+  const demCount = document.getElementById('modal-dist-demorados-count');
+  const barRap = document.getElementById('modal-bar-rapidos');
+  const barNorm = document.getElementById('modal-bar-normales');
+  const barDem = document.getElementById('modal-bar-demorados');
+
+  if (rapCount) rapCount.innerText = `${rapidos} (${pRapidos}%)`;
+  if (normCount) normCount.innerText = `${normales} (${pNormales}%)`;
+  if (demCount) demCount.innerText = `${demorados} (${pDemorados}%)`;
+
+  if (barRap) barRap.style.width = `${pRapidos}%`;
+  if (barNorm) barNorm.style.width = `${pNormales}%`;
+  if (barDem) barDem.style.width = `${pDemorados}%`;
+
+  // Diagnóstico contextual
+  if (diagTexto) {
+    if (total === 0) {
+      diagTexto.innerText = 'Aún no se registran pedidos finalizados con tiempo computado para generar el desglose estadístico.';
+    } else if (desviacion <= 5) {
+      diagTexto.innerText = `Alta consistencia y predictibilidad. Los envíos varían muy poco (±${desviacion} min), por lo que la gran mayoría de clientes recibe su pedido entre ${Math.max(1, Math.round(promedio - desviacion))} y ${Math.round(promedio + desviacion)} min.`;
+    } else if (desviacion <= 10) {
+      diagTexto.innerText = `Consistencia regular. El tiempo de entrega promedio es de ${promedio} min con una oscilación típica de ±${desviacion} min según la zona y demanda del momento.`;
+    } else {
+      diagTexto.innerText = `Dispersión elevada (±${desviacion} min). Existen pedidos con demoras atípicas que superan la media (hasta ${max} min), lo que sugiere revisar distancias o disponibilidad de cadetes en horas pico.`;
+    }
+  }
+
+  // Apertura animada
+  modal.classList.remove('hidden');
+  setTimeout(() => {
+    modal.classList.remove('opacity-0');
+    modal.classList.add('opacity-100');
+    card.classList.remove('scale-95');
+    card.classList.add('scale-100');
+  }, 10);
+
+  if (window.lucide) window.lucide.createIcons();
+}
+
+export function closeTiempoPromedioModal() {
+  const modal = document.getElementById('modal-tiempo-desglose');
+  const card = document.getElementById('modal-tiempo-card');
+  if (!modal || !card) return;
+
+  modal.classList.remove('opacity-100');
+  modal.classList.add('opacity-0');
+  card.classList.remove('scale-100');
+  card.classList.add('scale-95');
+
+  setTimeout(() => {
+    modal.classList.add('hidden');
+  }, 300);
+}
+
+// Cerrar con Escape
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeTiempoPromedioModal();
+  }
+});
+
 // Exponer globalmente
 if (typeof window !== 'undefined') {
   window.initDashboard = initDashboard;
   window.cargarUltimosPedidos = cargarUltimosPedidos;
   window.cargarFlotaCadetes = cargarFlotaCadetes;
+  window.openTiempoPromedioModal = openTiempoPromedioModal;
+  window.closeTiempoPromedioModal = closeTiempoPromedioModal;
 }
