@@ -5,8 +5,9 @@ import { supabase } from './conexion_supabase.js';
 // =========================================================================
 // Regla de Negocio Todo Delivery:
 // Facturación Total (100%) = Σ(coste_pedido)
-// Ganancia Neta Cadete (60%) = Math.round(totalFacturado * 0.6)
-// Efectivo a Rendir a Central (40%) = Math.round(totalFacturado * 0.4)
+// Comisión de la central = Datos_cotiz.Porc_Comision (se edita en Ajustes; 40% por defecto)
+// Efectivo a Rendir a Central = Math.round(totalFacturado * comisión / 100)
+// Ganancia Neta Cadete = Math.round(totalFacturado * (100 - comisión) / 100)
 // Ciclo: 'entregado' (en caja pendiente) -> 'rendido' (caja liquidada a cero)
 // =========================================================================
 
@@ -18,6 +19,10 @@ let currentPeriod = 'all'; // 'today' | 'yesterday' | 'week' | 'month' | 'all'
 let currentSearch = '';
 let currentStatusFilter = 'all'; // 'all' | 'pending' | 'settled'
 let realtimeChannel = null;
+let canalComision = null;
+
+// % de cada pedido que el cadete rinde a la central. Lo edita el admin en Ajustes (Datos_cotiz.Porc_Comision)
+let COMISION = 40;
 
 const STORAGE_SETTLEMENTS_KEY = 'todo_delivery_caja_settlements_v2';
 const STORAGE_CLOSURES_KEY = 'todo_delivery_caja_cierres_v2';
@@ -27,8 +32,41 @@ const STORAGE_CLOSURES_KEY = 'todo_delivery_caja_cierres_v2';
 // =========================================================================
 export async function initCaja() {
   setupPeriodBadges();
+  await cargarComision();
   await fetchSettlements();
   iniciarSuscripcionRealtime();
+}
+
+// =========================================================================
+// COMISIÓN DE LA CENTRAL
+// =========================================================================
+const parteEmpresa = (monto) => Math.round(monto * COMISION / 100);
+const parteCadete = (monto) => Math.round(monto * (100 - COMISION) / 100);
+const textoPct = (n) => `${Number(n.toFixed(2)).toLocaleString('es-AR')}%`;
+const pctEmpresa = () => textoPct(COMISION);
+const pctCadete = () => textoPct(100 - COMISION);
+
+async function cargarComision() {
+  try {
+    const { data, error } = await supabase
+      .from('Datos_cotiz')
+      .select('Porc_Comision')
+      .order('id', { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw error;
+    const valor = Number(data?.Porc_Comision);
+    if (Number.isFinite(valor) && valor >= 0 && valor <= 100) COMISION = valor;
+  } catch (err) {
+    console.warn('No se pudo leer Porc_Comision, se usa', COMISION + '%:', err);
+  }
+  pintarPorcentajes();
+}
+
+// Textos fijos del HTML: [data-comision-empresa] y [data-comision-cadete]
+function pintarPorcentajes() {
+  document.querySelectorAll('[data-comision-empresa]').forEach(el => { el.textContent = pctEmpresa(); });
+  document.querySelectorAll('[data-comision-cadete]').forEach(el => { el.textContent = pctCadete(); });
 }
 
 function getStoredSettlements() {
@@ -245,6 +283,18 @@ function iniciarSuscripcionRealtime() {
       fetchSettlements();
     })
     .subscribe();
+
+  // Si el admin cambia la comisión en Ajustes, la caja se recalcula sin recargar
+  if (canalComision) {
+    supabase.removeChannel(canalComision);
+  }
+  canalComision = supabase
+    .channel('caja-realtime-comision')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'Datos_cotiz' }, async () => {
+      await cargarComision();
+      if (typeof window.renderSettlementTable === 'function') window.renderSettlementTable();
+    })
+    .subscribe();
 }
 
 // =========================================================================
@@ -281,11 +331,11 @@ window.renderSettlementTable = () => {
     return matchSearch && matchStatus;
   });
 
-  // Calculamos métricas globales basadas en el esquema 60% Cadete / 40% Central
+  // Calculamos métricas globales según el reparto Cadete / Central vigente (comisión de Ajustes)
   cadetesSettlement.forEach(c => {
-    const cadeteEarnings = Math.round(c.totalVolume * 0.6); // 60%
-    const companyEarnings = Math.round(c.totalVolume * 0.4); // 40%
-    const pendingOwed = Math.round(c.pendingVolume * 0.4); // 40% de lo pendiente
+    const cadeteEarnings = parteCadete(c.totalVolume);
+    const companyEarnings = parteEmpresa(c.totalVolume);
+    const pendingOwed = parteEmpresa(c.pendingVolume);
 
     totalGross += c.totalVolume;
     totalPendingStreet += pendingOwed;
@@ -317,9 +367,9 @@ window.renderSettlementTable = () => {
   }
 
   filtered.forEach(c => {
-    const cadeteEarnings = Math.round(c.totalVolume * 0.6); // 60%
-    const companyEarnings = Math.round(c.totalVolume * 0.4); // 40%
-    const pendingOwed = Math.round(c.pendingVolume * 0.4); // 40% pendiente de rendir
+    const cadeteEarnings = parteCadete(c.totalVolume);
+    const companyEarnings = parteEmpresa(c.totalVolume);
+    const pendingOwed = parteEmpresa(c.pendingVolume);
 
     const tr = document.createElement("tr");
     tr.className = "hover:bg-brand-dark/40 transition-colors border-b border-brand-border/40";
@@ -366,7 +416,7 @@ window.renderSettlementTable = () => {
         ${c.settled
           ? `<span class="text-emerald-400 flex items-center gap-1.5 text-xs"><i data-lucide="check-check" class="w-4 h-4"></i> $0 (Caja a Cero)</span>`
           : `<span class="text-amber-400 flex items-center gap-1.5" title="Monto en efectivo que el cadete debe devolver a la central">
-               <i data-lucide="arrow-down-right" class="w-4 h-4 text-amber-400"></i> $${pendingOwed.toLocaleString('es-AR')} (Rendir 40%)
+               <i data-lucide="arrow-down-right" class="w-4 h-4 text-amber-400"></i> $${pendingOwed.toLocaleString('es-AR')} (Rendir ${pctEmpresa()})
              </span>`
         }
       </td>
@@ -453,8 +503,8 @@ window.openSettlementModal = (cadeteId) => {
   });
 
   const facturadoTurno = pendingOrders.reduce((acc, o) => acc + (parseFloat(o.coste_pedido) || 0), 0);
-  const gananciaCadete60 = Math.round(facturadoTurno * 0.6); // 60%
-  const efectivoRendir40 = Math.round(facturadoTurno * 0.4); // 40%
+  const gananciaCadete60 = parteCadete(facturadoTurno);
+  const efectivoRendir40 = parteEmpresa(facturadoTurno);
 
   currentGeneratedToken = generarTokenLiquidacion(cadeteId);
 
@@ -475,14 +525,14 @@ window.openSettlementModal = (cadeteId) => {
   if (cashInHandEl) cashInHandEl.innerText = `$${facturadoTurno.toLocaleString('es-AR')}`;
   if (earningsEl) earningsEl.innerText = `+$${gananciaCadete60.toLocaleString('es-AR')}`;
 
-  if (balanceLabel) balanceLabel.innerText = "Efectivo a Rendir a Central (40%):";
+  if (balanceLabel) balanceLabel.innerText = `Efectivo a Rendir a Central (${pctEmpresa()}):`;
   if (balanceAmount) {
     balanceAmount.className = "text-brand-gold font-mono text-xl font-extrabold";
     balanceAmount.innerText = `$${efectivoRendir40.toLocaleString('es-AR')}`;
   }
   if (balanceExp) {
     balanceExp.innerHTML = `
-      El repartidor retiene su ganancia acumulada de <strong class="text-emerald-400">+$${gananciaCadete60.toLocaleString('es-AR')} (60%)</strong> y debe entregar <strong class="text-brand-gold">$${efectivoRendir40.toLocaleString('es-AR')} (40%)</strong> a la administración central de Todo Delivery.
+      El repartidor retiene su ganancia acumulada de <strong class="text-emerald-400">+$${gananciaCadete60.toLocaleString('es-AR')} (${pctCadete()})</strong> y debe entregar <strong class="text-brand-gold">$${efectivoRendir40.toLocaleString('es-AR')} (${pctEmpresa()})</strong> a la administración central de Todo Delivery.
     `;
   }
 
@@ -495,8 +545,8 @@ window.openSettlementModal = (cadeteId) => {
       const clienteNombre = o.Clientes ? o.Clientes.nombre_cliente : 'Cliente';
       const detalle = o.tipo_paquete || o.inform_pedido || 'Envío estándar';
       const monto = parseFloat(o.coste_pedido) || 0;
-      const comision40 = Math.round(monto * 0.4);
-      const ganancia60 = Math.round(monto * 0.6);
+      const comision40 = parteEmpresa(monto);
+      const ganancia60 = parteCadete(monto);
 
       return `
         <tr class="border-b border-brand-border/40 text-xs hover:bg-zinc-800/40">
@@ -563,8 +613,8 @@ window.confirmSettlement = async () => {
   }
 
   const facturadoTurno = pendingOrders.reduce((acc, o) => acc + (parseFloat(o.coste_pedido) || 0), 0);
-  const cadeteShare60 = Math.round(facturadoTurno * 0.6);
-  const companyShare40 = Math.round(facturadoTurno * 0.4);
+  const cadeteShare60 = parteCadete(facturadoTurno);
+  const companyShare40 = parteEmpresa(facturadoTurno);
   const pendingOrderIds = pendingOrders.map(o => o.id_pedido);
 
   const confirmBtn = document.getElementById("btn-confirm-settlement");
@@ -660,8 +710,8 @@ window.verConstanciaCadete = (cadeteId) => {
   const stored = getStoredSettlements()[cadeteId] || {};
   const token = stored.token || generarTokenLiquidacion(cadeteId);
   const facturado = cad.totalVolume;
-  const ganancia60 = Math.round(facturado * 0.6);
-  const rendido40 = Math.round(facturado * 0.4);
+  const ganancia60 = parteCadete(facturado);
+  const rendido40 = parteEmpresa(facturado);
 
   const phoneSanitized = (cad.phone || '').replace(/\D/g, '');
 
@@ -671,14 +721,14 @@ window.verConstanciaCadete = (cadeteId) => {
     `🛵 *Cadete:* ${cad.name}\n` +
     `📦 *Envíos Rendidos:* ${cad.trips}\n` +
     `💵 *Facturación Total (100%):* $${facturado.toLocaleString('es-AR')}\n` +
-    `🟢 *Ganancia Repartidor (60%):* +$${ganancia60.toLocaleString('es-AR')}\n` +
-    `🏦 *Efectivo Rendido a Central (40%):* $${rendido40.toLocaleString('es-AR')}\n` +
+    `🟢 *Ganancia Repartidor (${pctCadete()}):* +$${ganancia60.toLocaleString('es-AR')}\n` +
+    `🏦 *Efectivo Rendido a Central (${pctEmpresa()}):* $${rendido40.toLocaleString('es-AR')}\n` +
     `✅ *Estado de Caja:* LIQUIDADO A CERO\n` +
     `📅 *Fecha:* ${new Date().toLocaleDateString('es-AR')} ${new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}\n` +
     `--------------------------------------\n` +
     `¡Gracias por tu jornada de trabajo!`;
 
-  if (confirm(`Comprobante de Caja (${token}):\n\n- Facturación: $${facturado}\n- Ganancia Cadete (60%): +$${ganancia60}\n- Efectivo Rendido (40%): $${rendido40}\n\n¿Deseas abrir WhatsApp para enviar la constancia al repartidor?`)) {
+  if (confirm(`Comprobante de Caja (${token}):\n\n- Facturación: $${facturado}\n- Ganancia Cadete (${pctCadete()}): +$${ganancia60}\n- Efectivo Rendido (${pctEmpresa()}): $${rendido40}\n\n¿Deseas abrir WhatsApp para enviar la constancia al repartidor?`)) {
     const url = phoneSanitized 
       ? `https://wa.me/${phoneSanitized}?text=${encodeURIComponent(msg)}`
       : `https://wa.me/?text=${encodeURIComponent(msg)}`;
@@ -719,8 +769,8 @@ window.openBreakdownModal = (cadeteId) => {
           </td>
           <td class="py-3 px-4 text-zinc-300 max-w-xs truncate">${detalle}</td>
           <td class="py-3 px-4 font-mono font-bold text-white text-right">$${monto.toLocaleString('es-AR')}</td>
-          <td class="py-3 px-4 font-mono text-emerald-400 font-semibold text-right">+$${Math.round(monto * 0.6).toLocaleString('es-AR')}</td>
-          <td class="py-3 px-4 font-mono text-brand-gold font-bold text-right">$${Math.round(monto * 0.4).toLocaleString('es-AR')}</td>
+          <td class="py-3 px-4 font-mono text-emerald-400 font-semibold text-right">+$${parteCadete(monto).toLocaleString('es-AR')}</td>
+          <td class="py-3 px-4 font-mono text-brand-gold font-bold text-right">$${parteEmpresa(monto).toLocaleString('es-AR')}</td>
           <td class="py-3 px-4 text-right">
             <span class="inline-block text-[10px] font-semibold px-2 py-0.5 rounded ${isRendido ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}">
               ${isRendido ? 'Rendido' : 'Entregado'}
@@ -767,8 +817,8 @@ window.openClosureModal = () => {
 
   cadetesSettlement.forEach(c => {
     totalGross += c.totalVolume;
-    totalCompany40 += Math.round(c.totalVolume * 0.4);
-    totalCadetes60 += Math.round(c.totalVolume * 0.6);
+    totalCompany40 += parteEmpresa(c.totalVolume);
+    totalCadetes60 += parteCadete(c.totalVolume);
     if (c.settled) settledCadetesCount++;
   });
 
@@ -831,8 +881,8 @@ window.confirmJornadaClosure = () => {
 
   cadetesSettlement.forEach(c => {
     totalGross += c.totalVolume;
-    totalCompany += Math.round(c.totalVolume * 0.4);
-    totalCadetes += Math.round(c.totalVolume * 0.6);
+    totalCompany += parteEmpresa(c.totalVolume);
+    totalCadetes += parteCadete(c.totalVolume);
   });
 
   const closureData = {
@@ -882,17 +932,17 @@ window.exportReport = () => {
     "Viajes Pendientes",
     "Viajes Rendidos",
     "Facturación Total (100% ARS)",
-    "Ganancia Cadete (60% ARS)",
-    "Comisión Central (40% ARS)",
+    `Ganancia Cadete (${pctCadete()} ARS)`,
+    `Comisión Central (${pctEmpresa()} ARS)`,
     "Deuda Pendiente a Rendir (ARS)",
     "Estado Caja"
   ].map(h => `"${h}"`).join(","));
 
   // Filas por cadete
   cadetesSettlement.forEach(c => {
-    const cadeteEarnings = Math.round(c.totalVolume * 0.6);
-    const companyEarnings = Math.round(c.totalVolume * 0.4);
-    const pendingOwed = Math.round(c.pendingVolume * 0.4);
+    const cadeteEarnings = parteCadete(c.totalVolume);
+    const companyEarnings = parteEmpresa(c.totalVolume);
+    const pendingOwed = parteEmpresa(c.pendingVolume);
 
     csvRows.push([
       c.id,
@@ -914,9 +964,9 @@ window.exportReport = () => {
 
   // Fila de Totales
   const sumGross = cadetesSettlement.reduce((acc, c) => acc + c.totalVolume, 0);
-  const sumCadetes = Math.round(sumGross * 0.6);
-  const sumCompany = Math.round(sumGross * 0.4);
-  const sumPending = cadetesSettlement.reduce((acc, c) => acc + Math.round(c.pendingVolume * 0.4), 0);
+  const sumCadetes = parteCadete(sumGross);
+  const sumCompany = parteEmpresa(sumGross);
+  const sumPending = cadetesSettlement.reduce((acc, c) => acc + parteEmpresa(c.pendingVolume), 0);
   const sumTrips = cadetesSettlement.reduce((acc, c) => acc + c.trips, 0);
 
   csvRows.push([
