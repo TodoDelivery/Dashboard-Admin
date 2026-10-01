@@ -536,8 +536,11 @@ function injectModalHTML() {
   const modal = document.createElement('div');
   modal.id = 'radar-map-modal';
   modal.className = 'fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-6 hidden opacity-0 transition-opacity duration-300';
+  modal.onclick = (e) => {
+    if (e.target === modal) window.closeRadarMapModal();
+  };
   modal.innerHTML = `
-    <div id="radar-map-card" class="w-full max-w-5xl h-[85vh] bg-brand-card border border-brand-border rounded-3xl flex flex-col shadow-2xl scale-95 transition-transform duration-300 overflow-hidden">
+    <div id="radar-map-card" class="w-full max-w-5xl h-[90vh] sm:h-[85vh] bg-brand-card border border-brand-border rounded-3xl flex flex-col shadow-2xl scale-95 transition-transform duration-300 overflow-hidden">
       <!-- Modal Header -->
       <div class="h-16 px-6 bg-brand-dark/95 border-b border-brand-border flex items-center justify-between shrink-0">
         <div class="flex items-center gap-3">
@@ -817,6 +820,7 @@ window.openRadarMapModal = () => {
   const c = document.getElementById('radar-map-card');
   if (m && c) {
     m.classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
     setTimeout(() => {
       m.classList.add('opacity-100');
       c.classList.remove('scale-95');
@@ -850,6 +854,7 @@ window.closeRadarMapModal = () => {
   if (m && c) {
     m.classList.remove('opacity-100');
     c.classList.add('scale-95');
+    document.body.classList.remove('overflow-hidden');
     setTimeout(() => m.classList.add('hidden'), 300);
   }
 };

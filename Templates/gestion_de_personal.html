@@ -5,6 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Todo Delivery - Gestión de Personal (Cadetes & Clientes)</title>
+  <link rel="icon" type="image/svg+xml" href="../images/Logo.svg">
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -50,13 +51,11 @@
       color: #F4F4F5;
       -webkit-tap-highlight-color: transparent;
       opacity: 0;
-      transition: opacity 0.25s ease-out, transform 0.25s ease-out;
-      transform: translateY(4px);
+      transition: opacity 0.25s ease-out;
     }
 
     body.page-loaded {
       opacity: 1;
-      transform: translateY(0);
     }
 
     ::-webkit-scrollbar {
@@ -163,20 +162,25 @@
   <!-- 1. SIDEBAR DE NAVEGACIÓN                   -->
   <!-- ========================================== -->
   <aside id="sidebar"
-    class="fixed inset-y-0 left-0 z-40 w-64 bg-brand-dark border-r border-brand-border flex flex-col justify-between transition-transform duration-300 -translate-x-full md:translate-x-0">
+    class="fixed inset-y-0 left-0 z-40 w-64 bg-brand-dark border-r border-brand-border flex flex-col justify-between transition-transform duration-300 -translate-x-full md:translate-x-0 h-screen max-h-screen overflow-y-auto">
     <div>
       <!-- Logo Header -->
-      <div class="h-20 flex items-center px-6 border-b border-brand-border gap-3">
-        <div
-          class="flex items-center justify-center w-10 h-10 bg-brand-accent/10 border border-brand-accent/20 rounded-xl">
-          <i data-lucide="zap" class="w-5 h-5 text-brand-accent fill-brand-accent"></i>
+      <div class="h-20 flex items-center justify-between px-6 border-b border-brand-border">
+        <div class="flex items-center gap-3">
+          <div
+            class="flex items-center justify-center w-10 h-10 bg-brand-accent/10 border border-brand-accent/20 rounded-xl p-1.5">
+            <img src="../images/Logo.svg" alt="Todo Delivery" class="w-full h-full object-contain">
+          </div>
+          <div>
+            <h1 class="text-base font-bold tracking-tight text-white flex items-center gap-1">
+              TODO <span class="text-brand-accent font-semibold tracking-wider uppercase text-xs">Delivery</span>
+            </h1>
+            <p class="text-[10px] uppercase tracking-wider text-brand-muted">Admin Console</p>
+          </div>
         </div>
-        <div>
-          <h1 class="text-base font-bold tracking-tight text-white flex items-center gap-1">
-            TODO <span class="text-brand-accent font-semibold tracking-wider uppercase text-xs">Delivery</span>
-          </h1>
-          <p class="text-[10px] uppercase tracking-wider text-brand-muted">Admin Console</p>
-        </div>
+        <button onclick="toggleSidebar()" class="md:hidden p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800 transition-colors" title="Cerrar menú">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
       </div>
 
       <!-- Menú de Opciones -->
@@ -254,10 +258,13 @@
     </div>
   </aside>
 
+  <!-- Backdrop para Sidebar Móvil -->
+  <div id="sidebar-backdrop" onclick="toggleSidebar()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 hidden md:hidden transition-opacity duration-300 opacity-0"></div>
+
   <!-- ========================================== -->
   <!-- 2. CONTENEDOR PRINCIPAL                   -->
   <!-- ========================================== -->
-  <div class="flex-1 md:pl-64 flex flex-col min-h-screen">
+  <div class="flex-1 md:pl-64 flex flex-col min-h-screen w-full min-w-0">
 
     <!-- Top Header -->
     <header
@@ -276,9 +283,10 @@
 
       <!-- Botón Registrar Persona -->
       <button onclick="openModal()"
-        class="flex items-center gap-2 bg-brand-accent hover:bg-brand-accentHover text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-lg shadow-brand-accent/20 transition-all active:scale-[0.98]">
+        class="flex items-center gap-2 bg-brand-accent hover:bg-brand-accentHover text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-lg shadow-brand-accent/20 transition-all active:scale-[0.98] shrink-0">
         <i data-lucide="user-plus" class="w-4 h-4"></i>
-        <span id="btn-action-text">Registrar un cadete</span>
+        <span id="btn-action-text" class="hidden sm:inline">Registrar un cadete</span>
+        <span class="sm:hidden">Nuevo</span>
       </button>
     </header>
 
@@ -334,10 +342,10 @@
   <!-- ========================================== -->
   <!-- 3. MODAL: REGISTRAR / EDITAR CADETE       -->
   <!-- ========================================== -->
-  <div id="modal-backdrop"
-    class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+  <div id="modal-backdrop" onclick="if(event.target === this) closeModal()"
+    class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-6 hidden opacity-0 transition-opacity duration-300">
     <div id="modal-container"
-      class="w-full max-w-lg bg-brand-card border border-brand-border rounded-3xl p-6 sm:p-8 shadow-2xl scale-95 transition-transform duration-300 space-y-6">
+      class="w-full max-w-lg bg-brand-card border border-brand-border rounded-3xl p-6 sm:p-8 shadow-2xl scale-95 transition-transform duration-300 space-y-6 max-h-[90vh] overflow-y-auto">
 
       <!-- Header Modal -->
       <div class="flex items-center justify-between border-b border-brand-border pb-4">
@@ -429,10 +437,10 @@
   <!-- ========================================== -->
   <!-- 4. MODAL: REGISTRAR / EDITAR CLIENTE       -->
   <!-- ========================================== -->
-  <div id="cliente-modal-backdrop"
-    class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+  <div id="cliente-modal-backdrop" onclick="if(event.target === this) closeClienteModal()"
+    class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-6 hidden opacity-0 transition-opacity duration-300">
     <div id="cliente-modal-container"
-      class="w-full max-w-md bg-brand-card border border-brand-border rounded-3xl p-6 sm:p-8 shadow-2xl scale-95 transition-transform duration-300 space-y-6">
+      class="w-full max-w-md bg-brand-card border border-brand-border rounded-3xl p-6 sm:p-8 shadow-2xl scale-95 transition-transform duration-300 space-y-6 max-h-[90vh] overflow-y-auto">
 
       <!-- Header Modal -->
       <div class="flex items-center justify-between border-b border-brand-border pb-4">
@@ -478,10 +486,10 @@
   <!-- ========================================== -->
   <!-- 5. MODAL DE CREDENCIAL GENERADA            -->
   <!-- ========================================== -->
-  <div id="credential-modal"
-    class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+  <div id="credential-modal" onclick="if(event.target === this) closeCredentialModal()"
+    class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-6 hidden opacity-0 transition-opacity duration-300">
     <div
-      class="w-full max-w-sm bg-brand-card border border-brand-border rounded-3xl p-6 shadow-2xl text-center space-y-4">
+      class="w-full max-w-sm bg-brand-card border border-brand-border rounded-3xl p-6 shadow-2xl text-center space-y-4 max-h-[90vh] overflow-y-auto">
       <div
         class="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mx-auto flex items-center justify-center">
         <i data-lucide="check-check" class="w-6 h-6"></i>
@@ -513,10 +521,10 @@
   <!-- ========================================== -->
   <!-- MODAL RÁPIDO: MODIFICAR / SUBIR PATENTE   -->
   <!-- ========================================== -->
-  <div id="quick-plate-modal"
-    class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+  <div id="quick-plate-modal" onclick="if(event.target === this) closeQuickPlateModal()"
+    class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-6 hidden opacity-0 transition-opacity duration-300">
     <div id="quick-plate-container"
-      class="w-full max-w-md bg-brand-card border border-brand-border rounded-3xl p-6 sm:p-7 shadow-2xl scale-95 transition-transform duration-300 space-y-5">
+      class="w-full max-w-md bg-brand-card border border-brand-border rounded-3xl p-6 sm:p-7 shadow-2xl scale-95 transition-transform duration-300 space-y-5 max-h-[90vh] overflow-y-auto">
       
       <div class="flex items-center justify-between border-b border-brand-border pb-4">
         <div class="flex items-center gap-3">
@@ -576,10 +584,27 @@
     // Inicializar iconos Lucide
     lucide.createIcons();
 
-    // Toggle Sidebar para dispositivos móviles
+    // Toggle Sidebar para dispositivos móviles con backdrop y scroll-lock
     function toggleSidebar() {
       const sidebar = document.getElementById('sidebar');
-      sidebar.classList.toggle('-translate-x-full');
+      const backdrop = document.getElementById('sidebar-backdrop');
+      if (!sidebar) return;
+      const isClosed = sidebar.classList.contains('-translate-x-full');
+      if (isClosed) {
+        sidebar.classList.remove('-translate-x-full');
+        if (backdrop) {
+          backdrop.classList.remove('hidden');
+          setTimeout(() => backdrop.classList.remove('opacity-0'), 10);
+        }
+        document.body.classList.add('overflow-hidden', 'md:overflow-auto');
+      } else {
+        sidebar.classList.add('-translate-x-full');
+        if (backdrop) {
+          backdrop.classList.add('opacity-0');
+          setTimeout(() => backdrop.classList.add('hidden'), 300);
+        }
+        document.body.classList.remove('overflow-hidden', 'md:overflow-auto');
+      }
     }
 
     // Transición de entrada y salida de página

@@ -478,6 +478,7 @@ window.openOrderModal = (orderId) => {
   const c = document.getElementById('order-modal-container');
   if (m && c) {
     m.classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
     setTimeout(() => {
       m.classList.add('opacity-100');
       c.classList.remove('scale-95');
@@ -492,6 +493,7 @@ window.closeOrderModal = () => {
   if (m && c) {
     m.classList.remove('opacity-100');
     c.classList.add('scale-95');
+    document.body.classList.remove('overflow-hidden');
     setTimeout(() => m.classList.add('hidden'), 300);
   }
 };

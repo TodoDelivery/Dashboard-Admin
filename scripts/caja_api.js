@@ -522,6 +522,7 @@ window.openSettlementModal = (cadeteId) => {
   const c = document.getElementById('modal-container');
   if (m && c) {
     m.classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
     setTimeout(() => {
       m.classList.add('opacity-100');
       c.classList.remove('scale-95');
@@ -537,6 +538,7 @@ window.closeSettlementModal = () => {
   if (m && c) {
     m.classList.remove('opacity-100');
     c.classList.add('scale-95');
+    document.body.classList.remove('overflow-hidden');
     setTimeout(() => m.classList.add('hidden'), 300);
   }
 };
@@ -733,6 +735,7 @@ window.openBreakdownModal = (cadeteId) => {
   const c = document.getElementById('breakdown-modal-container');
   if (m && c) {
     m.classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
     setTimeout(() => {
       m.classList.add('opacity-100');
       c.classList.remove('scale-95');
@@ -748,6 +751,7 @@ window.closeBreakdownModal = () => {
   if (m && c) {
     m.classList.remove('opacity-100');
     c.classList.add('scale-95');
+    document.body.classList.remove('overflow-hidden');
     setTimeout(() => m.classList.add('hidden'), 300);
   }
 };
@@ -798,6 +802,7 @@ window.openClosureModal = () => {
   const c = document.getElementById('closure-modal-container');
   if (m && c) {
     m.classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
     setTimeout(() => {
       m.classList.add('opacity-100');
       c.classList.remove('scale-95');
@@ -813,6 +818,7 @@ window.closeClosureModal = () => {
   if (m && c) {
     m.classList.remove('opacity-100');
     c.classList.add('scale-95');
+    document.body.classList.remove('overflow-hidden');
     setTimeout(() => m.classList.add('hidden'), 300);
   }
 };

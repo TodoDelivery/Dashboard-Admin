@@ -429,6 +429,7 @@ window.openCadeteModal = (id = null) => {
   const m = document.getElementById('modal-backdrop');
   const c = document.getElementById('modal-container');
   m.classList.remove('hidden');
+  document.body.classList.add('overflow-hidden');
   setTimeout(() => {
     m.classList.add('opacity-100');
     c.classList.remove('scale-95');
@@ -441,6 +442,7 @@ window.closeModal = () => {
   if (m && c) {
     m.classList.remove('opacity-100');
     c.classList.add('scale-95');
+    document.body.classList.remove('overflow-hidden');
     setTimeout(() => m.classList.add('hidden'), 300);
   }
   editingCadeteId = null;
@@ -573,6 +575,7 @@ window.openClienteModal = (id = null) => {
   const c = document.getElementById('cliente-modal-container');
   if (m && c) {
     m.classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
     setTimeout(() => {
       m.classList.add('opacity-100');
       c.classList.remove('scale-95');
@@ -586,6 +589,7 @@ window.closeClienteModal = () => {
   if (m && c) {
     m.classList.remove('opacity-100');
     c.classList.add('scale-95');
+    document.body.classList.remove('overflow-hidden');
     setTimeout(() => m.classList.add('hidden'), 300);
   }
   editingClienteId = null;
@@ -662,6 +666,7 @@ window.openCredentialModal = () => {
   const m = document.getElementById('credential-modal');
   if (m) {
     m.classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
     setTimeout(() => m.classList.add('opacity-100'), 10);
   }
 };
@@ -670,6 +675,7 @@ window.closeCredentialModal = () => {
   const m = document.getElementById('credential-modal');
   if (m) {
     m.classList.remove('opacity-100');
+    document.body.classList.remove('overflow-hidden');
     setTimeout(() => m.classList.add('hidden'), 300);
   }
 };
@@ -724,6 +730,7 @@ window.openQuickPlateModal = (id) => {
   const c = document.getElementById('quick-plate-container');
   if (m && c) {
     m.classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
     setTimeout(() => {
       m.classList.add('opacity-100');
       c.classList.remove('scale-95');
@@ -740,6 +747,7 @@ window.closeQuickPlateModal = () => {
   if (m && c) {
     m.classList.remove('opacity-100');
     c.classList.add('scale-95');
+    document.body.classList.remove('overflow-hidden');
     setTimeout(() => m.classList.add('hidden'), 300);
   }
   quickEditingCadeteId = null;

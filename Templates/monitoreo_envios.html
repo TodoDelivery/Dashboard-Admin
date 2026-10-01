@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Todo Delivery - Monitor de Envíos en Vivo</title>
+  <link rel="icon" type="image/svg+xml" href="../images/Logo.svg">
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -47,12 +48,10 @@
       color: #F4F4F5;
       -webkit-tap-highlight-color: transparent;
       opacity: 0;
-      transition: opacity 0.25s ease-out, transform 0.25s ease-out;
-      transform: translateY(4px);
+      transition: opacity 0.25s ease-out;
     }
     body.page-loaded {
       opacity: 1;
-      transform: translateY(0);
     }
     ::-webkit-scrollbar {
       width: 6px;
@@ -128,18 +127,23 @@
   <!-- ========================================== -->
   <!-- 1. SIDEBAR DE NAVEGACIÓN                   -->
   <!-- ========================================== -->
-  <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-64 bg-brand-dark border-r border-brand-border flex flex-col justify-between transition-transform duration-300 -translate-x-full md:translate-x-0">
+  <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-64 bg-brand-dark border-r border-brand-border flex flex-col justify-between transition-transform duration-300 -translate-x-full md:translate-x-0 h-screen max-h-screen overflow-y-auto">
     <div>
-      <div class="h-20 flex items-center px-6 border-b border-brand-border gap-3">
-        <div class="flex items-center justify-center w-10 h-10 bg-brand-accent/10 border border-brand-accent/20 rounded-xl">
-          <i data-lucide="zap" class="w-5 h-5 text-brand-accent fill-brand-accent"></i>
+      <div class="h-20 flex items-center justify-between px-6 border-b border-brand-border">
+        <div class="flex items-center gap-3">
+          <div class="flex items-center justify-center w-10 h-10 bg-brand-accent/10 border border-brand-accent/20 rounded-xl p-1.5">
+            <img src="../images/Logo.svg" alt="Todo Delivery" class="w-full h-full object-contain">
+          </div>
+          <div>
+            <h1 class="text-base font-bold tracking-tight text-white flex items-center gap-1">
+              TODO <span class="text-brand-accent font-semibold tracking-wider uppercase text-xs">Delivery</span>
+            </h1>
+            <p class="text-[10px] uppercase tracking-wider text-brand-muted">Admin Console</p>
+          </div>
         </div>
-        <div>
-          <h1 class="text-base font-bold tracking-tight text-white flex items-center gap-1">
-            TODO <span class="text-brand-accent font-semibold tracking-wider uppercase text-xs">Delivery</span>
-          </h1>
-          <p class="text-[10px] uppercase tracking-wider text-brand-muted">Admin Console</p>
-        </div>
+        <button onclick="toggleSidebar()" class="md:hidden p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800 transition-colors" title="Cerrar menú">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
       </div>
 
       <nav class="p-4 space-y-1.5">
@@ -198,10 +202,13 @@
     </div>
   </aside>
 
+  <!-- Backdrop para Sidebar Móvil -->
+  <div id="sidebar-backdrop" onclick="toggleSidebar()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 hidden md:hidden transition-opacity duration-300 opacity-0"></div>
+
   <!-- ========================================== -->
   <!-- 2. CONTENEDOR PRINCIPAL                   -->
   <!-- ========================================== -->
-  <div class="flex-1 md:pl-64 flex flex-col min-h-screen">
+  <div class="flex-1 md:pl-64 flex flex-col min-h-screen w-full min-w-0">
     
     <!-- Top Header -->
     <header class="h-20 bg-brand-dark/80 backdrop-blur-md border-b border-brand-border px-6 flex items-center justify-between sticky top-0 z-30">
@@ -245,11 +252,19 @@
     </div>
 
     <!-- Tablero Kanban de Despacho Operativo -->
-    <main class="flex-1 p-6 overflow-x-auto">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 min-w-[850px] kanban-col">
+    <main class="flex-1 p-4 sm:p-6 overflow-x-auto w-full min-w-0">
+      <!-- Selector de columna para pantallas móviles -->
+      <div class="lg:hidden flex items-center gap-2 mb-4 p-1.5 bg-brand-card border border-brand-border rounded-2xl overflow-x-auto">
+        <button onclick="setKanbanMobileView('all')" id="km-tab-all" class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all bg-brand-accent text-white shrink-0">Todos</button>
+        <button onclick="setKanbanMobileView('unassigned')" id="km-tab-unassigned" class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all text-zinc-400 hover:text-white shrink-0">Por Asignar</button>
+        <button onclick="setKanbanMobileView('in-transit')" id="km-tab-in-transit" class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all text-zinc-400 hover:text-white shrink-0">En Ruta</button>
+        <button onclick="setKanbanMobileView('delivered')" id="km-tab-delivered" class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all text-zinc-400 hover:text-white shrink-0">Entregados</button>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full">
         
         <!-- Columna 1: Por Asignar / Nuevos -->
-        <div class="bg-brand-dark/40 border border-brand-border/80 rounded-2xl p-4 flex flex-col">
+        <div id="kanban-col-unassigned" class="bg-brand-dark/40 border border-brand-border/80 rounded-2xl p-4 flex flex-col">
           <div class="flex items-center justify-between pb-3 border-b border-brand-border/60 mb-4">
             <div class="flex items-center gap-2">
               <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
@@ -264,7 +279,7 @@
         </div>
 
         <!-- Columna 2: En Curso / Con Cadete -->
-        <div class="bg-brand-dark/40 border border-brand-border/80 rounded-2xl p-4 flex flex-col">
+        <div id="kanban-col-in-transit" class="bg-brand-dark/40 border border-brand-border/80 rounded-2xl p-4 flex flex-col">
           <div class="flex items-center justify-between pb-3 border-b border-brand-border/60 mb-4">
             <div class="flex items-center gap-2">
               <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
@@ -279,7 +294,7 @@
         </div>
 
         <!-- Columna 3: Entregados (Filtro Hoy / Histórico) -->
-        <div class="bg-brand-dark/40 border border-brand-border/80 rounded-2xl p-4 flex flex-col">
+        <div id="kanban-col-delivered" class="bg-brand-dark/40 border border-brand-border/80 rounded-2xl p-4 flex flex-col">
           <div class="flex items-center justify-between pb-3 border-b border-brand-border/60 mb-4 flex-wrap gap-2">
             <div class="flex items-center gap-2">
               <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
@@ -307,7 +322,7 @@
   <!-- ========================================== -->
   <!-- 4. MODAL: EDITOR DE PEDIDOS (SOLO LECTURA) -->
   <!-- ========================================== -->
-  <div id="order-modal-backdrop" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+  <div id="order-modal-backdrop" onclick="if(event.target === this) closeOrderModal()" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-6 hidden opacity-0 transition-opacity duration-300">
     <div id="order-modal-container" class="w-full max-w-xl bg-brand-card border border-brand-border rounded-3xl p-6 sm:p-7 shadow-2xl scale-95 transition-transform duration-300 space-y-5 max-h-[90vh] flex flex-col">
       
       <!-- Modal Header -->
@@ -450,9 +465,67 @@
       });
     });
 
+    // Toggle Sidebar para dispositivos móviles con backdrop y scroll-lock
     function toggleSidebar() {
-      document.getElementById('sidebar').classList.toggle('-translate-x-full');
+      const sidebar = document.getElementById('sidebar');
+      const backdrop = document.getElementById('sidebar-backdrop');
+      if (!sidebar) return;
+      const isClosed = sidebar.classList.contains('-translate-x-full');
+      if (isClosed) {
+        sidebar.classList.remove('-translate-x-full');
+        if (backdrop) {
+          backdrop.classList.remove('hidden');
+          setTimeout(() => backdrop.classList.remove('opacity-0'), 10);
+        }
+        document.body.classList.add('overflow-hidden', 'md:overflow-auto');
+      } else {
+        sidebar.classList.add('-translate-x-full');
+        if (backdrop) {
+          backdrop.classList.add('opacity-0');
+          setTimeout(() => backdrop.classList.add('hidden'), 300);
+        }
+        document.body.classList.remove('overflow-hidden', 'md:overflow-auto');
+      }
     }
+
+    // Selector de vista de columnas Kanban en móviles
+    window.setKanbanMobileView = function(view) {
+      const col1 = document.getElementById('kanban-col-unassigned');
+      const col2 = document.getElementById('kanban-col-in-transit');
+      const col3 = document.getElementById('kanban-col-delivered');
+      const tabs = ['all', 'unassigned', 'in-transit', 'delivered'];
+      
+      tabs.forEach(t => {
+        const btn = document.getElementById(`km-tab-${t}`);
+        if (btn) {
+          if (t === view) {
+            btn.className = 'px-3.5 py-2 rounded-xl text-xs font-bold transition-all bg-brand-accent text-white shrink-0';
+          } else {
+            btn.className = 'px-3.5 py-2 rounded-xl text-xs font-bold transition-all text-zinc-400 hover:text-white shrink-0';
+          }
+        }
+      });
+
+      if (!col1 || !col2 || !col3) return;
+
+      if (view === 'all') {
+        col1.classList.remove('hidden');
+        col2.classList.remove('hidden');
+        col3.classList.remove('hidden');
+      } else if (view === 'unassigned') {
+        col1.classList.remove('hidden');
+        col2.classList.add('hidden');
+        col3.classList.add('hidden');
+      } else if (view === 'in-transit') {
+        col1.classList.add('hidden');
+        col2.classList.remove('hidden');
+        col3.classList.add('hidden');
+      } else if (view === 'delivered') {
+        col1.classList.add('hidden');
+        col2.classList.add('hidden');
+        col3.classList.remove('hidden');
+      }
+    };
   </script>
   <script type="module" src="../scripts/sidebar_radar.js"></script>
 </body>

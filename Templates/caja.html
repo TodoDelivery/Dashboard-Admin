@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Todo Delivery - Liquidación, Caja y Comisiones</title>
+  <link rel="icon" type="image/svg+xml" href="../images/Logo.svg">
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -47,12 +48,10 @@
       color: #F4F4F5;
       -webkit-tap-highlight-color: transparent;
       opacity: 0;
-      transition: opacity 0.25s ease-out, transform 0.25s ease-out;
-      transform: translateY(4px);
+      transition: opacity 0.25s ease-out;
     }
     body.page-loaded {
       opacity: 1;
-      transform: translateY(0);
     }
     ::-webkit-scrollbar {
       width: 6px;
@@ -125,18 +124,23 @@
   <!-- ========================================== -->
   <!-- 1. SIDEBAR DE NAVEGACIÓN                   -->
   <!-- ========================================== -->
-  <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-64 bg-brand-dark border-r border-brand-border flex flex-col justify-between transition-transform duration-300 -translate-x-full md:translate-x-0">
+  <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-64 bg-brand-dark border-r border-brand-border flex flex-col justify-between transition-transform duration-300 -translate-x-full md:translate-x-0 h-screen max-h-screen overflow-y-auto">
     <div>
-      <div class="h-20 flex items-center px-6 border-b border-brand-border gap-3">
-        <div class="flex items-center justify-center w-10 h-10 bg-brand-accent/10 border border-brand-accent/20 rounded-xl">
-          <i data-lucide="zap" class="w-5 h-5 text-brand-accent fill-brand-accent"></i>
+      <div class="h-20 flex items-center justify-between px-6 border-b border-brand-border">
+        <div class="flex items-center gap-3">
+          <div class="flex items-center justify-center w-10 h-10 bg-brand-accent/10 border border-brand-accent/20 rounded-xl p-1.5">
+            <img src="../images/Logo.svg" alt="Todo Delivery" class="w-full h-full object-contain">
+          </div>
+          <div>
+            <h1 class="text-base font-bold tracking-tight text-white flex items-center gap-1">
+              TODO <span class="text-brand-accent font-semibold tracking-wider uppercase text-xs">Delivery</span>
+            </h1>
+            <p class="text-[10px] uppercase tracking-wider text-brand-muted">Admin Console</p>
+          </div>
         </div>
-        <div>
-          <h1 class="text-base font-bold tracking-tight text-white flex items-center gap-1">
-            TODO <span class="text-brand-accent font-semibold tracking-wider uppercase text-xs">Delivery</span>
-          </h1>
-          <p class="text-[10px] uppercase tracking-wider text-brand-muted">Admin Console</p>
-        </div>
+        <button onclick="toggleSidebar()" class="md:hidden p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800 transition-colors" title="Cerrar menú">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
       </div>
 
       <nav class="p-4 space-y-1.5">
@@ -197,30 +201,33 @@
     </div>
   </aside>
 
+  <!-- Backdrop para Sidebar Móvil -->
+  <div id="sidebar-backdrop" onclick="toggleSidebar()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 hidden md:hidden transition-opacity duration-300 opacity-0"></div>
+
   <!-- ========================================== -->
   <!-- 2. CONTENEDOR PRINCIPAL                   -->
   <!-- ========================================== -->
-  <div class="flex-1 md:pl-64 flex flex-col min-h-screen">
+  <div class="flex-1 md:pl-64 flex flex-col min-h-screen w-full min-w-0">
     
     <!-- Top Header -->
-    <header class="h-20 bg-brand-dark/80 backdrop-blur-md border-b border-brand-border px-6 flex items-center justify-between sticky top-0 z-30">
-      <div class="flex items-center gap-4">
-        <button onclick="toggleSidebar()" class="md:hidden p-2 rounded-xl bg-brand-card border border-brand-border text-zinc-300 hover:text-white">
+    <header class="h-20 bg-brand-dark/80 backdrop-blur-md border-b border-brand-border px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30">
+      <div class="flex items-center gap-3 sm:gap-4 min-w-0">
+        <button onclick="toggleSidebar()" class="md:hidden p-2 rounded-xl bg-brand-card border border-brand-border text-zinc-300 hover:text-white shrink-0">
           <i data-lucide="menu" class="w-5 h-5"></i>
         </button>
-        <div>
-          <h2 class="text-lg font-bold text-white tracking-tight">Liquidación de Comisiones & Rendición de Caja</h2>
-          <p class="text-xs text-brand-muted hidden sm:block">Balance de cobros en mano, retención de central (40%) y ganancias de cadetes (60%)</p>
+        <div class="min-w-0">
+          <h2 class="text-base sm:text-lg font-bold text-white tracking-tight truncate">Liquidación & Caja</h2>
+          <p class="text-xs text-brand-muted hidden sm:block truncate">Balance de cobros en mano, retención de central (40%) y ganancias de cadetes (60%)</p>
         </div>
       </div>
 
       <!-- Acciones de Descarga y Cierre de Jornada -->
-      <div class="flex items-center gap-2.5">
-        <button onclick="exportReport()" class="hidden sm:flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-brand-border bg-brand-card hover:bg-zinc-800 text-xs font-medium text-zinc-300 hover:text-white transition-all shadow-sm">
+      <div class="flex items-center gap-2 shrink-0">
+        <button onclick="exportReport()" class="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl border border-brand-border bg-brand-card hover:bg-zinc-800 text-xs font-medium text-zinc-300 hover:text-white transition-all shadow-sm">
           <i data-lucide="download" class="w-4 h-4 text-brand-gold"></i>
-          <span>Exportar Resumen</span>
+          <span>Exportar</span>
         </button>
-        <button onclick="openClosureModal()" class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-accent hover:bg-brand-accentHover text-white text-xs font-bold shadow-lg shadow-brand-accent/20 transition-all active:scale-[0.98]">
+        <button onclick="openClosureModal()" class="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-brand-accent hover:bg-brand-accentHover text-white text-xs font-bold shadow-lg shadow-brand-accent/20 transition-all active:scale-[0.98]">
           <i data-lucide="badge-check" class="w-4 h-4"></i>
           <span>Cerrar Jornada</span>
         </button>
@@ -371,7 +378,7 @@
   <!-- ========================================== -->
   <!-- 3. MODAL DE RENDICIÓN / PAGO INDIVIDUAL    -->
   <!-- ========================================== -->
-  <div id="settlement-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+  <div id="settlement-modal" onclick="if(event.target === this) closeSettlementModal()" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-6 hidden opacity-0 transition-opacity duration-300">
     <div id="modal-container" class="w-full max-w-2xl bg-brand-card border border-brand-border rounded-3xl p-6 sm:p-7 shadow-2xl scale-95 transition-transform duration-300 space-y-5 max-h-[90vh] overflow-y-auto">
       
       <div class="flex items-center justify-between border-b border-brand-border pb-4">
@@ -471,7 +478,7 @@
   <!-- ========================================== -->
   <!-- MODAL DE AUDITORÍA / DETALLE DE VIAJES     -->
   <!-- ========================================== -->
-  <div id="breakdown-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+  <div id="breakdown-modal" onclick="if(event.target === this) closeBreakdownModal()" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-6 hidden opacity-0 transition-opacity duration-300">
     <div id="breakdown-modal-container" class="w-full max-w-4xl bg-brand-card border border-brand-border rounded-3xl p-6 sm:p-7 shadow-2xl scale-95 transition-transform duration-300 space-y-4 max-h-[90vh] flex flex-col">
       <div class="flex items-center justify-between border-b border-brand-border pb-4">
         <div>
@@ -514,8 +521,8 @@
   <!-- ========================================== -->
   <!-- MODAL DE CIERRE DE JORNADA                 -->
   <!-- ========================================== -->
-  <div id="closure-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
-    <div id="closure-modal-container" class="w-full max-w-lg bg-brand-card border border-brand-border rounded-3xl p-6 sm:p-7 shadow-2xl scale-95 transition-transform duration-300 space-y-5">
+  <div id="closure-modal" onclick="if(event.target === this) closeClosureModal()" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-6 hidden opacity-0 transition-opacity duration-300">
+    <div id="closure-modal-container" class="w-full max-w-lg bg-brand-card border border-brand-border rounded-3xl p-6 sm:p-7 shadow-2xl scale-95 transition-transform duration-300 space-y-5 max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between border-b border-brand-border pb-4">
         <div class="flex items-center gap-3">
           <div class="p-2.5 rounded-xl bg-brand-accent/10 text-brand-accent border border-brand-accent/20">
@@ -596,8 +603,27 @@
       });
     });
 
+    // Toggle Sidebar para dispositivos móviles con backdrop y scroll-lock
     function toggleSidebar() {
-      document.getElementById('sidebar').classList.toggle('-translate-x-full');
+      const sidebar = document.getElementById('sidebar');
+      const backdrop = document.getElementById('sidebar-backdrop');
+      if (!sidebar) return;
+      const isClosed = sidebar.classList.contains('-translate-x-full');
+      if (isClosed) {
+        sidebar.classList.remove('-translate-x-full');
+        if (backdrop) {
+          backdrop.classList.remove('hidden');
+          setTimeout(() => backdrop.classList.remove('opacity-0'), 10);
+        }
+        document.body.classList.add('overflow-hidden', 'md:overflow-auto');
+      } else {
+        sidebar.classList.add('-translate-x-full');
+        if (backdrop) {
+          backdrop.classList.add('opacity-0');
+          setTimeout(() => backdrop.classList.add('hidden'), 300);
+        }
+        document.body.classList.remove('overflow-hidden', 'md:overflow-auto');
+      }
     }
   </script>
   <script type="module" src="../scripts/sidebar_radar.js"></script>
