@@ -1,0 +1,103 @@
+/* =========================================================================
+   AJUSTES PARA CELULARES (PANEL ADMIN)
+   =========================================================================
+   Compartido por las páginas de Templates/. El resto de la adaptación a pantallas chicas está en las
+   clases de Tailwind de cada página; acá va solo lo que no se puede expresar con ellas. */
+
+/* -------------------------------------------------------------------------
+   Tablas como tarjetas
+   -------------------------------------------------------------------------
+   En pantallas angostas una tabla de 5 a 8 columnas obliga a deslizar de costado para leer cada fila.
+   Acá cada fila pasa a ser una tarjeta con renglones "ETIQUETA ... valor". La etiqueta sale de
+   data-label, que scripts/tablas_moviles.js copia del título de cada columna. */
+@media (max-width: 767px) {
+  table.tabla-tarjetas,
+  table.tabla-tarjetas > tbody {
+    display: block;
+    width: 100%;
+  }
+
+  table.tabla-tarjetas > thead {
+    display: none;
+  }
+
+  table.tabla-tarjetas > tbody > tr {
+    display: block;
+    padding: 0.875rem 1rem;
+  }
+
+  /* Grilla de 2 columnas: la etiqueta a la izquierda y, a la derecha, todo lo que haya en la celda
+     (si tiene varios elementos, uno debajo del otro) */
+  table.tabla-tarjetas > tbody > tr > td {
+    display: grid;
+    grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+    align-items: center;
+    column-gap: 0.75rem;
+    row-gap: 0;
+    padding: 0.3rem 0 !important;
+    text-align: right;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  table.tabla-tarjetas > tbody > tr > td > * {
+    grid-column: 2;
+    justify-self: end;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  table.tabla-tarjetas > tbody > tr > td[data-label]::before {
+    content: attr(data-label);
+    grid-column: 1;
+    grid-row: 1 / span 4;
+    max-width: 9rem;
+    color: #71717A;
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    line-height: 1.3;
+    text-align: left;
+    text-transform: uppercase;
+    overflow-wrap: normal;
+  }
+
+  /* La primera celda dice de quién o de qué pedido es la fila: va como título de la tarjeta */
+  table.tabla-tarjetas > tbody > tr > td:first-child {
+    display: block;
+    padding-bottom: 0.5rem !important;
+    text-align: left;
+  }
+
+  table.tabla-tarjetas > tbody > tr > td:first-child::before {
+    content: none;
+  }
+
+  table.tabla-tarjetas > tbody > tr > td:first-child > *,
+  table.tabla-tarjetas > tbody > tr > td[colspan] > * {
+    justify-self: stretch;
+  }
+
+  /* Filas de aviso (cargando, sin resultados): ocupan toda la tarjeta */
+  table.tabla-tarjetas > tbody > tr > td[colspan] {
+    display: block;
+    text-align: center;
+  }
+
+  table.tabla-tarjetas > tbody > tr > td[colspan]::before {
+    content: none;
+  }
+}
+
+/* -------------------------------------------------------------------------
+   Ventanas modales
+   -------------------------------------------------------------------------
+   100vh en el celular incluye la barra del navegador: con dvh el modal nunca queda más alto que lo visible. */
+@supports (height: 100dvh) {
+  @media (max-width: 767px) {
+    .modal-alto-movil {
+      max-height: calc(100dvh - 1.5rem) !important;
+    }
+  }
+}

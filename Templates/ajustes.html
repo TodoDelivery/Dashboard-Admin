@@ -14,6 +14,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles/responsive.css">
 
   <script>
     tailwind.config = {
@@ -199,31 +200,31 @@
   <div class="flex-1 md:pl-64 flex flex-col min-h-screen w-full min-w-0">
     
     <!-- Top Header -->
-    <header class="h-20 bg-brand-dark/80 backdrop-blur-md border-b border-brand-border px-6 flex items-center justify-between sticky top-0 z-30">
-      <div class="flex items-center gap-4">
-        <button onclick="toggleSidebar()" class="md:hidden p-2 rounded-xl bg-brand-card border border-brand-border text-zinc-300 hover:text-white">
+    <header class="min-h-[4rem] sm:h-20 py-2 sm:py-0 bg-brand-dark/80 backdrop-blur-md border-b border-brand-border px-4 sm:px-6 flex items-center justify-between gap-3 sticky top-0 z-30">
+      <div class="flex items-center gap-3 sm:gap-4 min-w-0">
+        <button onclick="toggleSidebar()" class="md:hidden p-2 rounded-xl bg-brand-card border border-brand-border text-zinc-300 hover:text-white shrink-0" aria-label="Abrir menú">
           <i data-lucide="menu" class="w-5 h-5"></i>
         </button>
-        <div>
-          <h2 class="text-lg font-bold text-white tracking-tight">Zonas de Cobertura & Configuración de Tarifas</h2>
+        <div class="min-w-0">
+          <h2 class="text-base sm:text-lg font-bold text-white tracking-tight leading-tight truncate"><span class="sm:hidden">Zonas y Tarifas</span><span class="hidden sm:inline">Zonas de Cobertura & Configuración de Tarifas</span></h2>
           <p class="text-xs text-brand-muted hidden sm:block">Parámetros de tarificación para la app de clientes y pagos automáticos</p>
         </div>
       </div>
     </header>
 
     <!-- Main Content -->
-    <main class="flex-1 p-6 space-y-6 max-w-7xl w-full mx-auto">
+    <main class="flex-1 p-4 sm:p-6 space-y-4 sm:space-y-6 max-w-7xl w-full mx-auto">
 
       <!-- Fórmulas y Reglas Generales de Costeo -->
-      <div class="flex items-center justify-between">
+      <div class="flex items-center justify-between gap-3">
         <h3 class="text-base font-bold text-white">Tarifas Globales</h3>
-        <button onclick="openCotizModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-brand-border bg-brand-card hover:bg-zinc-800 text-xs font-medium text-zinc-300 hover:text-white transition-all">
+        <button onclick="openCotizModal()" class="flex items-center gap-1.5 px-3 py-2 rounded-xl shrink-0 border border-brand-border bg-brand-card hover:bg-zinc-800 text-xs font-medium text-zinc-300 hover:text-white transition-all">
           <i data-lucide="edit-3" class="w-4 h-4"></i>
           <span>Editar Tarifas</span>
         </button>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6 mt-2">
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6 mt-2">
         
         <!-- Tarifa Base Global -->
         <div onclick="openCotizModal()" class="bg-brand-card border border-brand-border hover:border-brand-accent/50 rounded-2xl p-5 space-y-3 cursor-pointer transition-all group">
@@ -295,7 +296,7 @@
   <!-- MODAL: EDITAR TARIFAS GLOBALES            -->
   <!-- ========================================== -->
   <div id="cotiz-modal-backdrop" onclick="if(event.target === this) closeCotizModal()" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-6 hidden opacity-0 transition-opacity duration-300">
-    <div id="cotiz-modal-container" class="w-full max-w-md bg-brand-card border border-brand-border rounded-3xl p-6 sm:p-7 shadow-2xl scale-95 transition-transform duration-300 space-y-5 max-h-[90vh] overflow-y-auto">
+    <div id="cotiz-modal-container" class="modal-alto-movil w-full max-w-md bg-brand-card border border-brand-border rounded-3xl p-4 sm:p-7 shadow-2xl scale-95 transition-transform duration-300 space-y-5 max-h-[90vh] overflow-y-auto">
       
       <div class="flex items-center justify-between border-b border-brand-border pb-4">
         <div class="flex items-center gap-3">
@@ -307,7 +308,7 @@
             <p class="text-xs text-brand-muted">Modifica los valores base de la DB</p>
           </div>
         </div>
-        <button onclick="closeCotizModal()" class="text-zinc-500 hover:text-white p-1 rounded-lg">
+        <button onclick="closeCotizModal()" aria-label="Cerrar" class="text-zinc-500 hover:text-white p-2 -mr-2 rounded-lg shrink-0">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>

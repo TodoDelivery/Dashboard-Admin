@@ -540,17 +540,17 @@ function injectModalHTML() {
     if (e.target === modal) window.closeRadarMapModal();
   };
   modal.innerHTML = `
-    <div id="radar-map-card" class="w-full max-w-5xl h-[90vh] sm:h-[85vh] bg-brand-card border border-brand-border rounded-3xl flex flex-col shadow-2xl scale-95 transition-transform duration-300 overflow-hidden">
+    <div id="radar-map-card" class="modal-alto-movil w-full max-w-5xl h-[90vh] sm:h-[85vh] bg-brand-card border border-brand-border rounded-3xl flex flex-col shadow-2xl scale-95 transition-transform duration-300 overflow-hidden">
       <!-- Modal Header -->
-      <div class="h-16 px-6 bg-brand-dark/95 border-b border-brand-border flex items-center justify-between shrink-0">
-        <div class="flex items-center gap-3">
-          <div class="p-2.5 rounded-xl bg-brand-accent/10 text-brand-accent border border-brand-accent/20">
+      <div class="h-16 px-3 sm:px-6 bg-brand-dark/95 border-b border-brand-border flex items-center justify-between gap-2 shrink-0">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="hidden sm:block p-2.5 rounded-xl bg-brand-accent/10 text-brand-accent border border-brand-accent/20 shrink-0">
             <i data-lucide="map-pin" class="w-5 h-5"></i>
           </div>
-          <div>
-            <h3 class="text-sm sm:text-base font-bold text-white flex items-center gap-2">
-              Red Local en Vivo · Mapa de Cadetes
-              <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <div class="min-w-0">
+            <h3 class="text-sm sm:text-base font-bold text-white flex items-center gap-2 min-w-0">
+              <span class="truncate"><span class="hidden sm:inline">Red Local en Vivo · </span>Mapa de Cadetes</span>
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap shrink-0 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> <span id="modal-cadetes-count">0</span> Activos
               </span>
             </h3>
@@ -558,7 +558,7 @@ function injectModalHTML() {
           </div>
         </div>
         
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 shrink-0">
           <button onclick="window.recenterRadarMap()" title="Centrar mapa en cadetes" class="p-2 rounded-xl bg-brand-dark border border-brand-border text-zinc-400 hover:text-white hover:border-zinc-500 transition-all text-xs flex items-center gap-1.5">
             <i data-lucide="crosshair" class="w-4 h-4"></i> <span class="hidden sm:inline">Centrar</span>
           </button>
@@ -571,10 +571,10 @@ function injectModalHTML() {
       <!-- Map Container + Sidebar List -->
       <div class="flex-1 flex flex-col md:flex-row relative overflow-hidden">
         <!-- Map Container -->
-        <div id="radar-leaflet-map" class="flex-1 w-full h-full bg-zinc-950 min-h-[300px]"></div>
+        <div id="radar-leaflet-map" class="flex-1 w-full h-full bg-zinc-950 min-h-[200px] md:min-h-[300px]"></div>
 
         <!-- Cadetes sidebar list inside modal -->
-        <div class="w-full md:w-80 bg-brand-dark/95 border-t md:border-t-0 md:border-l border-brand-border p-4 flex flex-col h-48 md:h-full shrink-0">
+        <div class="w-full md:w-80 bg-brand-dark/95 border-t md:border-t-0 md:border-l border-brand-border p-3 sm:p-4 flex flex-col h-[32%] min-h-[9rem] md:h-full shrink-0">
           <h4 class="text-xs font-bold uppercase tracking-wider text-zinc-400 mb-3 flex items-center justify-between">
             <span>Cadetes Registrados</span>
             <span id="modal-list-count" class="text-[10px] text-zinc-400 font-mono">0 registrados</span>

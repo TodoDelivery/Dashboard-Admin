@@ -398,7 +398,7 @@ window.renderSettlementTable = () => {
       <td class="py-4 px-4 font-mono text-zinc-300 font-medium">
         <div class="flex items-center gap-2">
           <span>${c.trips} viajes</span>
-          <button onclick="openBreakdownModal(${c.id})" class="text-zinc-500 hover:text-brand-accent transition-colors p-1 rounded hover:bg-zinc-800" title="Ver desglose de pedidos">
+          <button onclick="openBreakdownModal(${c.id})" class="text-zinc-500 hover:text-brand-accent transition-colors p-2 -m-1 rounded hover:bg-zinc-800" title="Ver desglose de pedidos">
             <i data-lucide="eye" class="w-3.5 h-3.5"></i>
           </button>
         </div>
@@ -482,9 +482,9 @@ function setupPeriodBadges() {
   buttons.forEach(btn => {
     const p = btn.getAttribute('data-period');
     if (p === currentPeriod) {
-      btn.className = 'period-filter-btn px-3 py-1.5 rounded-xl bg-brand-accent text-white text-xs font-bold transition-all shadow-md shadow-brand-accent/20';
+      btn.className = 'period-filter-btn px-3 py-2 rounded-xl bg-brand-accent text-white text-xs font-bold transition-all shadow-md shadow-brand-accent/20';
     } else {
-      btn.className = 'period-filter-btn px-3 py-1.5 rounded-xl border border-brand-border bg-brand-dark hover:bg-zinc-800 text-zinc-400 hover:text-white text-xs font-medium transition-all';
+      btn.className = 'period-filter-btn px-3 py-2 rounded-xl border border-brand-border bg-brand-dark hover:bg-zinc-800 text-zinc-400 hover:text-white text-xs font-medium transition-all';
     }
   });
 }

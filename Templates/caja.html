@@ -14,6 +14,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles/responsive.css">
 
   <script>
     tailwind.config = {
@@ -210,24 +211,24 @@
   <div class="flex-1 md:pl-64 flex flex-col min-h-screen w-full min-w-0">
     
     <!-- Top Header -->
-    <header class="h-20 bg-brand-dark/80 backdrop-blur-md border-b border-brand-border px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30">
+    <header class="min-h-[4rem] sm:h-20 py-2 sm:py-0 bg-brand-dark/80 backdrop-blur-md border-b border-brand-border px-4 sm:px-6 flex items-center justify-between gap-3 sticky top-0 z-30">
       <div class="flex items-center gap-3 sm:gap-4 min-w-0">
-        <button onclick="toggleSidebar()" class="md:hidden p-2 rounded-xl bg-brand-card border border-brand-border text-zinc-300 hover:text-white shrink-0">
+        <button onclick="toggleSidebar()" class="md:hidden p-2 rounded-xl bg-brand-card border border-brand-border text-zinc-300 hover:text-white shrink-0" aria-label="Abrir menú">
           <i data-lucide="menu" class="w-5 h-5"></i>
         </button>
         <div class="min-w-0">
-          <h2 class="text-base sm:text-lg font-bold text-white tracking-tight truncate">Liquidación & Caja</h2>
+          <h2 class="text-base sm:text-lg font-bold text-white tracking-tight leading-tight truncate"><span class="min-[400px]:hidden">Caja</span><span class="hidden min-[400px]:inline">Liquidación & Caja</span></h2>
           <p class="text-xs text-brand-muted hidden sm:block truncate">Balance de cobros en mano, retención de central (<span data-comision-empresa>40%</span>) y ganancias de cadetes (<span data-comision-cadete>60%</span>)</p>
         </div>
       </div>
 
       <!-- Acciones de Descarga y Cierre de Jornada -->
       <div class="flex items-center gap-2 shrink-0">
-        <button onclick="exportReport()" class="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl border border-brand-border bg-brand-card hover:bg-zinc-800 text-xs font-medium text-zinc-300 hover:text-white transition-all shadow-sm">
+        <button onclick="exportReport()" title="Exportar reporte" aria-label="Exportar reporte" class="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl border border-brand-border bg-brand-card hover:bg-zinc-800 text-xs font-medium text-zinc-300 hover:text-white transition-all shadow-sm">
           <i data-lucide="download" class="w-4 h-4 text-brand-gold"></i>
-          <span>Exportar</span>
+          <span class="hidden sm:inline">Exportar</span>
         </button>
-        <button onclick="openClosureModal()" class="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-brand-accent hover:bg-brand-accentHover text-white text-xs font-bold shadow-lg shadow-brand-accent/20 transition-all active:scale-[0.98]">
+        <button onclick="openClosureModal()" class="flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-xl bg-brand-accent hover:bg-brand-accentHover text-white text-xs font-bold whitespace-nowrap shadow-lg shadow-brand-accent/20 transition-all active:scale-[0.98]">
           <i data-lucide="badge-check" class="w-4 h-4"></i>
           <span>Cerrar Jornada</span>
         </button>
@@ -235,7 +236,7 @@
     </header>
 
     <!-- Main Content -->
-    <main class="flex-1 p-6 space-y-6 max-w-7xl w-full mx-auto">
+    <main class="flex-1 p-4 sm:p-6 space-y-4 sm:space-y-6 max-w-7xl w-full mx-auto">
 
       <!-- Barra de Filtros de Período y Estado -->
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-brand-card/80 border border-brand-border p-3.5 rounded-2xl shadow-lg">
@@ -244,11 +245,11 @@
             <i data-lucide="calendar" class="w-4 h-4 text-brand-gold"></i>
             Período:
           </span>
-          <button onclick="changePeriodFilter('today')" data-period="today" class="period-filter-btn px-3 py-1.5 rounded-xl border border-brand-border bg-brand-dark hover:bg-zinc-800 text-zinc-400 hover:text-white text-xs font-medium transition-all">Hoy</button>
-          <button onclick="changePeriodFilter('yesterday')" data-period="yesterday" class="period-filter-btn px-3 py-1.5 rounded-xl border border-brand-border bg-brand-dark hover:bg-zinc-800 text-zinc-400 hover:text-white text-xs font-medium transition-all">Ayer</button>
-          <button onclick="changePeriodFilter('week')" data-period="week" class="period-filter-btn px-3 py-1.5 rounded-xl border border-brand-border bg-brand-dark hover:bg-zinc-800 text-zinc-400 hover:text-white text-xs font-medium transition-all">Últimos 7 días</button>
-          <button onclick="changePeriodFilter('month')" data-period="month" class="period-filter-btn px-3 py-1.5 rounded-xl border border-brand-border bg-brand-dark hover:bg-zinc-800 text-zinc-400 hover:text-white text-xs font-medium transition-all">Este Mes</button>
-          <button onclick="changePeriodFilter('all')" data-period="all" class="period-filter-btn px-3 py-1.5 rounded-xl bg-brand-accent text-white text-xs font-bold transition-all shadow-md shadow-brand-accent/20">Histórico Total</button>
+          <button onclick="changePeriodFilter('today')" data-period="today" class="period-filter-btn px-3 py-2 rounded-xl border border-brand-border bg-brand-dark hover:bg-zinc-800 text-zinc-400 hover:text-white text-xs font-medium transition-all">Hoy</button>
+          <button onclick="changePeriodFilter('yesterday')" data-period="yesterday" class="period-filter-btn px-3 py-2 rounded-xl border border-brand-border bg-brand-dark hover:bg-zinc-800 text-zinc-400 hover:text-white text-xs font-medium transition-all">Ayer</button>
+          <button onclick="changePeriodFilter('week')" data-period="week" class="period-filter-btn px-3 py-2 rounded-xl border border-brand-border bg-brand-dark hover:bg-zinc-800 text-zinc-400 hover:text-white text-xs font-medium transition-all">Últimos 7 días</button>
+          <button onclick="changePeriodFilter('month')" data-period="month" class="period-filter-btn px-3 py-2 rounded-xl border border-brand-border bg-brand-dark hover:bg-zinc-800 text-zinc-400 hover:text-white text-xs font-medium transition-all">Este Mes</button>
+          <button onclick="changePeriodFilter('all')" data-period="all" class="period-filter-btn px-3 py-2 rounded-xl bg-brand-accent text-white text-xs font-bold transition-all shadow-md shadow-brand-accent/20">Histórico Total</button>
         </div>
 
         <div class="flex items-center gap-3">
@@ -317,7 +318,7 @@
 
       <!-- Tabla de Liquidación por Cadete -->
       <div class="bg-brand-card border border-brand-border rounded-2xl overflow-hidden shadow-xl">
-        <div class="p-5 border-b border-brand-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="p-4 sm:p-5 border-b border-brand-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h3 class="text-base font-bold text-white">Liquidaciones Individuales y Rendición de Mano</h3>
             <p class="text-xs text-brand-muted">Cálculo de balance de turno: <span data-comision-cadete>60%</span> ganancia del cadete vs <span data-comision-empresa>40%</span> efectivo a rendir a la central</p>
@@ -328,7 +329,7 @@
             <select 
               id="filter-settlement-status" 
               onchange="renderSettlementTable()" 
-              class="bg-brand-dark border border-brand-border text-zinc-300 text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-brand-accent transition-all cursor-pointer"
+              class="w-full sm:w-auto bg-brand-dark border border-brand-border text-zinc-300 text-xs rounded-xl px-3 py-2.5 sm:py-2 focus:outline-none focus:border-brand-accent transition-all cursor-pointer"
             >
               <option value="all">Todos los estados</option>
               <option value="pending">Pendientes de rendición</option>
@@ -379,24 +380,24 @@
   <!-- 3. MODAL DE RENDICIÓN / PAGO INDIVIDUAL    -->
   <!-- ========================================== -->
   <div id="settlement-modal" onclick="if(event.target === this) closeSettlementModal()" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-6 hidden opacity-0 transition-opacity duration-300">
-    <div id="modal-container" class="w-full max-w-2xl bg-brand-card border border-brand-border rounded-3xl p-6 sm:p-7 shadow-2xl scale-95 transition-transform duration-300 space-y-5 max-h-[90vh] overflow-y-auto">
+    <div id="modal-container" class="modal-alto-movil w-full max-w-2xl bg-brand-card border border-brand-border rounded-3xl p-4 sm:p-7 shadow-2xl scale-95 transition-transform duration-300 space-y-4 sm:space-y-5 max-h-[90vh] overflow-y-auto">
       
-      <div class="flex items-center justify-between border-b border-brand-border pb-4">
-        <div class="flex items-center gap-3">
-          <div class="p-2.5 rounded-xl bg-brand-accent/10 text-brand-accent border border-brand-accent/20">
+      <div class="flex items-start justify-between gap-2 border-b border-brand-border pb-4">
+        <div class="flex items-start gap-3 min-w-0">
+          <div class="hidden sm:block p-2.5 rounded-xl bg-brand-accent/10 text-brand-accent border border-brand-accent/20 shrink-0">
             <i data-lucide="hand-coins" class="w-5 h-5"></i>
           </div>
-          <div>
-            <h3 class="text-base font-bold text-white">Rendir Cuenta de Cadete (Cashout)</h3>
+          <div class="min-w-0">
+            <h3 class="text-base font-bold text-white leading-tight">Rendir Cuenta de Cadete<span class="hidden sm:inline"> (Cashout)</span></h3>
             <p id="modal-cadete-name" class="text-sm font-semibold text-zinc-200">Cadete</p>
-            <div class="flex items-center gap-2 mt-1">
+            <div class="flex items-center gap-x-2 gap-y-1 flex-wrap mt-1">
               <span class="text-[10px] text-zinc-400 font-semibold uppercase">Token de Liquidación:</span>
-              <span id="modal-settlement-token" class="text-xs font-mono font-bold text-brand-gold bg-brand-dark px-2 py-0.5 rounded border border-brand-border"></span>
+              <span id="modal-settlement-token" class="text-xs font-mono font-bold text-brand-gold bg-brand-dark px-2 py-0.5 rounded border border-brand-border whitespace-nowrap"></span>
             </div>
             <p id="modal-cadete-subinfo" class="text-[11px] text-brand-muted mt-0.5">Detalles</p>
           </div>
         </div>
-        <button onclick="closeSettlementModal()" class="text-zinc-500 hover:text-white p-1.5 rounded-xl hover:bg-zinc-800 transition-colors">
+        <button onclick="closeSettlementModal()" aria-label="Cerrar" class="text-zinc-500 hover:text-white p-2 -mr-1 rounded-xl hover:bg-zinc-800 transition-colors shrink-0">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
@@ -479,13 +480,13 @@
   <!-- MODAL DE AUDITORÍA / DETALLE DE VIAJES     -->
   <!-- ========================================== -->
   <div id="breakdown-modal" onclick="if(event.target === this) closeBreakdownModal()" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-6 hidden opacity-0 transition-opacity duration-300">
-    <div id="breakdown-modal-container" class="w-full max-w-4xl bg-brand-card border border-brand-border rounded-3xl p-6 sm:p-7 shadow-2xl scale-95 transition-transform duration-300 space-y-4 max-h-[90vh] flex flex-col">
+    <div id="breakdown-modal-container" class="modal-alto-movil w-full max-w-4xl bg-brand-card border border-brand-border rounded-3xl p-4 sm:p-7 shadow-2xl scale-95 transition-transform duration-300 space-y-4 max-h-[90vh] flex flex-col">
       <div class="flex items-center justify-between border-b border-brand-border pb-4">
         <div>
           <h3 id="breakdown-modal-title" class="text-base font-bold text-white">Detalle de Viajes</h3>
           <p id="breakdown-modal-sub" class="text-xs text-brand-muted">Envíos del cadete</p>
         </div>
-        <button onclick="closeBreakdownModal()" class="text-zinc-500 hover:text-white p-1.5 rounded-xl hover:bg-zinc-800 transition-colors">
+        <button onclick="closeBreakdownModal()" aria-label="Cerrar" class="text-zinc-500 hover:text-white p-2 -mr-1 rounded-xl hover:bg-zinc-800 transition-colors shrink-0">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
@@ -522,7 +523,7 @@
   <!-- MODAL DE CIERRE DE JORNADA                 -->
   <!-- ========================================== -->
   <div id="closure-modal" onclick="if(event.target === this) closeClosureModal()" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-6 hidden opacity-0 transition-opacity duration-300">
-    <div id="closure-modal-container" class="w-full max-w-lg bg-brand-card border border-brand-border rounded-3xl p-6 sm:p-7 shadow-2xl scale-95 transition-transform duration-300 space-y-5 max-h-[90vh] overflow-y-auto">
+    <div id="closure-modal-container" class="modal-alto-movil w-full max-w-lg bg-brand-card border border-brand-border rounded-3xl p-4 sm:p-7 shadow-2xl scale-95 transition-transform duration-300 space-y-5 max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between border-b border-brand-border pb-4">
         <div class="flex items-center gap-3">
           <div class="p-2.5 rounded-xl bg-brand-accent/10 text-brand-accent border border-brand-accent/20">
@@ -533,7 +534,7 @@
             <p id="closure-date" class="text-xs text-brand-muted">Fecha del cierre</p>
           </div>
         </div>
-        <button onclick="closeClosureModal()" class="text-zinc-500 hover:text-white p-1.5 rounded-xl hover:bg-zinc-800 transition-colors">
+        <button onclick="closeClosureModal()" aria-label="Cerrar" class="text-zinc-500 hover:text-white p-2 -mr-1 rounded-xl hover:bg-zinc-800 transition-colors shrink-0">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
@@ -626,6 +627,7 @@
       }
     }
   </script>
+  <script type="module" src="../scripts/tablas_moviles.js"></script>
   <script type="module" src="../scripts/sidebar_radar.js"></script>
 </body>
 </html>

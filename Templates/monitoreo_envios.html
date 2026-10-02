@@ -14,6 +14,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles/responsive.css">
 
   <script>
     tailwind.config = {
@@ -211,16 +212,16 @@
   <div class="flex-1 md:pl-64 flex flex-col min-h-screen w-full min-w-0">
     
     <!-- Top Header -->
-    <header class="h-20 bg-brand-dark/80 backdrop-blur-md border-b border-brand-border px-6 flex items-center justify-between sticky top-0 z-30">
-      <div class="flex items-center gap-4">
-        <button onclick="toggleSidebar()" class="md:hidden p-2 rounded-xl bg-brand-card border border-brand-border text-zinc-300 hover:text-white">
+    <header class="min-h-[4rem] sm:h-20 py-2 sm:py-0 bg-brand-dark/80 backdrop-blur-md border-b border-brand-border px-4 sm:px-6 flex items-center justify-between gap-3 sticky top-0 z-30">
+      <div class="flex items-center gap-3 sm:gap-4 min-w-0">
+        <button onclick="toggleSidebar()" class="md:hidden p-2 rounded-xl bg-brand-card border border-brand-border text-zinc-300 hover:text-white shrink-0" aria-label="Abrir menú">
           <i data-lucide="menu" class="w-5 h-5"></i>
         </button>
-        <div>
-          <h2 class="text-lg font-bold text-white tracking-tight flex items-center gap-2">
-            Monitor de Envíos en Tiempo Real
-            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> Live Socket
+        <div class="min-w-0">
+          <h2 class="text-base sm:text-lg font-bold text-white tracking-tight leading-tight flex items-center gap-2 min-w-0">
+            <span class="truncate">Monitor de Envíos<span class="hidden lg:inline"> en Tiempo Real</span></span>
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0 whitespace-nowrap">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> Live<span class="hidden sm:inline"> Socket</span>
             </span>
           </h2>
           <p class="text-xs text-brand-muted hidden sm:block">Tablero de monitoreo y visualización de pedidos en tiempo real (Modo solo lectura)</p>
@@ -229,8 +230,8 @@
     </header>
 
     <!-- Subheader: Búsqueda Rápida y Acciones -->
-    <div class="px-6 py-4 border-b border-brand-border/60 bg-brand-black flex items-center justify-between gap-4 flex-wrap">
-      <div class="relative w-full max-w-md">
+    <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-brand-border/60 bg-brand-black flex items-center justify-between gap-3">
+      <div class="relative flex-1 min-w-0 max-w-md">
         <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500">
           <i data-lucide="search" class="w-4 h-4"></i>
         </span>
@@ -238,13 +239,13 @@
           type="text" 
           id="order-search"
           oninput="handleSearch(event)"
-          placeholder="Buscar por ID, cliente, dirección o paquete..." 
+          placeholder="Buscar por ID, cliente o dirección..." 
           class="w-full bg-brand-card border border-brand-border text-white text-xs rounded-xl pl-10 pr-4 py-2.5 placeholder-zinc-500 focus:outline-none focus:border-brand-accent transition-all"
         />
       </div>
 
-      <div class="flex items-center gap-3">
-        <button onclick="refreshMonitoreo()" id="btn-refresh" title="Recargar pedidos desde la base de datos" class="flex items-center gap-2 px-3.5 py-2 bg-brand-card border border-brand-border hover:border-zinc-500 rounded-xl text-zinc-300 hover:text-white text-xs font-semibold transition-all shadow-sm">
+      <div class="flex items-center gap-3 shrink-0">
+        <button onclick="refreshMonitoreo()" id="btn-refresh" title="Recargar pedidos desde la base de datos" class="flex items-center gap-2 px-3.5 py-2.5 bg-brand-card border border-brand-border hover:border-zinc-500 rounded-xl text-zinc-300 hover:text-white text-xs font-semibold transition-all shadow-sm">
           <i data-lucide="refresh-cw" id="refresh-icon" class="w-3.5 h-3.5"></i>
           <span class="hidden sm:inline">Actualizar</span>
         </button>
@@ -252,19 +253,19 @@
     </div>
 
     <!-- Tablero Kanban de Despacho Operativo -->
-    <main class="flex-1 p-4 sm:p-6 overflow-x-auto w-full min-w-0">
+    <main class="flex-1 p-4 sm:p-6 w-full min-w-0">
       <!-- Selector de columna para pantallas móviles -->
-      <div class="lg:hidden flex items-center gap-2 mb-4 p-1.5 bg-brand-card border border-brand-border rounded-2xl overflow-x-auto">
-        <button onclick="setKanbanMobileView('all')" id="km-tab-all" class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all bg-brand-accent text-white shrink-0">Todos</button>
-        <button onclick="setKanbanMobileView('unassigned')" id="km-tab-unassigned" class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all text-zinc-400 hover:text-white shrink-0">Por Asignar</button>
-        <button onclick="setKanbanMobileView('in-transit')" id="km-tab-in-transit" class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all text-zinc-400 hover:text-white shrink-0">En Ruta</button>
-        <button onclick="setKanbanMobileView('delivered')" id="km-tab-delivered" class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all text-zinc-400 hover:text-white shrink-0">Entregados</button>
+      <div class="lg:hidden flex items-center gap-1 mb-4 p-1.5 bg-brand-card border border-brand-border rounded-2xl overflow-x-auto">
+        <button onclick="setKanbanMobileView('all')" id="km-tab-all" class="flex-1 px-1.5 sm:px-3.5 py-2.5 rounded-xl text-[11px] sm:text-xs font-bold whitespace-nowrap transition-all bg-brand-accent text-white">Todos</button>
+        <button onclick="setKanbanMobileView('unassigned')" id="km-tab-unassigned" class="flex-1 px-1.5 sm:px-3.5 py-2.5 rounded-xl text-[11px] sm:text-xs font-bold whitespace-nowrap transition-all text-zinc-400 hover:text-white">Por Asignar</button>
+        <button onclick="setKanbanMobileView('in-transit')" id="km-tab-in-transit" class="flex-1 px-1.5 sm:px-3.5 py-2.5 rounded-xl text-[11px] sm:text-xs font-bold whitespace-nowrap transition-all text-zinc-400 hover:text-white">En Ruta</button>
+        <button onclick="setKanbanMobileView('delivered')" id="km-tab-delivered" class="flex-1 px-1.5 sm:px-3.5 py-2.5 rounded-xl text-[11px] sm:text-xs font-bold whitespace-nowrap transition-all text-zinc-400 hover:text-white">Entregados</button>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6 w-full">
         
         <!-- Columna 1: Por Asignar / Nuevos -->
-        <div id="kanban-col-unassigned" class="bg-brand-dark/40 border border-brand-border/80 rounded-2xl p-4 flex flex-col">
+        <div id="kanban-col-unassigned" class="bg-brand-dark/40 border border-brand-border/80 rounded-2xl p-3 sm:p-4 flex flex-col min-w-0">
           <div class="flex items-center justify-between pb-3 border-b border-brand-border/60 mb-4">
             <div class="flex items-center gap-2">
               <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
@@ -279,7 +280,7 @@
         </div>
 
         <!-- Columna 2: En Curso / Con Cadete -->
-        <div id="kanban-col-in-transit" class="bg-brand-dark/40 border border-brand-border/80 rounded-2xl p-4 flex flex-col">
+        <div id="kanban-col-in-transit" class="bg-brand-dark/40 border border-brand-border/80 rounded-2xl p-3 sm:p-4 flex flex-col min-w-0">
           <div class="flex items-center justify-between pb-3 border-b border-brand-border/60 mb-4">
             <div class="flex items-center gap-2">
               <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
@@ -294,7 +295,7 @@
         </div>
 
         <!-- Columna 3: Entregados (Filtro Hoy / Histórico) -->
-        <div id="kanban-col-delivered" class="bg-brand-dark/40 border border-brand-border/80 rounded-2xl p-4 flex flex-col">
+        <div id="kanban-col-delivered" class="bg-brand-dark/40 border border-brand-border/80 rounded-2xl p-3 sm:p-4 flex flex-col min-w-0">
           <div class="flex items-center justify-between pb-3 border-b border-brand-border/60 mb-4 flex-wrap gap-2">
             <div class="flex items-center gap-2">
               <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
@@ -304,8 +305,8 @@
 
             <!-- Selector Filtro: Hoy vs Histórico -->
             <div class="inline-flex p-0.5 bg-brand-dark rounded-xl border border-brand-border text-[10px]">
-              <button id="btn-delivered-today" onclick="setDeliveredFilter('today')" class="px-2.5 py-1 rounded-lg font-bold transition-all bg-brand-accent text-white">Hoy</button>
-              <button id="btn-delivered-all" onclick="setDeliveredFilter('all')" class="px-2.5 py-1 rounded-lg font-bold transition-all text-zinc-400 hover:text-white">Histórico</button>
+              <button id="btn-delivered-today" onclick="setDeliveredFilter('today')" class="px-3 py-1.5 rounded-lg font-bold transition-all bg-brand-accent text-white">Hoy</button>
+              <button id="btn-delivered-all" onclick="setDeliveredFilter('all')" class="px-3 py-1.5 rounded-lg font-bold transition-all text-zinc-400 hover:text-white">Histórico</button>
             </div>
           </div>
 
@@ -323,7 +324,7 @@
   <!-- 4. MODAL: EDITOR DE PEDIDOS (SOLO LECTURA) -->
   <!-- ========================================== -->
   <div id="order-modal-backdrop" onclick="if(event.target === this) closeOrderModal()" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-6 hidden opacity-0 transition-opacity duration-300">
-    <div id="order-modal-container" class="w-full max-w-xl bg-brand-card border border-brand-border rounded-3xl p-6 sm:p-7 shadow-2xl scale-95 transition-transform duration-300 space-y-5 max-h-[90vh] flex flex-col">
+    <div id="order-modal-container" class="modal-alto-movil w-full max-w-xl bg-brand-card border border-brand-border rounded-3xl p-4 sm:p-7 shadow-2xl scale-95 transition-transform duration-300 space-y-4 sm:space-y-5 max-h-[90vh] flex flex-col">
       
       <!-- Modal Header -->
       <div class="flex items-center justify-between border-b border-brand-border pb-4 shrink-0">
@@ -332,31 +333,31 @@
             <i data-lucide="clipboard-list" class="w-5 h-5"></i>
           </div>
           <div>
-            <h3 class="text-base font-bold text-white flex items-center gap-2">
+            <h3 class="text-base font-bold text-white flex items-center gap-2 flex-wrap">
               Editor de Pedidos
               <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400 border border-zinc-700">Solo Lectura</span>
             </h3>
             <p id="order-modal-subtitle" class="text-xs text-brand-muted">Pedido #TD-XXXX</p>
           </div>
         </div>
-        <button onclick="closeOrderModal()" class="text-zinc-500 hover:text-white p-1 rounded-lg">
+        <button onclick="closeOrderModal()" class="text-zinc-500 hover:text-white p-2 -mr-2 rounded-lg shrink-0" aria-label="Cerrar">
           <i data-lucide="x" class="w-5 h-5"></i>
         </button>
       </div>
 
       <!-- Info Banner de Solo Lectura -->
-      <div class="p-3 bg-brand-dark/70 border border-brand-border/70 rounded-2xl flex items-center justify-between gap-3 shrink-0">
+      <div class="p-3 bg-brand-dark/70 border border-brand-border/70 rounded-2xl flex items-center justify-between gap-3 flex-wrap shrink-0">
         <div class="flex items-center gap-2 text-xs text-zinc-400">
           <i data-lucide="lock" class="w-4 h-4 text-brand-gold shrink-0"></i>
           <span>Los datos del pedido son de solo lectura y no pueden modificarse.</span>
         </div>
-        <div id="order-modal-status-badge">
+        <div id="order-modal-status-badge" class="shrink-0">
           <!-- Badge dinámico de estado -->
         </div>
       </div>
 
       <!-- Modal Body (Campos en Solo Lectura) -->
-      <div class="space-y-4 overflow-y-auto pr-1 flex-1 text-xs">
+      <div class="space-y-4 overflow-y-auto pr-1 flex-1 min-h-0 text-xs">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           <div class="space-y-1">
             <label class="text-[10px] font-bold uppercase tracking-wider text-zinc-400">ID del Pedido</label>
@@ -415,14 +416,25 @@
             <span class="text-[10px] uppercase font-bold text-zinc-400 flex items-center gap-1 mb-1">
               <i data-lucide="store" class="w-3 h-3 text-zinc-500"></i> Origen / Retiro
             </span>
-            <p id="order-view-origin" class="text-xs text-zinc-300 truncate font-medium">Sucursal Central</p>
+            <p id="order-view-origin" class="text-xs text-zinc-300 break-words font-medium">Sucursal Central</p>
           </div>
           <div class="p-2.5 bg-brand-dark/50 rounded-xl border border-brand-border/60">
             <span class="text-[10px] uppercase font-bold text-zinc-400 flex items-center gap-1 mb-1">
               <i data-lucide="map-pin" class="w-3 h-3 text-brand-accent"></i> Destino / Entrega
             </span>
-            <p id="order-view-destination" class="text-xs text-zinc-300 truncate font-medium">-</p>
+            <p id="order-view-destination" class="text-xs text-zinc-300 break-words font-medium">-</p>
           </div>
+        </div>
+
+        <!-- Chat del pedido (solo lectura, para control) -->
+        <div class="space-y-2 pt-1">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-[10px] uppercase font-bold tracking-wider text-zinc-400 flex items-center gap-1.5">
+              <i data-lucide="message-circle" class="w-3 h-3 text-brand-gold"></i> Chat Cliente / Cadete
+            </span>
+            <span id="order-chat-count" class="text-[10px] font-bold text-zinc-400 bg-brand-dark px-2 py-0.5 rounded-full border border-brand-border shrink-0">...</span>
+          </div>
+          <div id="order-chat-list" class="space-y-3 p-3 bg-brand-dark/50 rounded-xl border border-brand-border/60"></div>
         </div>
       </div>
 
@@ -499,9 +511,9 @@
         const btn = document.getElementById(`km-tab-${t}`);
         if (btn) {
           if (t === view) {
-            btn.className = 'px-3.5 py-2 rounded-xl text-xs font-bold transition-all bg-brand-accent text-white shrink-0';
+            btn.className = 'flex-1 px-1.5 sm:px-3.5 py-2.5 rounded-xl text-[11px] sm:text-xs font-bold whitespace-nowrap transition-all bg-brand-accent text-white';
           } else {
-            btn.className = 'px-3.5 py-2 rounded-xl text-xs font-bold transition-all text-zinc-400 hover:text-white shrink-0';
+            btn.className = 'flex-1 px-1.5 sm:px-3.5 py-2.5 rounded-xl text-[11px] sm:text-xs font-bold whitespace-nowrap transition-all text-zinc-400 hover:text-white';
           }
         }
       });

@@ -7,6 +7,7 @@ let allClientesCache = new Map();
 let currentSelectedOrderId = null;
 let currentSearch = '';
 let deliveredFilter = 'today'; // 'today' | 'all'
+let lastChatRendered = null; // Chat_pedido que está pintado en el modal (para no repintar sin cambios)
 
 export async function initMonitoreo() {
   await Promise.all([
@@ -31,6 +32,7 @@ export async function initMonitoreo() {
   // Polling de respaldo cada 25 segundos para no depender únicamente del socket
   setInterval(() => {
     fetchOrders().then(() => renderColumns());
+    if (currentSelectedOrderId) fetchOrderChat(currentSelectedOrderId);
   }, 25000);
 }
 
@@ -200,8 +202,12 @@ async function fetchOrders() {
 function iniciarSuscripciones() {
   // Suscripción Realtime a la tabla Pedidos
   supabase.channel('monitor-pedidos-realtime')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'Pedidos' }, () => {
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'Pedidos' }, (payload) => {
       fetchOrders().then(() => renderColumns());
+      // Pedido abierto en el modal: su chat se actualiza en vivo
+      if (currentSelectedOrderId && String(payload.new?.id_pedido) === String(currentSelectedOrderId)) {
+        fetchOrderChat(currentSelectedOrderId);
+      }
     })
     .subscribe();
     
@@ -225,11 +231,11 @@ window.setDeliveredFilter = (filter) => {
   const btnAll = document.getElementById('btn-delivered-all');
 
   if (filter === 'today') {
-    if (btnToday) btnToday.className = "px-2.5 py-1 rounded-lg font-bold transition-all bg-brand-accent text-white shadow-sm";
-    if (btnAll) btnAll.className = "px-2.5 py-1 rounded-lg font-bold transition-all text-zinc-400 hover:text-white";
+    if (btnToday) btnToday.className = "px-3 py-1.5 rounded-lg font-bold transition-all bg-brand-accent text-white shadow-sm";
+    if (btnAll) btnAll.className = "px-3 py-1.5 rounded-lg font-bold transition-all text-zinc-400 hover:text-white";
   } else {
-    if (btnAll) btnAll.className = "px-2.5 py-1 rounded-lg font-bold transition-all bg-brand-accent text-white shadow-sm";
-    if (btnToday) btnToday.className = "px-2.5 py-1 rounded-lg font-bold transition-all text-zinc-400 hover:text-white";
+    if (btnAll) btnAll.className = "px-3 py-1.5 rounded-lg font-bold transition-all bg-brand-accent text-white shadow-sm";
+    if (btnToday) btnToday.className = "px-3 py-1.5 rounded-lg font-bold transition-all text-zinc-400 hover:text-white";
   }
 
   renderColumns();
@@ -325,23 +331,23 @@ function renderCardList(containerId, list) {
 
     let statusBadge = '';
     if (isCancelled) {
-      statusBadge = `<span class="text-[9px] font-bold text-red-400 bg-red-500/10 px-2 py-0.5 rounded border border-red-500/20">Cancelado</span>`;
+      statusBadge = `<span class="text-[10px] font-bold text-red-400 bg-red-500/10 px-2 py-0.5 rounded border border-red-500/20 whitespace-nowrap">Cancelado</span>`;
     } else if (order.packageType) {
-      statusBadge = `<span class="text-[9px] font-semibold text-brand-gold bg-brand-gold/10 px-1.5 py-0.5 rounded border border-brand-gold/20">${order.packageType}</span>`;
+      statusBadge = `<span class="text-[10px] font-semibold text-brand-gold bg-brand-gold/10 px-1.5 py-0.5 rounded border border-brand-gold/20 truncate max-w-full">${order.packageType}</span>`;
     }
 
     card.innerHTML = `
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <span class="font-bold text-white text-xs font-mono group-hover:text-brand-accent transition-colors">#TD-${order.id}</span>
-          <span class="text-[10px] text-zinc-400 bg-brand-dark px-2 py-0.5 rounded border border-brand-border">${order.time}</span>
+      <div class="flex items-start justify-between gap-2">
+        <div class="flex items-center gap-x-2 gap-y-1.5 flex-wrap min-w-0">
+          <span class="font-bold text-white text-xs font-mono whitespace-nowrap group-hover:text-brand-accent transition-colors">#TD-${order.id}</span>
+          <span class="text-[10px] text-zinc-400 bg-brand-dark px-2 py-0.5 rounded border border-brand-border whitespace-nowrap">${order.time}</span>
           ${statusBadge}
         </div>
-        <div class="flex items-center gap-1.5">
-          <span class="text-[11px] font-bold text-emerald-400 font-mono">
+        <div class="flex items-center gap-1.5 shrink-0">
+          <span class="text-[11px] font-bold text-emerald-400 font-mono whitespace-nowrap">
             $${order.total.toLocaleString()}
           </span>
-          <button onclick="event.stopPropagation(); window.openOrderModal('${order.id}')" title="Ver / Gestionar Pedido (Solo Lectura)" class="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-brand-dark border border-brand-border/40 transition-all">
+          <button onclick="event.stopPropagation(); window.openOrderModal('${order.id}')" title="Ver / Gestionar Pedido (Solo Lectura)" class="p-2 -my-1 rounded-lg text-zinc-400 hover:text-white hover:bg-brand-dark border border-brand-border/40 transition-all">
             <i data-lucide="eye" class="w-3.5 h-3.5"></i>
           </button>
         </div>
@@ -365,8 +371,8 @@ function renderCardList(containerId, list) {
         </span>
       </div>
 
-      <div class="pt-2 border-t border-brand-border/60 flex items-center justify-between">
-        <div class="flex items-center gap-1.5">
+      <div class="pt-2 border-t border-brand-border/60 flex items-center justify-between gap-2 flex-wrap">
+        <div class="flex items-center gap-1.5 min-w-0">
           ${order.cadete 
             ? `<div class="w-6 h-6 rounded-full bg-zinc-800 text-white text-[10px] flex items-center justify-center font-bold">${order.cadete.split(' ').map(n=>n[0]).join('').substring(0,2)}</div>
                <span class="text-xs text-zinc-300 font-medium truncate max-w-[110px]">${order.cadete}</span>`
@@ -390,7 +396,7 @@ function renderCardList(containerId, list) {
             </span>
           ` : ''}
 
-          <button onclick="event.stopPropagation(); window.deleteOrder('${order.id}')" title="Eliminar Pedido" class="px-2.5 py-1 text-xs font-semibold text-red-400 hover:text-white bg-red-500/10 hover:bg-red-600 border border-red-500/20 rounded-xl transition-all flex items-center gap-1 shadow-sm">
+          <button onclick="event.stopPropagation(); window.deleteOrder('${order.id}')" title="Eliminar Pedido" class="px-2.5 py-1.5 text-xs font-semibold text-red-400 hover:text-white bg-red-500/10 hover:bg-red-600 border border-red-500/20 rounded-xl transition-all flex items-center gap-1 shadow-sm">
             <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
             <span>Eliminar</span>
           </button>
@@ -468,6 +474,10 @@ window.openOrderModal = (orderId) => {
   setText('order-view-origin', order.origin || 'Sucursal Central');
   setText('order-view-destination', order.destination || 'Dirección de Entrega');
 
+  lastChatRendered = null;
+  renderOrderChat(null, order, true);
+  fetchOrderChat(order.id);
+
   const btnDel = document.getElementById('btn-delete-order');
   if (btnDel) {
     btnDel.disabled = false;
@@ -488,6 +498,7 @@ window.openOrderModal = (orderId) => {
 };
 
 window.closeOrderModal = () => {
+  currentSelectedOrderId = null;
   const m = document.getElementById('order-modal-backdrop');
   const c = document.getElementById('order-modal-container');
   if (m && c) {
@@ -497,6 +508,98 @@ window.closeOrderModal = () => {
     setTimeout(() => m.classList.add('hidden'), 300);
   }
 };
+
+/* ====================================================
+   CHAT DEL PEDIDO (SOLO LECTURA, PARA CONTROL)
+   ==================================================== */
+
+// Pedidos.Chat_pedido es un texto con un array JSON de mensajes: lo escriben la app de clientes y la de cadetes
+function parseOrderChat(value) {
+  let list = value;
+  if (typeof value === 'string') {
+    try {
+      list = JSON.parse(value);
+    } catch (e) {
+      return [];
+    }
+  }
+  if (!Array.isArray(list)) return [];
+  return list
+    .filter(m => m && typeof m === 'object' && String(m.texto ?? '').trim())
+    .sort((a, b) => String(a.timestamp || '').localeCompare(String(b.timestamp || '')));
+}
+
+// Se pide aparte y no en la lista de pedidos: así la grilla no trae el chat de los 500 pedidos en cada refresco
+async function fetchOrderChat(orderId) {
+  const { data, error } = await supabase
+    .from('Pedidos')
+    .select('Chat_pedido')
+    .eq('id_pedido', orderId)
+    .maybeSingle();
+
+  // El modal se cerró o pasó a otro pedido mientras llegaba la respuesta
+  if (String(currentSelectedOrderId) !== String(orderId)) return;
+
+  const order = orders.find(o => String(o.id) === String(orderId));
+  if (error) {
+    console.warn('No se pudo cargar el chat del pedido:', error);
+    if (lastChatRendered === null) renderOrderChat(null, order, false, true);
+    return;
+  }
+  renderOrderChat(data?.Chat_pedido ?? null, order);
+}
+
+function renderOrderChat(value, order, loading = false, failed = false) {
+  const listEl = document.getElementById('order-chat-list');
+  const countEl = document.getElementById('order-chat-count');
+  if (!listEl) return;
+
+  const messages = parseOrderChat(value);
+  const firma = loading ? 'loading' : failed ? 'failed' : JSON.stringify(messages);
+  if (firma === lastChatRendered) return;
+  lastChatRendered = loading ? null : firma;
+
+  if (countEl) countEl.innerText = loading ? '...' : `${messages.length} ${messages.length === 1 ? 'mensaje' : 'mensajes'}`;
+  listEl.innerHTML = '';
+
+  if (!messages.length) {
+    const empty = document.createElement('p');
+    empty.className = 'text-center text-[11px] text-zinc-500 py-3';
+    empty.textContent = loading ? 'Cargando chat...'
+      : failed ? 'No se pudo cargar el chat de este pedido.'
+      : 'El cliente y el cadete no intercambiaron mensajes en este pedido.';
+    listEl.appendChild(empty);
+    return;
+  }
+
+  messages.forEach(msg => {
+    const fromCadete = msg.remitente === 'cadete';
+    const author = fromCadete
+      ? `Cadete · ${order?.cadete || 'Sin nombre'}`
+      : `Cliente · ${order?.customer || 'Sin nombre'}`;
+    const date = msg.timestamp ? new Date(msg.timestamp) : null;
+    const time = date && !isNaN(date.getTime()) ? formatOrderDate(date) : (msg.hora || '');
+
+    const row = document.createElement('div');
+    row.className = `flex flex-col ${fromCadete ? 'items-end' : 'items-start'} gap-1`;
+
+    const meta = document.createElement('span');
+    meta.className = `text-[10px] font-semibold px-1 ${fromCadete ? 'text-brand-gold' : 'text-zinc-400'}`;
+    meta.textContent = time ? `${author} · ${time}` : author;
+
+    // El texto lo escriben usuarios: siempre como texto plano, nunca como HTML
+    const bubble = document.createElement('p');
+    bubble.className = `max-w-[85%] px-3 py-2 rounded-2xl text-xs leading-relaxed break-words whitespace-pre-wrap border ${
+      fromCadete
+        ? 'bg-brand-gold/10 border-brand-gold/20 text-zinc-100 rounded-tr-sm'
+        : 'bg-brand-dark border-brand-border text-zinc-200 rounded-tl-sm'
+    }`;
+    bubble.textContent = String(msg.texto);
+
+    row.append(meta, bubble);
+    listEl.appendChild(row);
+  });
+}
 
 window.handleDeleteCurrentOrder = () => {
   if (currentSelectedOrderId) {
