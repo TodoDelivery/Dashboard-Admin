@@ -18,8 +18,6 @@ let statsTiempo = {
   demorados: 0
 };
 
-const PRESENCE_CHANNEL_NAME = 'cadetes-disponibles';
-let channelPresence = null;
 let channelDbPedidos = null;
 let channelDbCadetes = null;
 
@@ -38,7 +36,6 @@ export async function initDashboard() {
   renderizarFlota();
 
   iniciarSuscripciones();
-  iniciarRadarPresence();
 }
 
 // =========================================================================
@@ -226,27 +223,11 @@ async function cargarFlotaCadetes() {
 
     const cadetesConViaje = new Set((pedidosEnCurso || []).map(p => Number(p.id_cadete)).filter(Boolean));
 
-    // 3. Detectar cadetes conectados activamente por Presence ('cadetes-disponibles')
+    // Quién está conectado lo sabe sidebar_radar.js, que es el único que escucha el canal de presencia
+    // 'cadetes-disponibles' (un segundo canal con el mismo nombre no se puede abrir). Acá, sin el radar,
+    // solo se pueden mostrar los que tienen un viaje en curso.
     const presenceMap = new Map();
-    if (channelPresence && typeof channelPresence.presenceState === 'function') {
-      const state = channelPresence.presenceState();
-      for (const id in state) {
-        if (id.startsWith('admin_')) continue;
-        const presences = state[id];
-        if (Array.isArray(presences) && presences.length > 0) {
-          const cad = presences[presences.length - 1];
-          if (cad && cad.estado_cad && cad.estado_cad !== 'offline' && cad.estado_cad !== 'desconectado') {
-            const realId = Number(cad.id_cad || String(id).replace(/^cad_/, ''));
-            if (realId) {
-              presenceMap.set(realId, cad);
-            }
-          }
-        }
-      }
-    }
-
-    // Solo son activos si están en viaje activo O conectados en presence
-    const idsSoloActivos = new Set([...cadetesConViaje, ...presenceMap.keys()]);
+    const idsSoloActivos = new Set(cadetesConViaje);
 
     if (idsSoloActivos.size > 0) {
       const { data: infoCadetes } = await supabase
@@ -300,19 +281,6 @@ function iniciarSuscripciones() {
   channelDbCadetes = supabase.channel('dashboard-cadetes-live')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'Cadetes' }, async () => {
       await cargarFlotaCadetes();
-    })
-    .subscribe();
-}
-
-function iniciarRadarPresence() {
-  if (channelPresence) {
-    try { supabase.removeChannel(channelPresence); } catch (e) {}
-  }
-
-  channelPresence = supabase.channel(PRESENCE_CHANNEL_NAME);
-  channelPresence
-    .on('presence', { event: 'sync' }, () => {
-      cargarFlotaCadetes();
     })
     .subscribe();
 }

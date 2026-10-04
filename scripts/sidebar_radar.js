@@ -7,8 +7,10 @@ let channelPresence = null;
 let channelDbCadetes = null;
 let channelDbPedidos = null;
 
-let activeCadetesMap = new Map();
-let cadetesLastLocationMap = new Map();
+// Las tres tablas se indexan por String(id_cad): una sola entrada por cadete
+let activeCadetesMap = new Map();       // conectados por Presence ('cadetes-disponibles')
+let telemetriaViajeMap = new Map();     // último GPS recibido de un viaje ('pedido-en-curso-*')
+let cadetesLastLocationMap = new Map(); // viaje en curso o última entrega según la tabla Pedidos
 let activeOrderChannels = new Map();
 
 let leafletMap = null;
@@ -35,39 +37,33 @@ export function initSidebarRadar() {
   }
 }
 
+const ESTADOS_VIAJE = ['asignado', 'en_camino_entrega'];
+const ESTADOS_OCUPADO = ['ocupado', 'en_curso', 'en_viaje'];
+
+const claveCadete = (c) => String(c?.id_cad ?? c?.id ?? c);
+const presenciaDe = (c) => activeCadetesMap.get(claveCadete(c)) || null;
+const viajeDe = (c) => {
+  const loc = cadetesLastLocationMap.get(claveCadete(c));
+  return loc && loc.isEnCurso ? loc : null;
+};
+
+function estaConectado(presencia) {
+  const st = String(presencia?.estado_cad || '').toLowerCase();
+  return Boolean(presencia) && st !== 'offline' && st !== 'desconectado';
+}
+
+// Activo = con un viaje en curso, o conectado al canal de presencia con el turno abierto
 function isCadeteActive(c) {
   if (!c) return false;
-  const cadId = c.id_cad ?? c.id;
-  
-  // 1. Si tiene un viaje activo en curso, está activo
-  const loc = cadetesLastLocationMap.get(cadId) || cadetesLastLocationMap.get(String(cadId)) || cadetesLastLocationMap.get(Number(cadId));
-  if (loc && loc.isEnCurso) {
-    return true;
-  }
-
-  // 2. Conectado vía Presence socket ('cadetes-disponibles')
-  if (activeCadetesMap.has(cadId) || activeCadetesMap.has(String(cadId)) || activeCadetesMap.has(Number(cadId))) {
-    const p = activeCadetesMap.get(cadId) || activeCadetesMap.get(String(cadId)) || activeCadetesMap.get(Number(cadId));
-    if (p && p.estado_cad && p.estado_cad.toLowerCase() !== 'offline' && p.estado_cad.toLowerCase() !== 'desconectado') {
-      return true;
-    }
-  }
-
-  return false;
+  return Boolean(viajeDe(c)) || estaConectado(presenciaDe(c));
 }
 
 function isCadeteBusy(c) {
   if (!c) return false;
-  const cadId = c.id_cad ?? c.id;
-  const p = activeCadetesMap.get(cadId) || activeCadetesMap.get(String(cadId)) || activeCadetesMap.get(Number(cadId));
-  if (p && (p.estado_cad === 'ocupado' || p.estado_cad === 'en_curso' || p.estado_cad === 'en_viaje')) {
-    return true;
-  }
-  if (c.estado_cad) {
-    const st = String(c.estado_cad).trim().toLowerCase();
-    return st === 'ocupado' || st === 'en_curso' || st === 'en_viaje';
-  }
-  return false;
+  if (viajeDe(c)) return true;
+  const p = presenciaDe(c);
+  if (p) return ESTADOS_OCUPADO.includes(String(p.estado_cad || '').toLowerCase());
+  return ESTADOS_OCUPADO.includes(String(c.estado_cad || '').trim().toLowerCase());
 }
 
 /**
@@ -97,11 +93,11 @@ function extractCoordinates(data) {
 }
 
 /**
- * Resuelve la ubicación geográfica real de un cadete con prioridad estricta:
- * 1. Coordenadas GPS en vivo transmitidas por Presence socket ('cadetes-disponibles')
- * 2. Telemetría GPS en tiempo real transmitida por viaje ('pedido-en-curso-*')
- * 3. Destino/Origen real del pedido en curso según la tabla Pedidos
- * 4. Última ubicación de entrega registrada en la base de datos
+ * Resuelve dónde dibujar a un cadete activo, en este orden:
+ * 1. GPS del viaje en curso ('pedido-en-curso-*')
+ * 2. GPS publicado por Presence ('cadetes-disponibles'), solo si ya tiene un fix real (coords_ts)
+ * 3. Destino del pedido en curso según la tabla Pedidos
+ * 4. Base central, mientras no haya señal de GPS
  */
 function resolveCadetePosition(c) {
   // Los cadetes desconectados NUNCA se dibujan en el mapa de red local
@@ -109,56 +105,61 @@ function resolveCadetePosition(c) {
     return null;
   }
 
-  const rawId = c.id_cad ?? c.id;
-  const numId = Number(rawId);
-
-  // Buscar datos activos de presencia usando ID numérico o string
-  let activeData = null;
-  if (!isNaN(numId) && activeCadetesMap.has(numId)) {
-    activeData = activeCadetesMap.get(numId);
-  } else if (activeCadetesMap.has(String(rawId))) {
-    activeData = activeCadetesMap.get(String(rawId));
-  } else if (activeCadetesMap.has(`cad_${rawId}`)) {
-    activeData = activeCadetesMap.get(`cad_${rawId}`);
+  const viaje = viajeDe(c);
+  const telemetria = telemetriaViajeMap.get(claveCadete(c));
+  if (viaje && telemetria && telemetria.idPedido === viaje.idPedido) {
+    return { lat: telemetria.lat, lng: telemetria.lng, isLive: true, source: telemetria.source };
   }
 
-  // 1. Live GPS de Presence o Telemetría Broadcast
-  if (activeData) {
-    const liveCoords = extractCoordinates(activeData);
+  // Sin coords_ts el cadete todavía transmite la ubicación por defecto: no es su posición real
+  const presencia = presenciaDe(c);
+  if (estaConectado(presencia) && presencia.coords_ts) {
+    const liveCoords = extractCoordinates(presencia);
     if (liveCoords) {
-      return {
-        lat: liveCoords[0],
-        lng: liveCoords[1],
-        isLive: true,
-        source: activeData.telemetrySource || 'GPS en vivo'
-      };
+      return { lat: liveCoords[0], lng: liveCoords[1], isLive: true, source: 'GPS en vivo' };
     }
   }
 
-  // 2. Coordenadas de pedido en curso activo (origen/destino)
-  let dbLoc = null;
-  if (!isNaN(numId) && cadetesLastLocationMap.has(numId)) {
-    dbLoc = cadetesLastLocationMap.get(numId);
-  } else if (cadetesLastLocationMap.has(String(rawId))) {
-    dbLoc = cadetesLastLocationMap.get(String(rawId));
+  if (viaje && viaje.lat && viaje.lng) {
+    return { lat: viaje.lat, lng: viaje.lng, isLive: false, source: viaje.source };
   }
 
-  if (dbLoc && dbLoc.lat && dbLoc.lng && dbLoc.isEnCurso) {
-    return {
-      lat: dbLoc.lat,
-      lng: dbLoc.lng,
-      isLive: false,
-      source: dbLoc.source
-    };
-  }
-
-  // 3. Si el cadete está activo pero aún no ha transmitido GPS ni tiene viajes, fallback a Base Central
   return {
     lat: DEFAULT_CENTER[0],
     lng: DEFAULT_CENTER[1],
     isLive: false,
     source: 'Base Central (Esperando señal GPS)'
   };
+}
+
+// De las conexiones de un mismo cadete (varias pestañas o una reconexión) vale la que tiene el turno
+// abierto y, entre esas, la del GPS más reciente
+function elegirPresencia(presencias) {
+  return [...presencias].sort((a, b) =>
+    (Number(estaConectado(b)) - Number(estaConectado(a))) || ((b.coords_ts || 0) - (a.coords_ts || 0)))[0];
+}
+
+// Cadetes activos: los registrados que están activos, más los conectados que todavía no están en la lista
+function listarActivos() {
+  const activos = registeredCadetesCache.filter(c => isCadeteActive(c));
+  const registrados = new Set(registeredCadetesCache.map(claveCadete));
+  activeCadetesMap.forEach((presencia, id) => {
+    if (!registrados.has(id) && estaConectado(presencia)) {
+      activos.push({
+        id_cad: Number(id) || id,
+        nombre_cad: presencia.nombre,
+        vehiculo_cad: presencia.vehiculo_cad,
+        patente: presencia.patente
+      });
+    }
+  });
+  return activos;
+}
+
+// Cualquier cambio de quién está activo se refleja en todos lados: radar, mapa, lista y tablero
+function refrescarTodo() {
+  updateRadarUI();
+  syncDashboardKPIs();
 }
 
 function iniciarRealtime() {
@@ -181,28 +182,14 @@ function iniciarRealtime() {
 
         const presences = state[key];
         if (Array.isArray(presences) && presences.length > 0) {
-          // Registro más reciente transmitido por el cadete
-          const cad = presences[presences.length - 1];
+          const cad = elegirPresencia(presences);
           if (cad) {
-            const rawId = cad.id_cad ?? cad.id ?? key.replace(/^cad_/, '');
-            const numId = Number(rawId);
-
-            if (!isNaN(numId)) {
-              activeCadetesMap.set(numId, cad);
-            }
-            activeCadetesMap.set(String(rawId), cad);
+            activeCadetesMap.set(String(cad.id_cad ?? cad.id ?? key.replace(/^cad_/, '')), cad);
           }
         }
       }
 
-      updateRadarUI();
-      if (leafletMap) {
-        updateMapMarkers();
-        updateModalList();
-      }
-
-      // Sincronizar contadores en dashboard si existen
-      syncDashboardKPIs();
+      refrescarTodo();
     };
 
     channelPresence
@@ -242,7 +229,7 @@ function iniciarRealtime() {
 }
 
 function syncDashboardKPIs() {
-  const activeCount = registeredCadetesCache.filter(c => isCadeteActive(c)).length || activeCadetesMap.size;
+  const activeCount = listarActivos().length;
   const kpiEl = document.getElementById('kpi-cadetes-activos');
   if (kpiEl) kpiEl.innerText = `${activeCount}`;
   const flotaCountEl = document.getElementById('flota-count');
@@ -254,24 +241,20 @@ function syncDashboardKPIs() {
 }
 
 window.getActiveCadetesList = () => {
-  return registeredCadetesCache
-    .filter(c => isCadeteActive(c))
-    .map(c => {
-      const cadId = c.id_cad ?? c.id;
-      const presence = activeCadetesMap.get(cadId) || activeCadetesMap.get(String(cadId)) || activeCadetesMap.get(Number(cadId));
-      const loc = cadetesLastLocationMap.get(cadId) || cadetesLastLocationMap.get(String(cadId)) || cadetesLastLocationMap.get(Number(cadId));
-      return {
-        ...c,
-        estado_cad: (presence && presence.estado_cad) || (loc && loc.isEnCurso ? 'ocupado' : (c.estado_cad || 'disponible'))
-      };
-    });
+  return listarActivos().map(c => {
+    const presence = presenciaDe(c);
+    return {
+      ...c,
+      estado_cad: viajeDe(c) ? 'ocupado' : ((presence && presence.estado_cad) || c.estado_cad || 'disponible')
+    };
+  });
 };
 
 async function fetchRegisteredCadetes() {
   const { data, error } = await supabase.from('Cadetes').select('*').order('id_cad', { ascending: true });
   if (!error && data) {
     registeredCadetesCache = data;
-    updateRadarUI();
+    refrescarTodo();
   }
 }
 
@@ -285,10 +268,13 @@ async function fetchCadetesLocationsFromDB() {
       .limit(100);
 
     if (!error && pedidos) {
+      // Se arma de nuevo en cada consulta: un viaje que terminó deja de contar al cadete como "en viaje"
+      const ubicaciones = new Map();
+
       pedidos.forEach(p => {
-        const cadId = Number(p.id_cadete) || p.id_cadete;
-        // Un viaje está activo si no ha sido entregado, cancelado o rendido
-        const isActiveTrip = p.estado_pedido && !['entregado', 'cancelado', 'rendido'].includes(p.estado_pedido.toLowerCase());
+        const cadId = String(p.id_cadete);
+        // Viaje en curso = el cadete aceptó y todavía no entregó (una oferta sin aceptar no es un viaje)
+        const isActiveTrip = ESTADOS_VIAJE.includes(String(p.estado_pedido || '').toLowerCase());
 
         // 1. Si el viaje está activo, suscribirse de inmediato al canal de telemetría GPS del viaje
         if (isActiveTrip) {
@@ -300,28 +286,33 @@ async function fetchCadetesLocationsFromDB() {
           activeOrderChannels.delete(p.id_pedido);
         }
 
-        // 2. Guardar ubicación de referencia (priorizando viajes en curso)
-        if (!cadetesLastLocationMap.has(cadId) || isActiveTrip) {
-          const lat = p.latitud_dest || p.latitud_org;
-          const lng = p.longitud_dest || p.longitud_org;
+        // 2. Guardar ubicación de referencia. Vienen del más nuevo al más viejo: manda el viaje en curso
+        const anterior = ubicaciones.get(cadId);
+        if (!anterior || (isActiveTrip && !anterior.isEnCurso)) {
+          const lat = Number(p.latitud_dest || p.latitud_org);
+          const lng = Number(p.longitud_dest || p.longitud_org);
+          const conCoords = Boolean(lat && lng) && !isNaN(lat) && !isNaN(lng);
 
-          if (lat && lng && !isNaN(Number(lat)) && !isNaN(Number(lng))) {
-            const locObj = {
-              lat: Number(lat),
-              lng: Number(lng),
+          if (conCoords || isActiveTrip) {
+            ubicaciones.set(cadId, {
+              lat: conCoords ? lat : null,
+              lng: conCoords ? lng : null,
               isEnCurso: isActiveTrip,
               idPedido: p.id_pedido,
               source: isActiveTrip ? `Destino Pedido #TD-${p.id_pedido} (En viaje)` : `Última entrega Pedido #TD-${p.id_pedido}`
-            };
-            cadetesLastLocationMap.set(cadId, locObj);
-            cadetesLastLocationMap.set(String(cadId), locObj);
-            cadetesLastLocationMap.set(Number(cadId), locObj);
+            });
           }
         }
       });
 
-      updateMapMarkers();
-      updateRadarUI();
+      cadetesLastLocationMap = ubicaciones;
+      // El GPS de un viaje que ya terminó no se sigue mostrando
+      telemetriaViajeMap.forEach((t, cadId) => {
+        const viaje = ubicaciones.get(cadId);
+        if (!viaje || !viaje.isEnCurso || viaje.idPedido !== t.idPedido) telemetriaViajeMap.delete(cadId);
+      });
+
+      refrescarTodo();
     }
   } catch (e) {
     console.warn('[Radar] Error consultando ubicaciones de pedidos:', e);
@@ -336,58 +327,35 @@ function suscribirCanalPedidoEnCurso(idPedido, idCadete) {
     if (payload) {
       const lat = payload.coords?.lat ?? payload.coords?.latitude ?? payload.lat;
       const lng = payload.coords?.lng ?? payload.coords?.longitude ?? payload.lng;
-      const cadId = Number(payload.id_cadete || idCadete);
+      const cadId = String(payload.id_cadete || idCadete);
 
       if (lat !== undefined && lng !== undefined && !isNaN(Number(lat)) && !isNaN(Number(lng))) {
-        const liveCoords = { lat: Number(lat), lng: Number(lng) };
+        const primera = !telemetriaViajeMap.has(cadId);
 
-        // 1. Guardar telemetría en activeCadetesMap
-        const existing = activeCadetesMap.get(cadId) || {};
-        const updatedCadete = {
-          ...existing,
-          id_cad: cadId,
-          coords: liveCoords,
-          estado_cad: 'ocupado',
-          telemetrySource: `GPS en viaje (Pedido #TD-${idPedido})`
-        };
-
-        activeCadetesMap.set(cadId, updatedCadete);
-        activeCadetesMap.set(String(cadId), updatedCadete);
-        activeCadetesMap.set(Number(cadId), updatedCadete);
-
-        // 2. Guardar en cadetesLastLocationMap
-        cadetesLastLocationMap.set(cadId, {
-          lat: liveCoords.lat,
-          lng: liveCoords.lng,
-          isEnCurso: true,
+        // 1. Guardar el GPS del viaje (aparte de Presence: un sync de presencia no lo borra)
+        telemetriaViajeMap.set(cadId, {
+          lat: Number(lat),
+          lng: Number(lng),
           idPedido,
-          source: `GPS en viaje (#TD-${idPedido})`
+          source: `GPS en viaje (Pedido #TD-${idPedido})`
         });
-        cadetesLastLocationMap.set(String(cadId), cadetesLastLocationMap.get(cadId));
-        cadetesLastLocationMap.set(Number(cadId), cadetesLastLocationMap.get(cadId));
 
-        // 3. Mover suavemente el marcador si ya existe en Leaflet
+        // 2. Mover suavemente el marcador si ya existe en Leaflet
+        let foundMarker = null;
         if (leafletMap && markersLayer) {
-          let foundMarker = null;
           markersLayer.eachLayer(layer => {
-            if (layer.cadeteData && (Number(layer.cadeteData.id_cad) === cadId || Number(layer.cadeteData.id) === cadId)) {
+            if (layer.cadeteData && claveCadete(layer.cadeteData) === cadId) {
               foundMarker = layer;
             }
           });
+        }
 
-          if (foundMarker) {
-            foundMarker.setLatLng([liveCoords.lat, liveCoords.lng]);
-            const name = updatedCadete.nombre_cad || updatedCadete.nombre || `Cadete #${cadId}`;
-            foundMarker.setTooltipContent(`<strong>${name}</strong> • En viaje (GPS en vivo)`);
-          } else {
-            updateMapMarkers();
-          }
+        if (foundMarker) {
+          foundMarker.setLatLng([Number(lat), Number(lng)]);
         } else {
           updateMapMarkers();
         }
-
-        updateModalList();
-        updateRadarUI();
+        if (primera) refrescarTodo();
       }
     }
   }).subscribe();
@@ -428,12 +396,8 @@ function updateRadarUI() {
     }
   });
 
-  // Si hay cadetes detectados por presencia que aún no figuren en caché
-  activeCadetesMap.forEach((cad, key) => {
-    if (!registeredCadetesCache.some(c => String(c.id_cad) === String(key))) {
-      activeCount++;
-    }
-  });
+  // Más los conectados que todavía no figuran en la lista de registrados
+  activeCount = listarActivos().length;
 
   // Actualizar contador del radar en sidebar
   const countElUpdate = document.getElementById('radar-cadetes-count');
@@ -725,23 +689,11 @@ function updateMapMarkers() {
     if (c.id_cad) renderedCadeteIds.add(String(c.id_cad));
   });
 
-  // 2. Graficar cadetes detectados por presencia o viaje que no figuren aún en cache de registrados
-  activeCadetesMap.forEach((activeCad, key) => {
-    const rawId = activeCad.id_cad ?? activeCad.id ?? key;
-    if (!renderedCadeteIds.has(String(rawId))) {
-      if (activeCad.estado_cad !== 'offline' && activeCad.estado_cad !== 'desconectado') {
-        const coords = extractCoordinates(activeCad);
-        if (coords) {
-          renderMarkerItem(
-            activeCad,
-            { lat: coords[0], lng: coords[1], isLive: true, source: activeCad.telemetrySource || 'GPS en vivo' },
-            true,
-            activeCad.estado_cad === 'ocupado'
-          );
-          renderedCadeteIds.add(String(rawId));
-        }
-      }
-    }
+  // 2. Graficar cadetes conectados por presencia que no figuren aún en cache de registrados
+  listarActivos().forEach((c) => {
+    if (renderedCadeteIds.has(claveCadete(c))) return;
+    const pos = resolveCadetePosition(c);
+    if (pos) renderMarkerItem(c, pos, true, isCadeteBusy(c));
   });
 }
 
@@ -754,7 +706,7 @@ function updateModalList() {
   listEl.innerHTML = '';
 
   const totalRegistrados = registeredCadetesCache.length;
-  const totalActivos = registeredCadetesCache.filter(c => isCadeteActive(c)).length;
+  const totalActivos = listarActivos().length;
 
   if (countEl) countEl.innerText = totalActivos;
   if (listCountEl) listCountEl.innerText = `${totalRegistrados} registrados`;
