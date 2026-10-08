@@ -92,6 +92,27 @@ function iniciarSuscripciones() {
     .subscribe();
 }
 
+// El estado sale de la red local (presencia en vivo + viaje en curso) que mantiene sidebar_radar.js,
+// no de Cadetes.estado_cad, que casi nunca se actualiza. Devuelve 'libre' | 'ocupado' | null (offline).
+const ESTADOS_OCUPADO = ['ocupado', 'en_curso', 'en_viaje'];
+
+function estadoEnRedLocal(idCad) {
+  const lista = typeof window.getActiveCadetesList === 'function' ? window.getActiveCadetesList() : [];
+  const activo = lista.find(a => String(a.id_cad) === String(idCad));
+  if (!activo) return null;
+  return ESTADOS_OCUPADO.includes(String(activo.estado_cad || '').toLowerCase()) ? 'ocupado' : 'libre';
+}
+
+// sidebar_radar.js llama a esto cada vez que cambia la presencia: solo se redibuja si cambió algún estado
+let firmaEstadosRed = '';
+window.cargarFlotaCadetes = () => {
+  if (currentTab !== 'cadetes') return;
+  const firma = cadetes.map(c => `${c.id}:${estadoEnRedLocal(c.id)}`).join('|');
+  if (firma === firmaEstadosRed) return;
+  firmaEstadosRed = firma;
+  renderTable();
+};
+
 window.switchTab = (tab) => {
   currentTab = tab;
 
@@ -176,10 +197,11 @@ window.renderTable = () => {
 
       let statusColor = "bg-zinc-800 text-zinc-400 border-zinc-700";
       let statusLabel = "Offline";
-      if (c.status === 'libre' || c.status === 'online') {
+      const estadoRed = estadoEnRedLocal(c.id);
+      if (estadoRed === 'libre') {
         statusColor = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
         statusLabel = "Libre";
-      } else if (c.status === 'ocupado' || c.status === 'en_curso') {
+      } else if (estadoRed === 'ocupado') {
         statusColor = "bg-amber-500/10 text-amber-400 border-amber-500/20";
         statusLabel = "Ocupado";
       }
