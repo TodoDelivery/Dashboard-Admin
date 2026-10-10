@@ -15,7 +15,9 @@ let cadetesSettlement = [];
 let rawDeliveredOrders = [];
 let currentSelectedCadete = null;
 let currentGeneratedToken = '';
-let currentPeriod = 'all'; // 'today' | 'yesterday' | 'week' | 'month' | 'all'
+// Rango de fechas elegido en el calendario ('YYYY-MM-DD' en hora local; '' = sin límite de ese lado)
+let fechaDesde = '';
+let fechaHasta = '';
 let currentSearch = '';
 let currentStatusFilter = 'all'; // 'all' | 'pending' | 'settled'
 let realtimeChannel = null;
@@ -31,7 +33,6 @@ const STORAGE_CLOSURES_KEY = 'todo_delivery_caja_cierres_v2';
 // INICIALIZACIÓN
 // =========================================================================
 export async function initCaja() {
-  setupPeriodBadges();
   await cargarComision();
   await fetchSettlements();
   iniciarSuscripcionRealtime();
@@ -120,21 +121,9 @@ function generarTokenLiquidacion(idCadete) {
 async function fetchSettlements() {
   mostrarLoading(true);
 
-  // Determinar rango de fechas según currentPeriod
-  const now = new Date();
-  let startDate = null;
-  let endDate = null;
-
-  if (currentPeriod === 'today') {
-    startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
-  } else if (currentPeriod === 'yesterday') {
-    startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 0, 0, 0);
-    endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 23, 59, 59, 999);
-  } else if (currentPeriod === 'week') {
-    startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  } else if (currentPeriod === 'month') {
-    startDate = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
-  }
+  // Rango de fechas del calendario: días completos en hora local (el Date local ya sale en UTC con toISOString)
+  const startDate = fechaDesde ? new Date(`${fechaDesde}T00:00:00`) : null;
+  const endDate = fechaHasta ? new Date(`${fechaHasta}T23:59:59.999`) : null;
 
   // 1. Consultar pedidos con joins a Cadetes y Clientes
   let query = supabase
@@ -311,11 +300,8 @@ window.renderSettlementTable = () => {
   if (!tbody) return;
   tbody.innerHTML = "";
 
-  let totalGross = 0;
-  let totalPendingStreet = 0;
-  let totalCompany40 = 0;
-  let totalCadetes60 = 0;
-  let totalTrips = 0;
+  // Métricas del rango elegido
+  const totales = { facturado: 0, pendiente: 0, rendido: 0, cadetes: 0, envios: 0, cadetesConDeuda: 0 };
 
   // Filtrado de cadetes para la vista
   const filtered = cadetesSettlement.filter(c => {
@@ -333,15 +319,12 @@ window.renderSettlementTable = () => {
 
   // Calculamos métricas globales según el reparto Cadete / Central vigente (comisión de Ajustes)
   cadetesSettlement.forEach(c => {
-    const cadeteEarnings = parteCadete(c.totalVolume);
-    const companyEarnings = parteEmpresa(c.totalVolume);
-    const pendingOwed = parteEmpresa(c.pendingVolume);
-
-    totalGross += c.totalVolume;
-    totalPendingStreet += pendingOwed;
-    totalCompany40 += companyEarnings;
-    totalCadetes60 += cadeteEarnings;
-    totalTrips += c.trips;
+    totales.facturado += c.totalVolume;
+    totales.pendiente += parteEmpresa(c.pendingVolume);
+    totales.rendido += parteEmpresa(c.rendidoVolume);
+    totales.cadetes += parteCadete(c.totalVolume);
+    totales.envios += c.trips;
+    if (c.pendingTrips > 0) totales.cadetesConDeuda += 1;
   });
 
   if (filtered.length === 0) {
@@ -353,15 +336,15 @@ window.renderSettlementTable = () => {
               <i data-lucide="inbox" class="w-6 h-6"></i>
             </div>
             <p class="font-semibold text-zinc-300">No se encontraron liquidaciones para este filtro</p>
-            <p class="text-xs text-zinc-500 max-w-sm">Prueba cambiando el período de tiempo (ej. "Histórico Total" o "Últimos 7 días") o el filtro de estado.</p>
-            <button onclick="changePeriodFilter('all')" class="mt-2 text-xs font-bold text-brand-accent hover:underline flex items-center gap-1">
-              <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Ver histórico completo
+            <p class="text-xs text-zinc-500 max-w-sm">Prueba ampliando el rango de fechas o cambiando el filtro de estado.</p>
+            <button onclick="setDateShortcut('all')" class="mt-2 text-xs font-bold text-brand-accent hover:underline flex items-center gap-1">
+              <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Ver todas las fechas
             </button>
           </div>
         </td>
       </tr>
     `;
-    actualizarCards(totalGross, totalPendingStreet, totalCompany40, totalCadetes60, totalTrips);
+    actualizarCards(totales);
     if (window.lucide) window.lucide.createIcons();
     return;
   }
@@ -440,54 +423,61 @@ window.renderSettlementTable = () => {
     tbody.appendChild(tr);
   });
 
-  actualizarCards(totalGross, totalPendingStreet, totalCompany40, totalCadetes60, totalTrips);
+  actualizarCards(totales);
   if (window.lucide) window.lucide.createIcons();
 };
 
-function actualizarCards(totalGross, totalPendingStreet, totalCompany40, totalCadetes60, totalTrips) {
-  const domSales = document.getElementById("card-total-sales");
-  const domStreet = document.getElementById("card-cash-street");
-  const domNet = document.getElementById("card-net-earnings");
-  const domPay = document.getElementById("card-cadetes-pay");
-  const badgeInfo = document.getElementById("badge-period-info");
+function actualizarCards(t) {
+  const pesos = (n) => `$${Math.round(n).toLocaleString('es-AR')}`;
+  const poner = (id, texto) => { const el = document.getElementById(id); if (el) el.innerText = texto; };
 
-  if (domSales) domSales.innerText = `$${Math.round(totalGross).toLocaleString('es-AR')}`;
-  if (domStreet) domStreet.innerText = `$${Math.round(totalPendingStreet).toLocaleString('es-AR')}`;
-  if (domNet) domNet.innerText = `$${Math.round(totalCompany40).toLocaleString('es-AR')}`;
-  if (domPay) domPay.innerText = `$${Math.round(totalCadetes60).toLocaleString('es-AR')}`;
+  poner("card-total-sales", pesos(t.facturado));
+  poner("card-cash-street", pesos(t.pendiente));
+  poner("card-net-earnings", pesos(t.rendido));
+  poner("card-cadetes-pay", pesos(t.cadetes));
+  poner("card-total-sales-detalle", `Total cobrado a clientes en ${t.envios} ${t.envios === 1 ? 'envío entregado' : 'envíos entregados'}`);
 
-  if (badgeInfo) {
-    const periodNames = {
-      today: 'Hoy',
-      yesterday: 'Ayer',
-      week: 'Últimos 7 días',
-      month: 'Este Mes',
-      all: 'Histórico Total'
-    };
-    badgeInfo.innerText = `${periodNames[currentPeriod] || 'Período'} • ${totalTrips} envíos procesados`;
-  }
+  poner("badge-period-info", `${textoRangoFechas()} • ${t.envios} envíos`);
 }
 
 // =========================================================================
-// CAMBIO DE PERÍODO TEMPORAL
+// FILTRO POR FECHAS (CALENDARIO)
 // =========================================================================
-window.changePeriodFilter = (period) => {
-  currentPeriod = period;
-  setupPeriodBadges();
+const fechaLocalISO = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const fechaLegible = (iso) => iso.split('-').reverse().join('/');
+
+function textoRangoFechas() {
+  if (fechaDesde && fechaHasta) return fechaDesde === fechaHasta ? fechaLegible(fechaDesde) : `${fechaLegible(fechaDesde)} al ${fechaLegible(fechaHasta)}`;
+  if (fechaDesde) return `Desde el ${fechaLegible(fechaDesde)}`;
+  if (fechaHasta) return `Hasta el ${fechaLegible(fechaHasta)}`;
+  return 'Todas las fechas';
+}
+
+function aplicarRangoFechas(desde, hasta) {
+  // Si quedaron al revés se ordenan en vez de mostrar un rango vacío
+  if (desde && hasta && desde > hasta) [desde, hasta] = [hasta, desde];
+  fechaDesde = desde;
+  fechaHasta = hasta;
+  const inputDesde = document.getElementById('filtro-fecha-desde');
+  const inputHasta = document.getElementById('filtro-fecha-hasta');
+  if (inputDesde) inputDesde.value = desde;
+  if (inputHasta) inputHasta.value = hasta;
   fetchSettlements();
+}
+
+window.changeDateRange = () => {
+  aplicarRangoFechas(
+    document.getElementById('filtro-fecha-desde')?.value || '',
+    document.getElementById('filtro-fecha-hasta')?.value || ''
+  );
 };
 
-function setupPeriodBadges() {
-  const buttons = document.querySelectorAll('.period-filter-btn');
-  buttons.forEach(btn => {
-    const p = btn.getAttribute('data-period');
-    if (p === currentPeriod) {
-      btn.className = 'period-filter-btn px-3 py-2 rounded-xl bg-brand-accent text-white text-xs font-bold transition-all shadow-md shadow-brand-accent/20';
-    } else {
-      btn.className = 'period-filter-btn px-3 py-2 rounded-xl border border-brand-border bg-brand-dark hover:bg-zinc-800 text-zinc-400 hover:text-white text-xs font-medium transition-all';
-    }
-  });
-}
+window.setDateShortcut = (atajo) => {
+  const hoy = new Date();
+  if (atajo === 'today') aplicarRangoFechas(fechaLocalISO(hoy), fechaLocalISO(hoy));
+  else if (atajo === 'month') aplicarRangoFechas(fechaLocalISO(new Date(hoy.getFullYear(), hoy.getMonth(), 1)), fechaLocalISO(hoy));
+  else aplicarRangoFechas('', '');
+};
 
 // =========================================================================
 // MODAL DE RENDICIÓN Y LIQUIDACIÓN INDIVIDUAL (CASHOUT)

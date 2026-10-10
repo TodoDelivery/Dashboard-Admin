@@ -18,6 +18,12 @@ function iniciarSuscripciones() {
       fetchCotiz();
     })
     .subscribe();
+
+  // Respaldo por si la tabla no emite cambios por Realtime (ej: editada desde el panel de Supabase)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') fetchCotiz();
+  });
+  setInterval(fetchCotiz, 60000);
 }
 
 async function fetchCotiz() {
@@ -49,8 +55,8 @@ function pintarTarifas() {
   const displayComision = document.getElementById("display-comision");
   const detalleComision = document.getElementById("display-comision-detalle");
 
-  if (displayBase) displayBase.innerText = `$${BASE_FEE.toLocaleString()}`;
-  if (displayKm) displayKm.innerText = `$${PRICE_PER_KM.toLocaleString()}`;
+  if (displayBase) displayBase.innerText = `$${BASE_FEE.toLocaleString('es-AR')}`;
+  if (displayKm) displayKm.innerText = `$${PRICE_PER_KM.toLocaleString('es-AR')}`;
   if (displaySurge) displaySurge.innerText = `+ ${SURGE_PRICE_PERCENT}%`;
   if (displayComision) displayComision.innerText = `${COMISION_EMPRESA}%`;
   if (detalleComision) detalleComision.innerText = `El cadete rinde ${COMISION_EMPRESA}% a la empresa y se queda con ${Math.round((100 - COMISION_EMPRESA) * 100) / 100}%.`;

@@ -218,7 +218,7 @@
         </button>
         <div class="min-w-0">
           <h2 class="text-base sm:text-lg font-bold text-white tracking-tight leading-tight truncate"><span class="min-[400px]:hidden">Caja</span><span class="hidden min-[400px]:inline">Liquidación & Caja</span></h2>
-          <p class="text-xs text-brand-muted hidden sm:block truncate">Balance de cobros en mano, retención de central (<span data-comision-empresa>40%</span>) y ganancias de cadetes (<span data-comision-cadete>60%</span>)</p>
+          <p class="text-xs text-brand-muted hidden sm:block truncate">Balance de cobros en mano, retención de central (<span data-comision-empresa>—</span>) y ganancias de cadetes (<span data-comision-cadete>—</span>)</p>
         </div>
       </div>
 
@@ -238,18 +238,24 @@
     <!-- Main Content -->
     <main class="flex-1 p-4 sm:p-6 space-y-4 sm:space-y-6 max-w-7xl w-full mx-auto">
 
-      <!-- Barra de Filtros de Período y Estado -->
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-brand-card/80 border border-brand-border p-3.5 rounded-2xl shadow-lg">
+      <!-- Barra de Filtro por Fechas (calendario) -->
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-brand-card/80 border border-brand-border p-3.5 rounded-2xl shadow-lg">
         <div class="flex items-center gap-2 flex-wrap">
           <span class="text-xs font-bold text-zinc-400 mr-1 flex items-center gap-1.5">
             <i data-lucide="calendar" class="w-4 h-4 text-brand-gold"></i>
-            Período:
+            Fechas:
           </span>
-          <button onclick="changePeriodFilter('today')" data-period="today" class="period-filter-btn px-3 py-2 rounded-xl border border-brand-border bg-brand-dark hover:bg-zinc-800 text-zinc-400 hover:text-white text-xs font-medium transition-all">Hoy</button>
-          <button onclick="changePeriodFilter('yesterday')" data-period="yesterday" class="period-filter-btn px-3 py-2 rounded-xl border border-brand-border bg-brand-dark hover:bg-zinc-800 text-zinc-400 hover:text-white text-xs font-medium transition-all">Ayer</button>
-          <button onclick="changePeriodFilter('week')" data-period="week" class="period-filter-btn px-3 py-2 rounded-xl border border-brand-border bg-brand-dark hover:bg-zinc-800 text-zinc-400 hover:text-white text-xs font-medium transition-all">Últimos 7 días</button>
-          <button onclick="changePeriodFilter('month')" data-period="month" class="period-filter-btn px-3 py-2 rounded-xl border border-brand-border bg-brand-dark hover:bg-zinc-800 text-zinc-400 hover:text-white text-xs font-medium transition-all">Este Mes</button>
-          <button onclick="changePeriodFilter('all')" data-period="all" class="period-filter-btn px-3 py-2 rounded-xl bg-brand-accent text-white text-xs font-bold transition-all shadow-md shadow-brand-accent/20">Histórico Total</button>
+          <label class="flex items-center gap-1.5 text-xs text-zinc-400">
+            Desde
+            <input type="date" id="filtro-fecha-desde" onchange="changeDateRange()" class="bg-brand-dark border border-brand-border text-white text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-brand-accent transition-all [color-scheme:dark]" />
+          </label>
+          <label class="flex items-center gap-1.5 text-xs text-zinc-400">
+            Hasta
+            <input type="date" id="filtro-fecha-hasta" onchange="changeDateRange()" class="bg-brand-dark border border-brand-border text-white text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-brand-accent transition-all [color-scheme:dark]" />
+          </label>
+          <button onclick="setDateShortcut('today')" class="px-3 py-2 rounded-xl border border-brand-border bg-brand-dark hover:bg-zinc-800 text-zinc-400 hover:text-white text-xs font-medium transition-all">Hoy</button>
+          <button onclick="setDateShortcut('month')" class="px-3 py-2 rounded-xl border border-brand-border bg-brand-dark hover:bg-zinc-800 text-zinc-400 hover:text-white text-xs font-medium transition-all">Este mes</button>
+          <button onclick="setDateShortcut('all')" class="px-3 py-2 rounded-xl border border-brand-border bg-brand-dark hover:bg-zinc-800 text-zinc-400 hover:text-white text-xs font-medium transition-all">Todas las fechas</button>
         </div>
 
         <div class="flex items-center gap-3">
@@ -263,55 +269,55 @@
         </div>
       </div>
 
-      <!-- Balance General de Caja (Cards) -->
+      <!-- Balance de Caja del rango elegido (Cards) -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        
-        <!-- Recaudación Total Bruta -->
+
+        <!-- Facturado -->
         <div class="bg-brand-card border border-brand-border p-5 rounded-2xl relative overflow-hidden group hover:border-blue-500/40 transition-all">
           <div class="flex items-center justify-between mb-3">
-            <span class="text-xs font-semibold uppercase tracking-wider text-brand-muted">Facturación Total (100%)</span>
+            <span class="text-xs font-semibold uppercase tracking-wider text-brand-muted">Facturado</span>
             <div class="p-2 rounded-xl bg-blue-500/10 text-blue-400">
               <i data-lucide="badge-dollar-sign" class="w-5 h-5"></i>
             </div>
           </div>
           <h3 id="card-total-sales" class="text-2xl font-extrabold text-white"><span class="animate-pulse">...</span></h3>
-          <p class="text-[11px] text-zinc-400 mt-1">Total recaudado en cobros de envíos</p>
+          <p id="card-total-sales-detalle" class="text-[11px] text-zinc-400 mt-1">Total cobrado a clientes por los envíos entregados</p>
         </div>
 
-        <!-- Efectivo en Calle (A Rendir por Cadetes) -->
+        <!-- A rendir pendiente -->
         <div class="bg-brand-card border border-brand-border p-5 rounded-2xl relative overflow-hidden group hover:border-amber-500/40 transition-all">
           <div class="flex items-center justify-between mb-3">
-            <span class="text-xs font-semibold uppercase tracking-wider text-brand-muted">Efectivo en Calle a Rendir</span>
+            <span class="text-xs font-semibold uppercase tracking-wider text-brand-muted">A rendir pendiente</span>
             <div class="p-2 rounded-xl bg-amber-500/10 text-amber-400">
               <i data-lucide="wallet" class="w-5 h-5"></i>
             </div>
           </div>
           <h3 id="card-cash-street" class="text-2xl font-extrabold text-brand-gold"><span class="animate-pulse">...</span></h3>
-          <p class="text-[11px] text-zinc-400 mt-1"><span data-comision-empresa>40%</span> en mano pendiente de entrega</p>
+          <p id="card-cash-street-detalle" class="text-[11px] text-zinc-400 mt-1">Efectivo que los cadetes todavía deben entregar (<span data-comision-empresa>—</span> de lo cobrado)</p>
         </div>
 
-        <!-- Ganancia Neta de Todo Delivery -->
-        <div class="bg-brand-card border border-brand-border p-5 rounded-2xl relative overflow-hidden group hover:border-blue-500/40 transition-all">
-          <div class="flex items-center justify-between mb-3">
-            <span class="text-xs font-semibold uppercase tracking-wider text-brand-muted">Comisión Central (<span data-comision-empresa>40%</span>)</span>
-            <div class="p-2 rounded-xl bg-blue-500/10 text-blue-400">
-              <i data-lucide="trending-up" class="w-5 h-5"></i>
-            </div>
-          </div>
-          <h3 id="card-net-earnings" class="text-2xl font-extrabold text-blue-400"><span class="animate-pulse">...</span></h3>
-          <p class="text-[11px] text-zinc-400 mt-1">Ingreso retenido por la plataforma</p>
-        </div>
-
-        <!-- Total a Pagar a Cadetes -->
+        <!-- Ya rendido -->
         <div class="bg-brand-card border border-brand-border p-5 rounded-2xl relative overflow-hidden group hover:border-emerald-500/40 transition-all">
           <div class="flex items-center justify-between mb-3">
-            <span class="text-xs font-semibold uppercase tracking-wider text-brand-muted">Ganancia Flota (<span data-comision-cadete>60%</span>)</span>
+            <span class="text-xs font-semibold uppercase tracking-wider text-brand-muted">Ya rendido</span>
             <div class="p-2 rounded-xl bg-emerald-500/10 text-emerald-400">
+              <i data-lucide="check-check" class="w-5 h-5"></i>
+            </div>
+          </div>
+          <h3 id="card-net-earnings" class="text-2xl font-extrabold text-emerald-400"><span class="animate-pulse">...</span></h3>
+          <p id="card-net-earnings-detalle" class="text-[11px] text-zinc-400 mt-1">Efectivo ya entregado a la central (<span data-comision-empresa>—</span> de lo cobrado)</p>
+        </div>
+
+        <!-- Ganancia de cadetes -->
+        <div class="bg-brand-card border border-brand-border p-5 rounded-2xl relative overflow-hidden group hover:border-blue-500/40 transition-all">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-semibold uppercase tracking-wider text-brand-muted">Ganancia de cadetes</span>
+            <div class="p-2 rounded-xl bg-blue-500/10 text-blue-400">
               <i data-lucide="users" class="w-5 h-5"></i>
             </div>
           </div>
-          <h3 id="card-cadetes-pay" class="text-2xl font-extrabold text-emerald-400"><span class="animate-pulse">...</span></h3>
-          <p class="text-[11px] text-zinc-400 mt-1">Honorarios acumulados de cadetes</p>
+          <h3 id="card-cadetes-pay" class="text-2xl font-extrabold text-blue-400"><span class="animate-pulse">...</span></h3>
+          <p class="text-[11px] text-zinc-400 mt-1">Lo que se quedan los cadetes (<span data-comision-cadete>—</span> de lo cobrado)</p>
         </div>
 
       </div>
@@ -321,7 +327,7 @@
         <div class="p-4 sm:p-5 border-b border-brand-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h3 class="text-base font-bold text-white">Liquidaciones Individuales y Rendición de Mano</h3>
-            <p class="text-xs text-brand-muted">Cálculo de balance de turno: <span data-comision-cadete>60%</span> ganancia del cadete vs <span data-comision-empresa>40%</span> efectivo a rendir a la central</p>
+            <p class="text-xs text-brand-muted">Cálculo de balance de turno: <span data-comision-cadete>—</span> ganancia del cadete vs <span data-comision-empresa>—</span> efectivo a rendir a la central</p>
           </div>
 
           <div class="flex items-center gap-3 flex-wrap sm:flex-nowrap">
@@ -359,9 +365,9 @@
                 <th class="py-3.5 px-4">Cadete</th>
                 <th class="py-3.5 px-4">Viajes</th>
                 <th class="py-3.5 px-4">Facturación Total</th>
-                <th class="py-3.5 px-4">Ganancia Cadete (<span data-comision-cadete>60%</span>)</th>
-                <th class="py-3.5 px-4">Comisión Central (<span data-comision-empresa>40%</span>)</th>
-                <th class="py-3.5 px-4">Efectivo a Rendir (<span data-comision-empresa>40%</span>)</th>
+                <th class="py-3.5 px-4">Ganancia Cadete (<span data-comision-cadete>—</span>)</th>
+                <th class="py-3.5 px-4">Comisión Central (<span data-comision-empresa>—</span>)</th>
+                <th class="py-3.5 px-4">Efectivo a Rendir (<span data-comision-empresa>—</span>)</th>
                 <th class="py-3.5 px-4 text-right">Acción</th>
               </tr>
             </thead>
@@ -402,24 +408,24 @@
         </button>
       </div>
 
-      <!-- Resumen de Balance del Cadete (60% / 40%) -->
+      <!-- Resumen de Balance del Cadete (ganancia / rendición) -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div class="bg-brand-dark p-3.5 rounded-2xl border border-brand-border">
           <span class="text-[11px] text-zinc-400 block mb-1">Facturación del Turno (100%):</span>
           <strong id="modal-cash-in-hand" class="text-white font-mono text-lg block"><span class="animate-pulse">...</span></strong>
         </div>
         <div class="bg-brand-dark p-3.5 rounded-2xl border border-emerald-500/30 bg-emerald-500/5">
-          <span class="text-[11px] text-emerald-400 block mb-1 font-semibold">Ganancia Cadete (<span data-comision-cadete>60%</span>):</span>
+          <span class="text-[11px] text-emerald-400 block mb-1 font-semibold">Ganancia Cadete (<span data-comision-cadete>—</span>):</span>
           <strong id="modal-cadete-earnings" class="text-emerald-400 font-mono text-lg block"><span class="animate-pulse">...</span></strong>
         </div>
         <div class="bg-brand-dark p-3.5 rounded-2xl border border-brand-gold/30 bg-amber-500/5">
-          <span id="modal-balance-label" class="text-[11px] text-brand-gold block mb-1 font-bold">Rendición a Central (<span data-comision-empresa>40%</span>):</span>
+          <span id="modal-balance-label" class="text-[11px] text-brand-gold block mb-1 font-bold">Rendición a Central (<span data-comision-empresa>—</span>):</span>
           <strong id="modal-balance-amount" class="text-brand-gold font-mono text-lg font-extrabold block"><span class="animate-pulse">...</span></strong>
         </div>
       </div>
 
       <div id="modal-balance-explanation" class="text-xs text-zinc-300 bg-zinc-900/60 p-3 rounded-xl border border-brand-border/60 leading-relaxed">
-        El repartidor retiene su ganancia del <span data-comision-cadete>60%</span> y debe devolver el <span data-comision-empresa>40%</span> a la administración central de Todo Delivery.
+        El repartidor retiene su ganancia del <span data-comision-cadete>—</span> y debe devolver el <span data-comision-empresa>—</span> a la administración central de Todo Delivery.
       </div>
 
       <!-- Tabla con detalle de pedidos incluidos en esta rendición -->
@@ -437,8 +443,8 @@
                 <th class="py-2.5 px-3">Cliente</th>
                 <th class="py-2.5 px-3">Detalle</th>
                 <th class="py-2.5 px-3 text-right">Total (100%)</th>
-                <th class="py-2.5 px-3 text-right">Cadete (<span data-comision-cadete>60%</span>)</th>
-                <th class="py-2.5 px-3 text-right">Central (<span data-comision-empresa>40%</span>)</th>
+                <th class="py-2.5 px-3 text-right">Cadete (<span data-comision-cadete>—</span>)</th>
+                <th class="py-2.5 px-3 text-right">Central (<span data-comision-empresa>—</span>)</th>
               </tr>
             </thead>
             <tbody id="modal-cadete-orders-list" class="divide-y divide-brand-border/40">
@@ -500,8 +506,8 @@
               <th class="py-3 px-4">Cliente</th>
               <th class="py-3 px-4">Detalle / Paquete</th>
               <th class="py-3 px-4 text-right">Total (100%)</th>
-              <th class="py-3 px-4 text-right">Cadete (<span data-comision-cadete>60%</span>)</th>
-              <th class="py-3 px-4 text-right">Central (<span data-comision-empresa>40%</span>)</th>
+              <th class="py-3 px-4 text-right">Cadete (<span data-comision-cadete>—</span>)</th>
+              <th class="py-3 px-4 text-right">Central (<span data-comision-empresa>—</span>)</th>
               <th class="py-3 px-4 text-right">Estado</th>
             </tr>
           </thead>
@@ -546,11 +552,11 @@
             <strong id="closure-total-sales" class="text-white font-mono text-sm">$0</strong>
           </div>
           <div class="flex justify-between text-zinc-400">
-            <span>Ganancia Total Cadetes (<span data-comision-cadete>60%</span>):</span>
+            <span>Ganancia Total Cadetes (<span data-comision-cadete>—</span>):</span>
             <strong id="closure-cadetes-profit" class="text-emerald-400 font-mono text-sm">+$0</strong>
           </div>
           <div class="pt-2 border-t border-brand-border/60 flex justify-between items-center text-sm font-bold">
-            <span class="text-brand-gold">Comisión Neta Central (<span data-comision-empresa>40%</span>):</span>
+            <span class="text-brand-gold">Comisión Neta Central (<span data-comision-empresa>—</span>):</span>
             <span id="closure-company-profit" class="text-brand-gold font-mono text-base font-bold">$0</span>
           </div>
         </div>
