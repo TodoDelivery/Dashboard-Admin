@@ -5,6 +5,7 @@ let BASE_FEE = 1200;
 let PRICE_PER_KM = 350;
 let SURGE_PRICE_PERCENT = 20; // 20%
 let COMISION_EMPRESA = 40; // % de cada pedido que el cadete rinde a la empresa
+let WHATSAPP_CENTRAL = '';
 let cotizId = 1;
 
 export async function initAjustes() {
@@ -42,6 +43,7 @@ async function fetchCotiz() {
     SURGE_PRICE_PERCENT = parseFloat(data.porc_tarif_dinamica) || 0;
     const comision = parseFloat(data.Porc_Comision);
     if (Number.isFinite(comision)) COMISION_EMPRESA = comision;
+    WHATSAPP_CENTRAL = data.whatsapp_central || '';
   }
 
   pintarTarifas();
@@ -60,6 +62,8 @@ function pintarTarifas() {
   if (displaySurge) displaySurge.innerText = `+ ${SURGE_PRICE_PERCENT}%`;
   if (displayComision) displayComision.innerText = `${COMISION_EMPRESA}%`;
   if (detalleComision) detalleComision.innerText = `El cadete rinde ${COMISION_EMPRESA}% a la empresa y se queda con ${Math.round((100 - COMISION_EMPRESA) * 100) / 100}%.`;
+  const displayWhatsapp = document.getElementById("display-whatsapp");
+  if (displayWhatsapp) displayWhatsapp.innerText = WHATSAPP_CENTRAL ? `+${WHATSAPP_CENTRAL}` : 'Sin cargar';
 }
 
 window.openCotizModal = () => {
@@ -76,6 +80,8 @@ window.openCotizModal = () => {
   if (inputKm) inputKm.value = PRICE_PER_KM;
   if (inputDinamica) inputDinamica.value = SURGE_PRICE_PERCENT;
   if (inputComision) inputComision.value = COMISION_EMPRESA;
+  const inputWhatsapp = document.getElementById('input-whatsapp');
+  if (inputWhatsapp) inputWhatsapp.value = WHATSAPP_CENTRAL;
 
   if (m && c) {
     m.classList.remove('hidden');
@@ -112,14 +118,20 @@ window.handleSaveCotiz = async (e) => {
   const newKm = parseFloat(document.getElementById('input-km').value) || 0;
   const newDinamica = parseFloat(document.getElementById('input-dinamica').value) || 0;
   const newComision = parseFloat(document.getElementById('input-comision').value);
+  const newWhatsapp = (document.getElementById('input-whatsapp')?.value || '').replace(/\D/g, '');
 
-  if (!Number.isFinite(newComision) || newComision < 0 || newComision > 100) {
-    alert("La comisión tiene que ser un porcentaje entre 0 y 100.");
+  const rechazar = (mensaje) => {
+    alert(mensaje);
     if (submitBtn) {
       submitBtn.disabled = false;
       submitBtn.innerText = originalText;
     }
-    return;
+  };
+  if (!Number.isFinite(newComision) || newComision < 0 || newComision > 100) {
+    return rechazar("La comisión tiene que ser un porcentaje entre 0 y 100.");
+  }
+  if (newWhatsapp && (newWhatsapp.length < 10 || newWhatsapp.length > 15)) {
+    return rechazar("El WhatsApp tiene que tener entre 10 y 15 dígitos, con código de país y área (ej: 5492644123456).");
   }
 
   const { error } = await supabase
@@ -129,7 +141,8 @@ window.handleSaveCotiz = async (e) => {
       bajada_band: newBajada,
       tarifa_km: newKm,
       porc_tarif_dinamica: newDinamica,
-      Porc_Comision: newComision
+      Porc_Comision: newComision,
+      whatsapp_central: newWhatsapp || null
     });
 
   if (submitBtn) {
@@ -144,6 +157,7 @@ window.handleSaveCotiz = async (e) => {
     PRICE_PER_KM = newKm;
     SURGE_PRICE_PERCENT = newDinamica;
     COMISION_EMPRESA = newComision;
+    WHATSAPP_CENTRAL = newWhatsapp;
 
     pintarTarifas();
 

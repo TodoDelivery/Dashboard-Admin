@@ -15,7 +15,6 @@ import { supabase } from './conexion_supabase.js';
 let cadetesSettlement = [];
 let rawDeliveredOrders = [];
 let currentSelectedCadete = null;
-let currentGeneratedToken = '';
 // Rango de fechas elegido en el calendario ('YYYY-MM-DD' en hora local; '' = sin límite de ese lado)
 let fechaDesde = '';
 let fechaHasta = '';
@@ -26,9 +25,6 @@ let canalComision = null;
 
 // % de cada pedido que el cadete rinde a la central. Lo edita el admin en Ajustes (Datos_cotiz.Porc_Comision)
 let COMISION = 40;
-
-const STORAGE_SETTLEMENTS_KEY = 'todo_delivery_caja_settlements_v2';
-const STORAGE_CLOSURES_KEY = 'todo_delivery_caja_cierres_v2';
 
 // =========================================================================
 // INICIALIZACIÓN
@@ -90,50 +86,17 @@ function pintarPorcentajes() {
   document.querySelectorAll('[data-comision-cadete]').forEach(el => { el.textContent = pctCadete(); });
 }
 
-function getStoredSettlements() {
-  try {
-    const raw = localStorage.getItem(STORAGE_SETTLEMENTS_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch (e) {
-    console.error('Error leyendo localStorage settlements', e);
-    return {};
-  }
-}
+const pesos = (n) => `$${Math.round(Number(n) || 0).toLocaleString('es-AR')}`;
+const fechaHora = (iso) => {
+  const d = new Date(iso);
+  return isNaN(d.getTime()) ? '-' : `${d.toLocaleDateString('es-AR')} ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+};
+const ETIQUETA_METODO = { efectivo: 'Efectivo', transferencia: 'Transferencia', descuento: 'Ajuste de saldo' };
 
-function saveStoredSettlement(cadeteId, data) {
-  try {
-    const all = getStoredSettlements();
-    all[cadeteId] = {
-      ...data,
-      timestamp: new Date().toISOString()
-    };
-    localStorage.setItem(STORAGE_SETTLEMENTS_KEY, JSON.stringify(all));
-  } catch (e) {
-    console.error('Error guardando en localStorage', e);
-  }
-}
-
-function removeStoredSettlement(cadeteId) {
-  try {
-    const all = getStoredSettlements();
-    delete all[cadeteId];
-    localStorage.setItem(STORAGE_SETTLEMENTS_KEY, JSON.stringify(all));
-  } catch (e) {
-    console.error('Error removiendo en localStorage', e);
-  }
-}
-
-// Generador del Token Único de Rendición conforme a la especificación de Todo Delivery:
-// Formato: TD-${id_cad}-${YYYYMMDD}-${random4} (ej: TD-1-20260905-7481)
-function generarTokenLiquidacion(idCadete) {
-  const now = new Date();
-  const yyyy = now.getFullYear();
-  const mm = String(now.getMonth() + 1).padStart(2, '0');
-  const dd = String(now.getDate()).padStart(2, '0');
-  const yyyymmdd = `${yyyy}${mm}${dd}`;
-  const random4 = Math.floor(1000 + Math.random() * 9000);
-  return `TD-${idCadete}-${yyyymmdd}-${random4}`;
-}
+// Rendiciones guardadas en la BD (tabla Rendiciones), la más nueva primero
+const rendicionesDe = (cadeteId) => cadetesSettlement.find(c => c.id === cadeteId)?.rendiciones || [];
+const ultimaConfirmada = (cadeteId) => rendicionesDe(cadeteId).find(r => r.estado === 'confirmada');
+const buscarRendicion = (idRendicion) => cadetesSettlement.flatMap(c => c.rendiciones).find(r => r.id_rendicion === idRendicion);
 
 // =========================================================================
 // OBTENCIÓN Y AGRUPACIÓN DE DATOS DE SUPABASE
@@ -154,6 +117,7 @@ async function fetchSettlements() {
       id_cliente,
       coste_pedido,
       porc_comision,
+      id_rendicion,
       inform_pedido,
       estado_pedido,
       tipo_paquete,
@@ -207,10 +171,7 @@ async function fetchSettlements() {
 
   rawDeliveredOrders = deliveredList;
 
-  // 3. Obtener liquidaciones guardadas localmente
-  const storedSettlements = getStoredSettlements();
-
-  // 4. Agrupar por cadete
+  // 3. Agrupar por cadete
   const map = new Map();
 
   deliveredList.forEach(p => {
@@ -252,7 +213,7 @@ async function fetchSettlements() {
         rendidoEmpresa: 0,
         orders: [],
         settled: false,
-        settlementData: storedSettlements[cadeteId] || null
+        rendiciones: []
       });
     }
 
@@ -282,6 +243,20 @@ async function fetchSettlements() {
     stat.settled = (stat.pendingTrips === 0 && stat.trips > 0);
   });
 
+  // 4. Rendiciones de esos cadetes (todas las fechas: son el historial de caja)
+  if (map.size > 0) {
+    const { data: rendiciones, error: errRend } = await supabase
+      .from('Rendiciones')
+      .select('*')
+      .in('id_cadete', [...map.keys()])
+      .order('fecha', { ascending: false });
+    if (errRend) {
+      console.error('Error cargando rendiciones:', errRend);
+      mostrarToast('No se pudieron cargar las rendiciones guardadas', 'error');
+    }
+    (rendiciones || []).forEach(r => map.get(r.id_cadete)?.rendiciones.push(r));
+  }
+
   cadetesSettlement = Array.from(map.values());
 
   mostrarLoading(false);
@@ -296,10 +271,13 @@ function iniciarSuscripcionRealtime() {
     supabase.removeChannel(realtimeChannel);
   }
 
+  // Varios cambios seguidos (una rendición toca muchos pedidos) se juntan en una sola recarga
+  let recarga = null;
   realtimeChannel = supabase
     .channel('caja-realtime-pedidos')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'Pedidos' }, () => {
-      fetchSettlements();
+      clearTimeout(recarga);
+      recarga = setTimeout(fetchSettlements, 400);
     })
     .subscribe();
 
@@ -526,15 +504,13 @@ window.openSettlementModal = (cadeteId) => {
   const pctEmpresaTurno = pctDePedidos(pendingOrders);
   const pctCadeteTurno = pctDePedidos(pendingOrders, true);
 
-  currentGeneratedToken = generarTokenLiquidacion(cadeteId);
-
   const nameEl = document.getElementById("modal-cadete-name");
   const subEl = document.getElementById("modal-cadete-subinfo");
   const tokenBadge = document.getElementById("modal-settlement-token");
 
   if (nameEl) nameEl.innerText = `${currentSelectedCadete.name}`;
   if (subEl) subEl.innerText = `ID #${currentSelectedCadete.id} • Tel: ${currentSelectedCadete.phone} • ${currentSelectedCadete.vehicle} (${currentSelectedCadete.plate})`;
-  if (tokenBadge) tokenBadge.innerText = currentGeneratedToken;
+  if (tokenBadge) tokenBadge.innerText = 'Se genera al confirmar';
 
   const cashInHandEl = document.getElementById("modal-cash-in-hand");
   const earningsEl = document.getElementById("modal-cadete-earnings");
@@ -629,131 +605,161 @@ window.confirmSettlement = async () => {
     return;
   }
 
-  const facturadoTurno = sumar(pendingOrders, montoDe);
-  const cadeteShare60 = sumar(pendingOrders, cadeteDe);
-  const companyShare40 = sumar(pendingOrders, empresaDe);
-  const pendingOrderIds = pendingOrders.map(o => o.id_pedido);
-
   const confirmBtn = document.getElementById("btn-confirm-settlement");
   const originalBtnContent = confirmBtn ? confirmBtn.innerHTML : '';
+  const restaurarBoton = () => {
+    if (!confirmBtn) return;
+    confirmBtn.disabled = false;
+    confirmBtn.innerHTML = originalBtnContent;
+  };
   if (confirmBtn) {
     confirmBtn.disabled = true;
     confirmBtn.innerHTML = `<i data-lucide="loader" class="w-4 h-4 animate-spin"></i> Liquidando en BD...`;
     if (window.lucide) window.lucide.createIcons();
   }
 
-  // 1. Confirmación en BD: Los pedidos pasan de 'entregado' a 'rendido'
-  const { error: errUpdatePedidos } = await supabase
-    .from('Pedidos')
-    .update({ estado_pedido: 'rendido' })
-    .in('id_pedido', pendingOrderIds);
+  // La BD calcula los montos con el % de cada pedido, guarda la rendición y marca los pedidos en un solo paso.
+  // Si algún pedido cambió desde que se abrió el modal, rechaza todo y no rinde a medias.
+  const { data: rendicion, error } = await supabase.rpc('rendir_caja', {
+    p_id_cadete: currentSelectedCadete.id,
+    p_ids_pedidos: pendingOrders.map(o => o.id_pedido),
+    p_metodo_pago: method,
+    p_notas: notes
+  });
 
-  if (errUpdatePedidos) {
-    if (confirmBtn) {
-      confirmBtn.disabled = false;
-      confirmBtn.innerHTML = originalBtnContent;
-    }
-    alert("Error al actualizar pedidos a 'rendido': " + errUpdatePedidos.message);
+  if (error) {
+    restaurarBoton();
+    alert(`No se pudo rendir la caja: ${error.message}`);
+    window.closeSettlementModal();
+    await fetchSettlements();
     return;
   }
 
-  // 2. El estado del cadete en la tabla Cadetes pasa a 'desconectado'
   await supabase
     .from('Cadetes')
     .update({ estado_cad: 'desconectado' })
     .eq('id_cad', currentSelectedCadete.id);
 
-  if (confirmBtn) {
-    confirmBtn.disabled = false;
-    confirmBtn.innerHTML = originalBtnContent;
-  }
-
-  // 3. Guardar registro local con el Token
-  const token = currentGeneratedToken || generarTokenLiquidacion(currentSelectedCadete.id);
-  saveStoredSettlement(currentSelectedCadete.id, {
-    token: token,
-    cadeteName: currentSelectedCadete.name,
-    totalVolume: facturadoTurno,
-    cadeteShare: cadeteShare60,
-    companyShare: companyShare40,
-    method: method,
-    notes: notes,
-    tripsCount: pendingOrders.length,
-    orderIds: pendingOrderIds
-  });
-
+  restaurarBoton();
   window.closeSettlementModal();
   await fetchSettlements();
-  mostrarToast(`¡Caja rendida con éxito! Token: ${token}`, "success");
+  mostrarToast(`¡Caja rendida con éxito! Token: ${rendicion.token}`, "success");
 };
 
 // =========================================================================
-// REABRIR RENDICIÓN (DESHACER CIERRE DE PEDIDOS)
+// REABRIR = ANULAR UNA RENDICIÓN PUNTUAL (sus pedidos vuelven a 'entregado')
 // =========================================================================
-window.reopenSettlement = async (cadeteId) => {
-  const cad = cadetesSettlement.find(c => c.id === cadeteId);
-  if (!cad) return;
+window.anularRendicion = async (idRendicion) => {
+  const rend = buscarRendicion(idRendicion);
+  if (!rend || rend.estado !== 'confirmada') return;
 
-  if (confirm(`¿Deseas reabrir la rendición de ${cad.name}? Los pedidos volverán a estado 'entregado' y se reactivará el saldo deudor de caja.`)) {
-    const rendidoOrderIds = cad.orders
-      .filter(o => o.estado_pedido === 'rendido')
-      .map(o => o.id_pedido);
+  const aviso = `¿Reabrir la rendición ${rend.token}?\n\n` +
+    `Queda anulada (no se borra) y sus ${rend.cant_pedidos} pedidos vuelven a pendientes de rendir ` +
+    `(${pesos(rend.monto_empresa)} a rendir otra vez).`;
+  if (!confirm(aviso)) return;
 
-    if (rendidoOrderIds.length > 0) {
-      const { error } = await supabase
-        .from('Pedidos')
-        .update({ estado_pedido: 'entregado' })
-        .in('id_pedido', rendidoOrderIds);
-
-      if (error) {
-        alert("Error al revertir pedidos a 'entregado': " + error.message);
-        return;
-      }
-    }
-
-    removeStoredSettlement(cadeteId);
-    await fetchSettlements();
-    mostrarToast(`Caja de ${cad.name} reabierta a 'entregado'`, "info");
+  const { error } = await supabase.rpc('anular_rendicion', { p_id_rendicion: idRendicion });
+  if (error) {
+    alert(`No se pudo reabrir la rendición: ${error.message}`);
+    return;
   }
+  window.closeBreakdownModal();
+  await fetchSettlements();
+  mostrarToast(`Rendición ${rend.token} anulada; sus pedidos volvieron a pendientes`, "info");
+};
+
+window.reopenSettlement = (cadeteId) => {
+  const rend = ultimaConfirmada(cadeteId);
+  if (!rend) {
+    mostrarToast("Este cadete no tiene rendiciones confirmadas para reabrir", "warning");
+    return;
+  }
+  window.anularRendicion(rend.id_rendicion);
 };
 
 // =========================================================================
-// VER CONSTANCIA / COMPROBANTE Y ENVIAR POR WHATSAPP
+// VER CONSTANCIA / COMPROBANTE Y ENVIAR POR WHATSAPP (sale de la rendición guardada)
 // =========================================================================
-window.verConstanciaCadete = (cadeteId) => {
-  const cad = cadetesSettlement.find(c => c.id === cadeteId);
-  if (!cad) return;
+window.verConstancia = async (idRendicion) => {
+  const rend = buscarRendicion(idRendicion);
+  if (!rend) return;
+  const cad = cadetesSettlement.find(c => c.id === rend.id_cadete) || { name: `Cadete #${rend.id_cadete}`, phone: '' };
 
-  const stored = getStoredSettlements()[cadeteId] || {};
-  const token = stored.token || generarTokenLiquidacion(cadeteId);
-  const facturado = cad.totalVolume;
-  const ganancia60 = cad.totalCadete;
-  const rendido40 = cad.totalEmpresa;
-  const pctEmp = pctDePedidos(cad.orders);
-  const pctCad = pctDePedidos(cad.orders, true);
-
-  const phoneSanitized = (cad.phone || '').replace(/\D/g, '');
+  // % de los pedidos de esa rendición; si fue anulada (ya no tiene pedidos) se muestra el % efectivo
+  const { data: pedidosRend } = await supabase.from('Pedidos').select('porc_comision').eq('id_rendicion', idRendicion);
+  const pctEfectivo = rend.total_facturado > 0 ? rend.monto_empresa / rend.total_facturado * 100 : COMISION;
+  const conPct = (pedidosRend || []).length ? pedidosRend : [{ porc_comision: pctEfectivo }];
+  const pctEmp = pctDePedidos(conPct);
+  const pctCad = pctDePedidos(conPct, true);
+  const anulada = rend.estado === 'anulada';
 
   const msg = `*TODO DELIVERY - CONSTANCIA DE RENDICIÓN DE CAJA*\n` +
     `--------------------------------------\n` +
-    `🔖 *Token:* ${token}\n` +
+    `🔖 *Token:* ${rend.token}\n` +
     `🛵 *Cadete:* ${cad.name}\n` +
-    `📦 *Envíos Rendidos:* ${cad.trips}\n` +
-    `💵 *Facturación Total (100%):* $${facturado.toLocaleString('es-AR')}\n` +
-    `🟢 *Ganancia Repartidor (${pctCad}):* +$${ganancia60.toLocaleString('es-AR')}\n` +
-    `🏦 *Efectivo Rendido a Central (${pctEmp}):* $${rendido40.toLocaleString('es-AR')}\n` +
-    `✅ *Estado de Caja:* LIQUIDADO A CERO\n` +
-    `📅 *Fecha:* ${new Date().toLocaleDateString('es-AR')} ${new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}\n` +
+    `📦 *Envíos Rendidos:* ${rend.cant_pedidos}\n` +
+    `💵 *Facturación Total (100%):* ${pesos(rend.total_facturado)}\n` +
+    `🟢 *Ganancia Repartidor (${pctCad}):* +${pesos(rend.monto_cadete)}\n` +
+    `🏦 *Efectivo Rendido a Central (${pctEmp}):* ${pesos(rend.monto_empresa)}\n` +
+    `💳 *Método:* ${ETIQUETA_METODO[rend.metodo_pago] || rend.metodo_pago}\n` +
+    (rend.notas ? `📝 *Nota:* ${rend.notas}\n` : '') +
+    `✅ *Estado:* ${anulada ? `ANULADA el ${fechaHora(rend.fecha_anulacion)}` : 'LIQUIDADO A CERO'}\n` +
+    `📅 *Fecha:* ${fechaHora(rend.fecha)}\n` +
     `--------------------------------------\n` +
     `¡Gracias por tu jornada de trabajo!`;
 
-  if (confirm(`Comprobante de Caja (${token}):\n\n- Facturación: $${facturado}\n- Ganancia Cadete (${pctCad}): +$${ganancia60}\n- Efectivo Rendido (${pctEmp}): $${rendido40}\n\n¿Deseas abrir WhatsApp para enviar la constancia al repartidor?`)) {
-    const url = phoneSanitized 
+  const resumen = `Constancia ${rend.token}${anulada ? ' (ANULADA)' : ''}:\n\n` +
+    `- Fecha: ${fechaHora(rend.fecha)}\n- Envíos: ${rend.cant_pedidos}\n- Facturación: ${pesos(rend.total_facturado)}\n` +
+    `- Ganancia Cadete (${pctCad}): +${pesos(rend.monto_cadete)}\n- Efectivo Rendido (${pctEmp}): ${pesos(rend.monto_empresa)}\n\n` +
+    `¿Deseas abrir WhatsApp para enviar la constancia al repartidor?`;
+  if (confirm(resumen)) {
+    const phoneSanitized = (cad.phone || '').replace(/\D/g, '');
+    const url = phoneSanitized
       ? `https://wa.me/${phoneSanitized}?text=${encodeURIComponent(msg)}`
       : `https://wa.me/?text=${encodeURIComponent(msg)}`;
     window.open(url, '_blank');
   }
 };
+
+window.verConstanciaCadete = (cadeteId) => {
+  const rend = ultimaConfirmada(cadeteId);
+  if (!rend) {
+    mostrarToast("Este cadete no tiene rendiciones guardadas", "warning");
+    return;
+  }
+  window.verConstancia(rend.id_rendicion);
+};
+
+function renderRendiciones(cad) {
+  const lista = document.getElementById("breakdown-rendiciones-list");
+  if (!lista) return;
+  if (cad.rendiciones.length === 0) {
+    lista.innerHTML = `<p class="py-4 px-4 text-xs text-zinc-500">Todavía no tiene rendiciones guardadas.</p>`;
+    return;
+  }
+  lista.innerHTML = cad.rendiciones.map(r => {
+    const anulada = r.estado === 'anulada';
+    return `
+      <div class="flex items-center justify-between gap-3 py-2.5 px-4 text-xs ${anulada ? 'opacity-60' : ''}">
+        <div class="min-w-0">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="font-mono font-bold text-brand-gold">${r.token}</span>
+            <span class="text-[10px] font-semibold px-2 py-0.5 rounded ${anulada ? 'bg-zinc-800 text-zinc-400 border border-zinc-700' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'}">${anulada ? 'Anulada' : 'Confirmada'}</span>
+          </div>
+          <span class="text-zinc-400">${fechaHora(r.fecha)} • ${r.cant_pedidos} envíos • Rendido ${pesos(r.monto_empresa)} • ${ETIQUETA_METODO[r.metodo_pago] || r.metodo_pago}</span>
+        </div>
+        <div class="flex items-center gap-1 shrink-0">
+          <button onclick="verConstancia(${r.id_rendicion})" class="text-zinc-400 hover:text-emerald-400 p-2 rounded-lg hover:bg-zinc-800" title="Ver constancia">
+            <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+          </button>
+          ${anulada ? '' : `<button onclick="anularRendicion(${r.id_rendicion})" class="text-zinc-400 hover:text-amber-400 p-2 rounded-lg hover:bg-zinc-800" title="Reabrir (anular esta rendición)">
+            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+          </button>`}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
 
 // =========================================================================
 // MODAL DE DESGLOSE / AUDITORÍA DE VIAJES POR CADETE
@@ -799,6 +805,8 @@ window.openBreakdownModal = (cadeteId) => {
       `;
     }).join('');
   }
+
+  renderRendiciones(cad);
 
   const m = document.getElementById('breakdown-modal');
   const c = document.getElementById('breakdown-modal-container');
@@ -892,39 +900,27 @@ window.closeClosureModal = () => {
   }
 };
 
-window.confirmJornadaClosure = () => {
-  const today = new Date().toISOString().split('T')[0];
-  let totalGross = 0;
-  let totalCompany = 0;
-  let totalCadetes = 0;
-
-  cadetesSettlement.forEach(c => {
-    totalGross += c.totalVolume;
-    totalCompany += c.totalEmpresa;
-    totalCadetes += c.totalCadete;
-  });
-
-  const closureData = {
-    date: today,
-    closedAt: new Date().toISOString(),
-    totalGross,
-    totalCompany40: totalCompany,
-    totalCadetes60: totalCadetes,
-    cadetesCount: cadetesSettlement.length,
-    ordersCount: rawDeliveredOrders.length
+window.confirmJornadaClosure = async () => {
+  const cierre = {
+    fecha: fechaLocalISO(new Date()),
+    desde: fechaDesde || null,
+    hasta: fechaHasta || null,
+    total_facturado: cadetesSettlement.reduce((acc, c) => acc + c.totalVolume, 0),
+    total_empresa: cadetesSettlement.reduce((acc, c) => acc + c.totalEmpresa, 0),
+    total_cadetes: cadetesSettlement.reduce((acc, c) => acc + c.totalCadete, 0),
+    cant_cadetes: cadetesSettlement.length,
+    cant_pedidos: rawDeliveredOrders.length,
+    cadetes_al_dia: cadetesSettlement.filter(c => c.settled).length
   };
 
-  try {
-    const raw = localStorage.getItem(STORAGE_CLOSURES_KEY);
-    const closures = raw ? JSON.parse(raw) : [];
-    closures.unshift(closureData);
-    localStorage.setItem(STORAGE_CLOSURES_KEY, JSON.stringify(closures));
-  } catch (e) {
-    console.error("Error guardando cierre", e);
+  const { error } = await supabase.from('Cierres_jornada').insert(cierre);
+  if (error) {
+    alert(`No se pudo guardar el cierre de jornada: ${error.message}`);
+    return;
   }
 
   window.closeClosureModal();
-  mostrarToast("¡Jornada cerrada con éxito! Balance contable archivado.", "success");
+  mostrarToast("¡Jornada cerrada con éxito! Balance guardado en la base.", "success");
 };
 
 // =========================================================================
