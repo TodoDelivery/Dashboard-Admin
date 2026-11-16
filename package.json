@@ -1,0 +1,9 @@
+{
+  "name": "tododelivery-admin",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Panel de administración de Todo Delivery (sitio estático, sin build)",
+  "scripts": {
+    "css": "node tailwind/compilar.mjs"
+  }
+}

@@ -6,8 +6,6 @@
   <title>Todo Delivery - Admin Dashboard</title>
   <link rel="icon" type="image/svg+xml" href="../images/Logo.svg">
   
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- Google Fonts: Plus Jakarta Sans -->
@@ -16,29 +14,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../styles/responsive.css">
 
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
-          },
-          colors: {
-            brand: {
-              black: '#0A0A0C',
-              dark: '#121217',
-              card: '#18181F',
-              accent: '#E63946',
-              accentHover: '#D62839',
-              gold: '#F4A261',
-              muted: '#71717A',
-              border: '#27272A'
-            }
-          }
-        }
-      }
-    }
-  </script>
 
   <style>
     html {
@@ -119,6 +94,8 @@
       50% { opacity: 1; transform: scale(1.15); }
     }
   </style>
+  <!-- Tailwind compilado (npm run css). Va último en el <head>, igual que lo dejaba el CDN -->
+  <link rel="stylesheet" href="../styles/tailwind.css" />
 </head>
 <body class="min-h-screen font-sans flex flex-col md:flex-row overflow-x-hidden selection:bg-brand-accent selection:text-white">
 
