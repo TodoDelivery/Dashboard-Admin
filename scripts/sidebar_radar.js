@@ -1,4 +1,5 @@
 import { supabase } from './conexion_supabase.js';
+import { cargarEstiloMapa } from './mapa_td.js';
 
 // Canal oficial de presencia de cadetes en SistemaCadetes
 const CADETES_PRESENCE_CHANNEL = 'cadetes-disponibles';
@@ -13,16 +14,28 @@ let telemetriaViajeMap = new Map();     // último GPS recibido de un viaje ('pe
 let cadetesLastLocationMap = new Map(); // viaje en curso o última entrega según la tabla Pedidos
 let activeOrderChannels = new Map();
 
-let leafletMap = null;
-let markersLayer = null;
-let leafletLoaded = false;
+// Mapa (MapLibre, con el mismo estilo, 3D/2D y controles que la app de cadetes)
+let mapa = null;
+let creandoMapa = false;
+let sinMapa = false;                    // sin WebGL o sin MapLibre: queda solo la lista
+const marcadores = new Map();           // id del cadete → { marker, el, popup, firma }
+let puckAdmin = null;                   // "Vos": la ubicación de quien mira el panel
 let registeredCadetesCache = [];
 
 // Coordenadas base por defecto: San Juan Centro (Plaza 25 de Mayo)
 const DEFAULT_CENTER = [-31.5375, -68.5364];
+const CENTRO_MAPA = [DEFAULT_CENTER[1], DEFAULT_CENTER[0]]; // MapLibre usa [lng, lat]
+
+// Vista 3D (inclinada) o 2D; se recuerda entre visitas como en la app de cadetes
+const PREFS_MAPA = 'td_admin_mapa_prefs';
+const prefsMapa = (() => { try { return JSON.parse(localStorage.getItem(PREFS_MAPA)) || {}; } catch { return {}; } })();
+const camara = { inclinado: prefsMapa.inclinado !== false };
+const PITCH_3D = 50;
+
+const esc = (v) => String(v ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 
 export function initSidebarRadar() {
-  injectLeafletAssets();
+  injectMapAssets();
   injectModalHTML();
   fetchRegisteredCadetes();
   fetchCadetesLocationsFromDB();
@@ -340,18 +353,10 @@ function suscribirCanalPedidoEnCurso(idPedido, idCadete) {
           source: `GPS en viaje (Pedido #TD-${idPedido})`
         });
 
-        // 2. Mover suavemente el marcador si ya existe en Leaflet
-        let foundMarker = null;
-        if (leafletMap && markersLayer) {
-          markersLayer.eachLayer(layer => {
-            if (layer.cadeteData && claveCadete(layer.cadeteData) === cadId) {
-              foundMarker = layer;
-            }
-          });
-        }
-
-        if (foundMarker) {
-          foundMarker.setLatLng([Number(lat), Number(lng)]);
+        // 2. Mover el marcador si ya está en el mapa
+        const existente = marcadores.get(cadId);
+        if (existente) {
+          existente.marker.setLngLat([Number(lng), Number(lat)]);
         } else {
           updateMapMarkers();
         }
@@ -415,80 +420,123 @@ function updateRadarUI() {
   updateModalList();
 }
 
-function injectLeafletAssets() {
-  if (!document.getElementById('leaflet-css')) {
+function injectMapAssets() {
+  if (!document.getElementById('maplibre-css')) {
     const link = document.createElement('link');
-    link.id = 'leaflet-css';
+    link.id = 'maplibre-css';
     link.rel = 'stylesheet';
-    link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+    link.href = 'https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css';
     document.head.appendChild(link);
   }
 
-  // Estilo Dark Mode para OpenStreetMap y limpieza de marcadores
-  if (!document.getElementById('leaflet-dark-style')) {
+  // Mapa, marcadores y controles con el mismo diseño que la app de cadetes
+  if (!document.getElementById('radar-mapa-estilo')) {
     const style = document.createElement('style');
-    style.id = 'leaflet-dark-style';
-    style.innerHTML = `
-      #radar-leaflet-map .leaflet-tile {
-        filter: brightness(0.65) invert(1) contrast(2.8) hue-rotate(200deg) saturate(0.3) brightness(0.7);
+    style.id = 'radar-mapa-estilo';
+    style.textContent = `
+      #radar-mapa-zona { position: relative; flex: 1 1 0%; min-height: 200px; }
+      @media (min-width: 768px) { #radar-mapa-zona { min-height: 300px; } }
+      #radar-mapa { position: absolute; inset: 0; background: #0B0E14; }
+      #radar-mapa-fallback {
+        position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
+        padding: 24px; text-align: center; color: #A1A1AA; font-size: 12px; background: #0B0E14;
       }
-      #radar-leaflet-map {
-        background: #121217 !important;
+      #radar-mapa.sin-mapa ~ #radar-mapa-fallback { display: flex; }
+      #radar-mapa.sin-mapa ~ .radar-controles { display: none; }
+
+      #radar-mapa .maplibregl-ctrl-attrib { background: rgba(0, 0, 0, .55) !important; font-size: 8px !important; line-height: 1.4; }
+      #radar-mapa .maplibregl-ctrl-attrib a { color: #8E9AA8 !important; }
+      #radar-mapa .maplibregl-ctrl-attrib-button { filter: invert(1); opacity: .5; }
+
+      /* Controles flotantes: brújula, 3D / 2D y mi ubicación */
+      .radar-controles { position: absolute; right: 12px; bottom: 28px; z-index: 2; display: flex; flex-direction: column; gap: 10px; }
+      .radar-btn {
+        width: 44px; height: 44px; border-radius: 9999px; cursor: pointer;
+        background: rgba(17, 19, 24, .96); border: 1px solid rgba(255, 255, 255, .09);
+        box-shadow: 0 8px 22px rgba(0, 0, 0, .5);
+        display: flex; align-items: center; justify-content: center; color: #fff;
+        transition: transform .15s, border-color .25s, color .25s;
       }
-      .leaflet-div-icon, .custom-radar-marker {
-        background: transparent !important;
-        border: none !important;
+      .radar-btn:hover { border-color: rgba(255, 255, 255, .25); }
+      .radar-btn:active { transform: scale(.9); }
+      .radar-btn.activo { border-color: rgba(230, 57, 70, .6); color: #E63946; }
+      .radar-btn svg { width: 22px; height: 22px; }
+      #radar-aguja { transition: transform .12s linear; width: 26px; height: 26px; }
+      .radar-tilt {
+        position: relative; width: 44px; height: 78px; padding: 4px; border-radius: 9999px; cursor: pointer;
+        background: rgba(17, 19, 24, .96); border: 1px solid rgba(255, 255, 255, .09);
+        box-shadow: 0 8px 22px rgba(0, 0, 0, .5);
+        display: flex; flex-direction: column; transition: transform .15s;
       }
-      .leaflet-popup-content-wrapper {
-        background: #18181F !important;
-        color: #F4F4F5 !important;
-        border: 1px solid #27272A;
-        border-radius: 16px !important;
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.7) !important;
+      .radar-tilt:active { transform: scale(.94); }
+      .radar-tilt__marca {
+        position: absolute; left: 4px; right: 4px; top: 4px; height: 34px; border-radius: 9999px;
+        background: #E63946; transition: transform .3s cubic-bezier(.34, 1.4, .64, 1);
       }
-      .leaflet-popup-tip {
-        background: #18181F !important;
+      .radar-tilt.plano .radar-tilt__marca { transform: translateY(34px); }
+      .radar-tilt__op {
+        position: relative; flex: 1; display: flex; align-items: center; justify-content: center;
+        font-size: 11px; font-weight: 900; color: #8E9AA8; transition: color .25s;
       }
-      .leaflet-container a {
-        color: #E63946 !important;
+      .radar-tilt:not(.plano) [data-op="3d"], .radar-tilt.plano [data-op="2d"] { color: #fff; }
+
+      #radar-mapa-aviso {
+        position: absolute; left: 50%; top: 14px; z-index: 3; transform: translateX(-50%);
+        background: rgba(17, 19, 24, .96); border: 1px solid rgba(255, 255, 255, .1); color: #fff;
+        font-size: 12px; font-weight: 700; padding: 8px 14px; border-radius: 9999px;
+        box-shadow: 0 8px 22px rgba(0, 0, 0, .5); transition: opacity .25s, transform .25s; white-space: nowrap;
       }
-      .radar-tooltip {
-        background: #18181F !important;
-        color: #F4F4F5 !important;
-        border: 1px solid #27272A !important;
-        border-radius: 8px !important;
-        font-family: 'Plus Jakarta Sans', sans-serif !important;
-        font-size: 11px !important;
-        font-weight: 600 !important;
-        padding: 4px 8px !important;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important;
+      #radar-mapa-aviso.oculto { opacity: 0; transform: translate(-50%, -6px); pointer-events: none; }
+
+      /* Cadetes: círculo con iniciales, borde del color del estado y pulso si está activo */
+      .radar-cad {
+        position: relative; width: 40px; height: 40px; border-radius: 50%; cursor: pointer;
+        background: #18181F; border: 2px solid var(--color);
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 11px; color: #fff;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, .6);
       }
-      .radar-tooltip::before {
-        border-top-color: #18181F !important;
+      .radar-cad__pulso {
+        position: absolute; inset: -5px; border-radius: 50%; border: 2px solid var(--color); background: var(--pulso);
+        animation: radar-ring-pulse 2s cubic-bezier(0, 0, .2, 1) infinite; pointer-events: none;
       }
       @keyframes radar-ring-pulse {
-        0% { transform: scale(1); opacity: 0.8; }
-        50% { transform: scale(1.4); opacity: 0.3; }
+        0% { transform: scale(1); opacity: .8; }
+        50% { transform: scale(1.4); opacity: .3; }
         100% { transform: scale(1.8); opacity: 0; }
       }
-      .marker-pulse-ring {
-        position: absolute;
-        inset: -5px;
-        border-radius: 50%;
-        animation: radar-ring-pulse 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+
+      /* "Vos": punto azul con halo, como el GPS de la app de cadetes */
+      .radar-yo { position: relative; width: 44px; height: 44px; pointer-events: none; }
+      .radar-yo__halo { position: absolute; inset: 8px; border-radius: 9999px; background: rgba(59, 130, 246, .35); animation: radar-yo-pulso 2.2s ease-out infinite; }
+      .radar-yo__punto { position: absolute; inset: 13px; border-radius: 9999px; background: #3B82F6; border: 3px solid #fff; box-shadow: 0 4px 14px rgba(0, 0, 0, .55); }
+      @keyframes radar-yo-pulso { 0% { transform: scale(.8); opacity: .9; } 100% { transform: scale(2.2); opacity: 0; } }
+
+      @media (prefers-reduced-motion: reduce) {
+        .radar-cad__pulso, .radar-yo__halo { animation: none; }
       }
+
+      /* Ventana del cadete al tocarlo */
+      .radar-popup .maplibregl-popup-content {
+        background: #18181F; color: #F4F4F5; border: 1px solid #27272A; border-radius: 16px;
+        padding: 10px 12px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, .7);
+      }
+      .radar-popup.maplibregl-popup-anchor-bottom .maplibregl-popup-tip { border-top-color: #18181F; }
+      .radar-popup.maplibregl-popup-anchor-top .maplibregl-popup-tip { border-bottom-color: #18181F; }
+      .radar-popup.maplibregl-popup-anchor-left .maplibregl-popup-tip { border-right-color: #18181F; }
+      .radar-popup.maplibregl-popup-anchor-right .maplibregl-popup-tip { border-left-color: #18181F; }
+      .radar-popup a { color: #E63946; text-decoration: none; }
     `;
     document.head.appendChild(style);
   }
 
-  if (window.L) {
-    leafletLoaded = true;
-  } else if (!document.getElementById('leaflet-js')) {
+  if (!window.maplibregl && !document.getElementById('maplibre-js')) {
     const script = document.createElement('script');
-    script.id = 'leaflet-js';
-    script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-    script.onload = () => {
-      leafletLoaded = true;
+    script.id = 'maplibre-js';
+    script.src = 'https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js';
+    script.onerror = () => {
+      sinMapa = true;
+      document.getElementById('radar-mapa')?.classList.add('sin-mapa');
     };
     document.head.appendChild(script);
   }
@@ -521,7 +569,7 @@ function injectModalHTML() {
             <p class="text-[11px] text-zinc-400 hidden sm:block">Monitoreo geolocalizado en tiempo real vía socket y base de datos</p>
           </div>
         </div>
-        
+
         <div class="flex items-center gap-2 shrink-0">
           <button onclick="window.recenterRadarMap()" title="Centrar mapa en cadetes" class="p-2 rounded-xl bg-brand-dark border border-brand-border text-zinc-400 hover:text-white hover:border-zinc-500 transition-all text-xs flex items-center gap-1.5">
             <i data-lucide="crosshair" class="w-4 h-4"></i> <span class="hidden sm:inline">Centrar</span>
@@ -534,8 +582,31 @@ function injectModalHTML() {
 
       <!-- Map Container + Sidebar List -->
       <div class="flex-1 flex flex-col md:flex-row relative overflow-hidden">
-        <!-- Map Container -->
-        <div id="radar-leaflet-map" class="flex-1 w-full h-full bg-zinc-950 min-h-[200px] md:min-h-[300px]"></div>
+        <!-- Mapa con sus controles flotantes -->
+        <div id="radar-mapa-zona">
+          <div id="radar-mapa"></div>
+          <div id="radar-mapa-fallback">No se pudo cargar el mapa en este navegador. La lista de cadetes sigue funcionando.</div>
+          <div id="radar-mapa-aviso" class="oculto" role="status" aria-live="polite"></div>
+          <div class="radar-controles">
+            <button type="button" id="radar-btn-brujula" class="radar-btn" title="Apuntar al norte" aria-label="Apuntar al norte" onclick="window.radarMapaNorte()">
+              <svg id="radar-aguja" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 2.5 15.2 12H8.8z" fill="#FF3B30"></path>
+                <path d="M12 21.5 8.8 12h6.4z" fill="currentColor" opacity=".75"></path>
+                <circle cx="12" cy="12" r="1.6" fill="#111318"></circle>
+              </svg>
+            </button>
+            <button type="button" id="radar-btn-tilt" class="radar-tilt" title="Vista del mapa: 2D o 3D" aria-label="Vista del mapa en 3D" aria-pressed="true" onclick="window.radarMapaTilt()">
+              <i class="radar-tilt__marca" aria-hidden="true"></i>
+              <span class="radar-tilt__op" data-op="3d">3D</span>
+              <span class="radar-tilt__op" data-op="2d">2D</span>
+            </button>
+            <button type="button" id="radar-btn-gps" class="radar-btn" title="Ir a mi ubicación" aria-label="Ir a mi ubicación" onclick="window.radarMapaMiUbicacion()">
+              <svg fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true">
+                <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
+              </svg>
+            </button>
+          </div>
+        </div>
 
         <!-- Cadetes sidebar list inside modal -->
         <div class="w-full md:w-80 bg-brand-dark/95 border-t md:border-t-0 md:border-l border-brand-border p-3 sm:p-4 flex flex-col h-[32%] min-h-[9rem] md:h-full shrink-0">
@@ -551,149 +622,211 @@ function injectModalHTML() {
     </div>
   `;
   document.body.appendChild(modal);
+  actualizarBotonesMapa();
 }
 
-function initMapInstance() {
-  if (leafletMap) return;
-  if (!window.L) return;
+function mapaNoDisponible() {
+  sinMapa = true;
+  document.getElementById('radar-mapa')?.classList.add('sin-mapa');
+}
 
-  const mapContainer = document.getElementById('radar-leaflet-map');
-  if (!mapContainer) return;
+async function initMapInstance() {
+  if (mapa || creandoMapa || sinMapa || !window.maplibregl) return;
+  const contenedor = document.getElementById('radar-mapa');
+  if (!contenedor) return;
+  creandoMapa = true;
 
-  leafletMap = window.L.map('radar-leaflet-map', {
-    center: DEFAULT_CENTER,
-    zoom: 14,
-    zoomControl: true
+  try {
+    const estilo = await cargarEstiloMapa();
+    mapa = new window.maplibregl.Map({
+      container: contenedor,
+      style: estilo,
+      center: CENTRO_MAPA,
+      zoom: 14,
+      pitch: camara.inclinado ? PITCH_3D : 0,   // arranca con la vista elegida la última vez
+      maxPitch: 65,
+      attributionControl: false,
+      fadeDuration: 150
+    });
+  } catch (e) {
+    console.warn('[Radar] No se pudo crear el mapa (¿sin WebGL?):', e);
+    creandoMapa = false;
+    return mapaNoDisponible();
+  }
+
+  mapa.addControl(new window.maplibregl.AttributionControl({ compact: true }), 'bottom-left');
+  // Si la ventana cambia de tamaño (o se creó mientras se abría), el lienzo acompaña
+  if ('ResizeObserver' in window) {
+    new ResizeObserver(() => mapa?.resize()).observe(document.getElementById('radar-mapa-zona'));
+  }
+  mapa.on('rotate', actualizarAgujaBrujula);
+  // Si inclina el mapa con el mouse (clic derecho o Ctrl + arrastrar), el selector 2D/3D acompaña lo que se ve
+  mapa.on('pitchend', (e) => {
+    if (!e.originalEvent) return;
+    const inclinado = mapa.getPitch() > 15;
+    if (inclinado === camara.inclinado) return;
+    camara.inclinado = inclinado;
+    guardarPrefsMapa();
+    actualizarBotonesMapa();
   });
 
-  window.L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    maxZoom: 19
-  }).addTo(leafletMap);
-
-  markersLayer = window.L.layerGroup().addTo(leafletMap);
+  creandoMapa = false;
+  updateMapMarkers();
+  actualizarBotonesMapa();
 }
 
-function fitMapToMarkers() {
-  if (!leafletMap || !markersLayer || !window.L) return;
-  const layers = markersLayer.getLayers();
-  if (layers.length > 0) {
-    const group = window.L.featureGroup(layers);
-    leafletMap.fitBounds(group.getBounds().pad(0.25), { maxZoom: 16 });
-  } else {
-    leafletMap.setView(DEFAULT_CENTER, 14);
+function guardarPrefsMapa() {
+  localStorage.setItem(PREFS_MAPA, JSON.stringify({ inclinado: camara.inclinado }));
+}
+
+function actualizarBotonesMapa() {
+  const tilt = document.getElementById('radar-btn-tilt');
+  if (tilt) {
+    tilt.classList.toggle('plano', !camara.inclinado);
+    tilt.setAttribute('aria-pressed', String(camara.inclinado));
   }
+  document.getElementById('radar-btn-gps')?.classList.toggle('activo', Boolean(puckAdmin));
+  actualizarAgujaBrujula();
 }
 
-function renderMarkerItem(cadeteObj, pos, isActive, isBusy) {
-  const lat = pos.lat;
-  const lng = pos.lng;
+function actualizarAgujaBrujula() {
+  const aguja = document.getElementById('radar-aguja');
+  if (aguja) aguja.style.transform = `rotate(${-(mapa ? mapa.getBearing() : 0)}deg)`;
+}
 
+let avisoMapaTimer = null;
+function mostrarAvisoMapa(texto) {
+  const aviso = document.getElementById('radar-mapa-aviso');
+  if (!aviso) return;
+  aviso.textContent = texto;
+  aviso.classList.remove('oculto');
+  clearTimeout(avisoMapaTimer);
+  avisoMapaTimer = setTimeout(() => aviso.classList.add('oculto'), 2600);
+}
+
+// Encuadra a todos los cadetes del mapa (y a "Vos", si se mostró la ubicación propia)
+function fitMapToMarkers() {
+  if (!mapa) return;
+  const pitch = camara.inclinado ? PITCH_3D : 0;
+  const puntos = [...marcadores.values()].map(m => m.marker.getLngLat());
+  if (puckAdmin) puntos.push(puckAdmin.getLngLat());
+
+  if (puntos.length === 0) {
+    mapa.easeTo({ center: CENTRO_MAPA, zoom: 14, pitch, bearing: 0, duration: 900 });
+    return;
+  }
+  const caja = new window.maplibregl.LngLatBounds();
+  puntos.forEach(p => caja.extend(p));
+  // El encuadre se calcula plano; inclinado, el fondo se aleja, así que se abre un poco más
+  const cam = mapa.cameraForBounds(caja, { padding: 70, bearing: 0, maxZoom: 16 });
+  if (!cam) return mapa.easeTo({ pitch, bearing: 0, duration: 700 });
+  mapa.easeTo({
+    center: cam.center,
+    zoom: Math.min(16, cam.zoom - (camara.inclinado ? 0.6 : 0)),
+    pitch, bearing: 0, duration: 900, essential: true
+  });
+}
+
+function datosMarcador(cadeteObj, isActive, isBusy) {
   const name = cadeteObj.nombre_cad || cadeteObj.nombre || `Cadete #${cadeteObj.id_cad || '---'}`;
-  const initials = name.split(' ').map(n=>n[0]).join('').substring(0, 2).toUpperCase();
-  const vehicle = cadeteObj.vehiculo_cad || cadeteObj.vehiculo || 'Moto';
-  
+  const initials = name.split(' ').filter(Boolean).map(n => n[0]).join('').substring(0, 2).toUpperCase();
   let statusText = 'Desconectado';
-  let colorClass = '#71717A';
-  let bgPulse = '';
-
+  let color = '#71717A';
+  let pulso = 'transparent';
   if (isActive) {
     if (isBusy) {
       statusText = 'En viaje';
-      colorClass = '#E63946';
-      bgPulse = 'rgba(230, 57, 70, 0.4)';
+      color = '#E63946';
+      pulso = 'rgba(230, 57, 70, 0.4)';
     } else {
       statusText = 'Libre / Activo';
-      colorClass = '#10B981';
-      bgPulse = 'rgba(16, 185, 129, 0.4)';
+      color = '#10B981';
+      pulso = 'rgba(16, 185, 129, 0.4)';
     }
   }
+  return { name, initials, statusText, color, pulso };
+}
 
-  const customIcon = window.L.divIcon({
-    className: 'custom-radar-marker',
-    html: `
-      <div style="
-        position: relative;
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background: #18181F;
-        border: 2px solid ${colorClass};
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 800;
-        font-size: 11px;
-        color: #FFFFFF;
-        box-shadow: 0 4px 14px rgba(0,0,0,0.6);
-        cursor: pointer;
-      ">
-        ${isActive ? `
-          <span class="marker-pulse-ring" style="border: 2px solid ${colorClass}; background: ${bgPulse};"></span>
-        ` : ''}
-        ${initials}
-      </div>
-    `,
-    iconSize: [40, 40],
-    iconAnchor: [20, 20],
-    popupAnchor: [0, -22]
-  });
-
-  const marker = window.L.marker([lat, lng], { icon: customIcon });
-
-  marker.bindTooltip(`<strong>${name}</strong> • ${statusText}`, {
-    direction: 'top',
-    offset: [0, -20],
-    className: 'radar-tooltip'
-  });
-
-  const popupContent = `
+function contenidoPopup(cadeteObj, pos, isActive, isBusy, d) {
+  const vehicle = cadeteObj.vehiculo_cad || cadeteObj.vehiculo || 'Moto';
+  const colorTexto = isActive ? (isBusy ? '#F87171' : '#34D399') : '#A1A1AA';
+  const telefono = cadeteObj.telef_cad ? String(cadeteObj.telef_cad) : '';
+  return `
     <div style="font-family: 'Plus Jakarta Sans', sans-serif; min-width: 180px; padding: 2px;">
-      <div style="font-weight: 800; font-size: 13px; color: #FFFFFF; margin-bottom: 2px;">${name}</div>
-      <div style="font-size: 11px; color: #A1A1AA; margin-bottom: 6px;">ID: #${cadeteObj.id_cad || '---'} • ${vehicle}</div>
+      <div style="font-weight: 800; font-size: 13px; color: #FFFFFF; margin-bottom: 2px;">${esc(d.name)}</div>
+      <div style="font-size: 11px; color: #A1A1AA; margin-bottom: 6px;">ID: #${esc(cadeteObj.id_cad || '---')} • ${esc(vehicle)}</div>
       <div style="display: flex; align-items: center; gap: 6px; font-size: 11px; margin-bottom: 4px;">
-        <span style="width: 8px; height: 8px; border-radius: 50%; background: ${colorClass}; display: inline-block;"></span>
-        <strong style="color: ${isActive ? (isBusy ? '#F87171' : '#34D399') : '#A1A1AA'};">${statusText}</strong>
+        <span style="width: 8px; height: 8px; border-radius: 50%; background: ${d.color}; display: inline-block;"></span>
+        <strong style="color: ${colorTexto};">${d.statusText}</strong>
       </div>
-      <div style="font-size: 10px; color: #71717A; margin-bottom: 4px;">📍 ${pos.source}</div>
-      <div style="font-size: 9px; font-family: monospace; color: #52525B;">${lat.toFixed(5)}, ${lng.toFixed(5)}</div>
-      ${cadeteObj.telef_cad ? `<div style="font-size: 10px; color: #71717A; border-top: 1px solid #27272A; padding-top: 4px; margin-top: 4px;"><a href="tel:${cadeteObj.telef_cad}" style="color: #E63946; text-decoration: none;">📞 ${cadeteObj.telef_cad}</a></div>` : ''}
+      <div style="font-size: 10px; color: #71717A; margin-bottom: 4px;">📍 ${esc(pos.source)}</div>
+      <div style="font-size: 9px; font-family: monospace; color: #52525B;">${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)}</div>
+      ${telefono ? `<div style="font-size: 10px; color: #71717A; border-top: 1px solid #27272A; padding-top: 4px; margin-top: 4px;"><a href="tel:${esc(telefono.replace(/[^\d+]/g, ''))}">📞 ${esc(telefono)}</a></div>` : ''}
     </div>
   `;
+}
 
-  marker.bindPopup(popupContent);
-  marker.cadeteData = cadeteObj;
-  marker.addTo(markersLayer);
+// Crea o actualiza el marcador de un cadete (sin rehacerlo: así no parpadea ni se cierra su ventana)
+function renderMarkerItem(cadeteObj, pos, isActive, isBusy) {
+  const id = claveCadete(cadeteObj);
+  const d = datosMarcador(cadeteObj, isActive, isBusy);
+  const firma = `${d.initials}|${d.color}`;
+  let item = marcadores.get(id);
+
+  if (!item) {
+    const el = document.createElement('div');
+    const popup = new window.maplibregl.Popup({ offset: 24, closeButton: false, className: 'radar-popup', maxWidth: '260px' });
+    const marker = new window.maplibregl.Marker({ element: el, anchor: 'center' })
+      .setLngLat([pos.lng, pos.lat])
+      .setPopup(popup)
+      .addTo(mapa);
+    item = { marker, el, popup, firma: '' };
+    marcadores.set(id, item);
+  } else {
+    item.marker.setLngLat([pos.lng, pos.lat]);
+  }
+
+  if (item.firma !== firma) {
+    item.el.innerHTML = `
+      <div class="radar-cad" style="--color: ${d.color}; --pulso: ${d.pulso};">
+        ${isActive ? '<span class="radar-cad__pulso"></span>' : ''}
+        <span></span>
+      </div>`;
+    item.el.querySelector('.radar-cad > span:last-child').textContent = d.initials;
+    item.firma = firma;
+  }
+  item.el.title = `${d.name} • ${d.statusText}`;
+  item.popup.setHTML(contenidoPopup(cadeteObj, pos, isActive, isBusy, d));
+  item.cadete = cadeteObj;
 }
 
 function updateMapMarkers() {
-  if (!leafletMap || !markersLayer || !window.L) return;
+  if (!mapa) return;
 
-  markersLayer.clearLayers();
-
-  const renderedCadeteIds = new Set();
-
-  // 1. Graficar ÚNICAMENTE cadetes que se encuentren ACTIVOS o en viaje
-  registeredCadetesCache.forEach((c) => {
-    const isActive = isCadeteActive(c);
-    if (!isActive) {
-      // Cadete desconectado: NO se dibuja en el mapa
-      return;
-    }
-
-    const isBusy = isCadeteBusy(c);
+  const dibujados = new Set();
+  const dibujar = (c, isBusy) => {
     const pos = resolveCadetePosition(c);
     if (!pos) return;
+    renderMarkerItem(c, pos, true, isBusy);
+    dibujados.add(claveCadete(c));
+  };
 
-    renderMarkerItem(c, pos, isActive, isBusy);
-    if (c.id_cad) renderedCadeteIds.add(String(c.id_cad));
+  // 1. Graficar ÚNICAMENTE cadetes que se encuentren ACTIVOS o en viaje (los desconectados no se dibujan)
+  registeredCadetesCache.forEach((c) => {
+    if (isCadeteActive(c)) dibujar(c, isCadeteBusy(c));
   });
 
   // 2. Graficar cadetes conectados por presencia que no figuren aún en cache de registrados
   listarActivos().forEach((c) => {
-    if (renderedCadeteIds.has(claveCadete(c))) return;
-    const pos = resolveCadetePosition(c);
-    if (pos) renderMarkerItem(c, pos, true, isCadeteBusy(c));
+    if (!dibujados.has(claveCadete(c))) dibujar(c, isCadeteBusy(c));
+  });
+
+  // 3. Sacar a los que ya no están activos
+  marcadores.forEach((item, id) => {
+    if (!dibujados.has(id)) {
+      item.marker.remove();
+      marcadores.delete(id);
+    }
   });
 }
 
@@ -767,7 +900,7 @@ window.openRadarMapModal = () => {
   injectModalHTML();
   fetchRegisteredCadetes();
   fetchCadetesLocationsFromDB();
-  
+
   const m = document.getElementById('radar-map-modal');
   const c = document.getElementById('radar-map-card');
   if (m && c) {
@@ -779,20 +912,27 @@ window.openRadarMapModal = () => {
     }, 10);
   }
 
-  const checkAndInitMap = () => {
-    if (window.L) {
-      initMapInstance();
-      updateMapMarkers();
-      updateModalList();
-      setTimeout(() => {
-        if (leafletMap) {
-          leafletMap.invalidateSize();
-          fitMapToMarkers();
-        }
-      }, 300);
-    } else {
-      setTimeout(checkAndInitMap, 100);
+  updateModalList();
+
+  let intentos = 0;
+  const checkAndInitMap = async () => {
+    if (sinMapa) return mapaNoDisponible();
+    if (!window.maplibregl) {
+      // Si MapLibre no llega en ~10 s, se avisa y queda la lista
+      if (++intentos > 100) return mapaNoDisponible();
+      return setTimeout(checkAndInitMap, 100);
     }
+    const nuevo = !mapa;
+    await initMapInstance();
+    if (!mapa) return;
+    updateMapMarkers();
+    setTimeout(() => {
+      if (!mapa) return;
+      mapa.resize();
+      // La primera vez (o al reabrir) encuadra a los cadetes activos
+      if (nuevo && !mapa.loaded()) mapa.once('load', fitMapToMarkers);
+      else fitMapToMarkers();
+    }, 300);
   };
 
   checkAndInitMap();
@@ -815,24 +955,61 @@ window.recenterRadarMap = () => {
   fitMapToMarkers();
 };
 
-window.focusCadeteOnMap = (cadeteId) => {
-  if (!markersLayer || !leafletMap) return;
-  let targetLayer = null;
-  markersLayer.eachLayer(layer => {
-    if (layer.cadeteData && (String(layer.cadeteData.id_cad) === String(cadeteId) || String(layer.cadeteData.id) === String(cadeteId))) {
-      targetLayer = layer;
-    }
-  });
+// Brújula: vuelve el mapa al norte
+window.radarMapaNorte = () => {
+  if (!mapa) return;
+  mapa.easeTo({ bearing: 0, duration: 600 });
+};
 
-  if (targetLayer) {
-    leafletMap.flyTo(targetLayer.getLatLng(), 16, { duration: 0.8 });
-    setTimeout(() => {
-      targetLayer.openPopup();
-    }, 850);
+// Selector 3D / 2D: cambia la inclinación sin mover el centro ni el zoom
+window.radarMapaTilt = () => {
+  if (!mapa) return;
+  camara.inclinado = !camara.inclinado;
+  guardarPrefsMapa();
+  mapa.easeTo({ pitch: camara.inclinado ? PITCH_3D : 0, duration: 700 });
+  actualizarBotonesMapa();
+};
+
+// Mi ubicación: muestra a quien mira el panel en el mapa y va hasta ahí
+window.radarMapaMiUbicacion = () => {
+  if (!mapa) return;
+  if (!('geolocation' in navigator)) return mostrarAvisoMapa('Este navegador no comparte la ubicación');
+  mostrarAvisoMapa('Buscando tu ubicación…');
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      const punto = [pos.coords.longitude, pos.coords.latitude];
+      if (!puckAdmin) {
+        const raiz = document.createElement('div');
+        raiz.innerHTML = '<div class="radar-yo" title="Vos"><div class="radar-yo__halo"></div><div class="radar-yo__punto"></div></div>';
+        puckAdmin = new window.maplibregl.Marker({ element: raiz, anchor: 'center' }).setLngLat(punto).addTo(mapa);
+      } else {
+        puckAdmin.setLngLat(punto);
+      }
+      document.getElementById('radar-mapa-aviso')?.classList.add('oculto');
+      mapa.easeTo({ center: punto, zoom: 16, pitch: camara.inclinado ? PITCH_3D : 0, duration: 1100, essential: true });
+      actualizarBotonesMapa();
+    },
+    (err) => {
+      console.warn('[Radar] Sin ubicación:', err.message);
+      mostrarAvisoMapa(err.code === 1 ? 'Permiso de ubicación denegado' : 'No se pudo obtener tu ubicación');
+    },
+    { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 }
+  );
+};
+
+window.focusCadeteOnMap = (cadeteId) => {
+  if (!mapa) return;
+  const item = marcadores.get(String(cadeteId));
+
+  if (item) {
+    mapa.flyTo({ center: item.marker.getLngLat(), zoom: 16, pitch: camara.inclinado ? PITCH_3D : 0, duration: 800 });
+    mapa.once('moveend', () => {
+      if (!item.popup.isOpen()) item.marker.togglePopup();
+    });
   } else {
     const cad = registeredCadetesCache.find(c => String(c.id_cad) === String(cadeteId));
     const name = cad ? (cad.nombre_cad || cad.nombre) : 'El cadete';
-    alert(`${name} se encuentra actualmente desconectado y no aparece en el mapa.`);
+    mostrarAvisoMapa(`${name} está desconectado y no aparece en el mapa`);
   }
 };
 
@@ -846,3 +1023,4 @@ if (document.readyState === 'loading') {
 }
 
 window.initSidebarRadar = initSidebarRadar;
+
