@@ -72,7 +72,8 @@ function normalizeStatus(st, hasCadete) {
   if (s === 'cancelled' || s === 'cancelado' || s === 'anulado') {
     return 'cancelled';
   }
-  if (hasCadete && s !== 'unassigned' && s !== 'pendiente' && s !== 'en_confirmacion') {
+  // 'en_cola': un cadete en viaje lo aceptó para después; todavía no está en tránsito
+  if (hasCadete && s !== 'unassigned' && s !== 'pendiente' && s !== 'en_confirmacion' && s !== 'en_cola') {
     return 'in_transit';
   }
   return 'unassigned';

@@ -342,6 +342,11 @@ export function renderizarTablaPedidos() {
       statusClass = 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20';
       statusIconClass = 'bg-cyan-400 animate-pulse';
       statusText = 'Confirmando';
+    } else if (st === 'en_cola') {
+      // Un cadete en viaje lo aceptó para hacerlo apenas termine
+      statusClass = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+      statusIconClass = 'bg-amber-400 animate-pulse';
+      statusText = 'En cola';
     }
 
     const cadeteNombre = (p.Cadetes && p.Cadetes.nombre_cad) 
